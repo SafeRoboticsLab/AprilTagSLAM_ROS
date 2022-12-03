@@ -1,0 +1,101 @@
+#############################################
+### Parameters only use zed sdk directly ####
+#############################################
+camera:
+    camera_model:               zed2                            # A name for the camera (can be different from camera model and node name and can be overwritten by the launch file)
+    frame_rate:                 30                              # Camera frame rate (can be overwritten by the launch file)
+    resolution:                 2                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
+    
+depth:
+    quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
+    sensing_mode:               0                               # '0': STANDARD, '1': FILL (not use FILL for robotic applications)
+    min_depth:                  0.5                             # Minimum depth in meters
+    max_depth:                  15.0                            # Maximum depth in meters
+
+sensors:
+    sensor_rate:               200                             # Maximum rate at which the sensors data are published
+
+#################################
+### Parameters for the slam ####
+#################################
+
+publish:
+    # ros publishing
+    publish_image:              true                            # Publish the camera image
+    publish_image_with_tags:    true                            # Publish the camera image with the tags detected
+    publish_tags:               true                            # Publish the tags detected
+    use_approx_sync:            false                           # Allow ROS subscriber to use approximate sync 
+frontend:
+    type: "GPU"                # "CPU" or "GPU"         
+    # AprilTag parameters
+    tag_size: 0.19                 # Size of the tag in meters, default: 0.1 m
+
+    # CPU detector only parameters
+    tag_family:        'tag36h11' # options: tagStandard52h13, tagStandard41h12, tag36h11, tag25h9, tag16h5, tagCustom48h12, tagCircle21h7, tagCircle49h12
+    tag_threads:       2          # default: 2
+    tag_decimate:      2.0        # default: 1.0
+    tag_blur:          0.0        # default: 0.0
+    tag_refine_edges:  1          # default: 1
+    tag_debug:         0          # default: 0
+    max_hamming_dist:  1          # default: 2 (Tunable parameter with 2 being a good choice - values >=3 consume large amounts of memory. Choose the largest value possible.)
+    
+    # GPU detector only parameters
+    max_tags:          20
+
+backend:
+    #smoother parameter
+    smoother: "fixed_lag" # choose from "fixed_lag", "isam2", and "none"
+    odom: "imu" # choose from "vision" and "imu"
+
+    # Load and Save Maps
+    prior_map: false
+    save_graph: false
+    load_path: ""    # prior map
+    save_path: ""                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
+
+    ################# Uncertainty parameters ####################
+
+    # variance of tag pose estimation
+    landmark_sigma_trans: 0.1   
+    landmark_sigma_rot: 0.3
+
+    # variance of prior landmark loaded from file
+    #(smaller value to enforce the landmark are not updated)
+    landmark_prior_sigma_trans: 0.1 
+    landmark_prior_sigma_rot: 0.3
+
+    # variance of initial pose if no map is loaded
+    pose_prior_sigma_trans: 0.1
+    pose_prior_sigma_rot: 0.3
+
+    # ** VIO only parameters **
+    # variance of velocity assosciated with the first pose
+    # we initialize the velocity at 0
+    vel_prior_sigma: 0.2
+
+    # variance of imu bias assosciated with the first pose
+    # we initialize the bias with 0
+    bias_prior_sigma: 0.2
+
+    ################# Optimization Parameters #################### 
+
+    # isam2 parameters
+    relinearize_threshold: 0.1
+    relinearize_skip: 1
+    optimizer: "GaussNewton"
+    cacheLinearizedFactors: true
+
+    # LM parameter for fixed_lag smoother
+    lag: 0.1 # parameter for fix lag only
+    lambda_initial: 1e-5
+    lambda_upper_bound: 100.0
+    lambda_lower_bound: 1e-10
+    lambda_factor: 10
+    max_iterations: 10
+    error_tol: 1e-5
+    relative_error_tol: 1e-1
+    absolute_error_tol: 1e-3
+
+    # if this is true, we will accept the local optimal solution 
+    # when the error no longer decrease rather than increase the lambda
+    local_optimal: true 

@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<package>
+  <name>tagslam_ros</name>
+  <version>3.2.1</version>
+  <description>
+    TODO: Package description
+  </description>
+
+  <maintainer email="danylo.malyuta@gmail.com">Danylo Malyuta</maintainer>
+  <maintainer email="w.merkt+oss@gmail.com">Wolfgang Merkt</maintainer>
+
+  <author>TODO</author>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- <build_depend>apriltag</build_depend> -->
+  <!-- <build_depend>gtsam</build_depend> -->
+  <build_depend>boost</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>image_geometry</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>nodelet</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>eigen</build_depend>
+  <build_depend>libopencv-dev</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  
+  <!-- <run_depend>gtsam</run_depend> -->
+  <!-- <run_depend>apriltag</run_depend> -->
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>boost</run_depend>
+  <run_depend>image_transport</run_depend>
+  <run_depend>image_geometry</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>nodelet</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>eigen</run_depend>
+  <run_depend>libopencv-dev</run_depend>
+
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
+  </export>
+</package>

@@ -1,0 +1,8 @@
+<launch>
+    <include file="$(find zed_wrapper)/launch/zed2.launch"/>
+    <include file="$(find tagslam_ros)/launch/tagslam.launch">
+        <arg name="camera_name" value="/zed2/zed_node/left" />
+        <arg name="image_topic" value="image_rect_gray" />
+        <arg name="detector_type" value="CPU" />
+    </include>
+</launch>
