@@ -1,7 +1,7 @@
 
 # ROS AprilTag SLAM
 
-This repo contains a ROS implementation of a real-time landmark SLAM based on [AprilTag](https://github.com/AprilRobotics/apriltag) and [GTSAM](https://gtsam.org/). We use AprilTag as the front end, which alleviates the challengings in data association. Both CPU and CUDA versions of the AprilTag front end are included. We provide iSAM2 and batch fixed-lag smoother for SLAM and visual Odometry.
+This repo contains a ROS implementation of a real-time landmark SLAM based on [AprilTag](https://github.com/AprilRobotics/apriltag) and [GTSAM](https://gtsam.org/). We use AprilTag as the front end, which alleviates the challengings in data association. Both CPU and CUDA versions of the AprilTag front end are included. We provide iSAM2 and batch fixed-lag smoother for SLAM and visual Inertia Odometry.
 
 The package is initially built for a [ZED2](https://www.stereolabs.com/zed-2/) camera running on [Nvidia Jetson Xavier](https://www.nvidia.com/en-us/autonomous-machines/embedded-systems/jetson-xavier-nx/). However, it can be easily adapted for other sensors and other platforms. We have tested this on JetPack 5.0.2 and regular PC with Ubuntu 20.04, ROS Noetic and Nvidia GTX 1080Ti.
 
