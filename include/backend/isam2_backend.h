@@ -29,7 +29,7 @@
 
  **/
 
- /***************************** vio_isam2_backend.h ************************************
+ /***************************** isam2_backend.h ************************************
  *
  * Header file of iSAM2Backend base class based on GTSAM::ISAM2.
  * 

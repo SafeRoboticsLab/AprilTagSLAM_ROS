@@ -27,7 +27,6 @@ message( STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}" )
 option(USE_CUDA "Build with CUDA" ON)
 option(USE_ZED "Build with ZED SDK" ON)
 option(USE_CUDA_OPENCV "Build with OpenCV CUDA" ON)
-option(BUILD_TEST "Build backend test code" OFF)
 
 if(NOT USE_CUDA)
   # these packages depend on CUDA
@@ -226,21 +225,6 @@ target_link_libraries(${PROJECT_NAME}_slam_zed
                       ${ZED_LIBRARIES}
                       ${CUDA_LIBRARIES}
                       ${catkin_LIBRARIES} )
-
-if(BUILD_TEST)
-  ################################
-  ## TEST Node
-  ################################
-  # add plot library
-  add_subdirectory(matplotplusplus)
-
-  add_executable(${PROJECT_NAME}_test_node src/test_node.cpp)
-  add_dependencies(${PROJECT_NAME}_test_node ${PROJECT_NAME}_generate_messages_cpp)
-  target_link_libraries(${PROJECT_NAME}_test_node PUBLIC
-                        ${catkin_LIBRARIES}
-                        ${PROJECT_NAME}_backend
-                        matplot)
-endif()
 
 ################################
 ## TAG SLAM Node
