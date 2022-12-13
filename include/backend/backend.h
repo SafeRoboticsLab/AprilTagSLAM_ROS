@@ -92,12 +92,18 @@ namespace tagslam_ros
             /*
             Update the smoother with landmark detections and odometry measurement.
             */
-            virtual EigenPose updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov) = 0;
+            virtual nav_msgs::OdometryPtr updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov) = 0;
+
+            // /*
+            // Update the smoother with landmark detections and preintegrated IMU factor
+            // */
+            // virtual EigenPose updateVIO(TagDetectionArrayPtr landmark_ptr) = 0;
 
             /*
-            Update the smoother with landmark detections and preintegrated IMU factor
+            Update the smoother with landmark detections, preintegrated IMU factor and odometry measurement.
             */
-            virtual EigenPose updateVIO(TagDetectionArrayPtr landmark_ptr) = 0;
+            virtual nav_msgs::OdometryPtr updateVIO(TagDetectionArrayPtr landmark_ptr,
+                                    EigenPose odom, EigenPoseCov odom_cov, bool use_odom) = 0;
 
             void setupIMU(double accel_noise_sigma, double accel_bias_rw_sigma,
                             double gyro_noise_sigma, double gyro_bias_rw_sigma, EigenPose T_sensor2cam);
@@ -128,15 +134,27 @@ namespace tagslam_ros
             */
             Pose3 initSLAM(double cur_img_t);
 
-            /*
-            add combined imu factor to connect previous NavState to current NavState
-            */
-            Pose3 addImuFactor(double cur_img_t);
+            // /*
+            // add combined imu factor to connect previous NavState to current NavState
+            // */
+            // Pose3 addImuFactor(double cur_img_t);
 
             /*
             add odometry factor to connect previous Pose3 to current Pose3
             */
             Pose3 addOdomFactor(EigenPose odom, EigenPoseCov odom_cov);
+
+            /* 
+            add odometry factor to connect previous Pose3 to current Pose3 along with IMU preintegration
+            */
+            Pose3 addImuFactor(EigenPose odom, EigenPoseCov odom_cov, double cur_img_t, bool use_odom);
+
+            /*
+            create nav_msg/odometry message from Eigen::Matrix4d
+            */
+            nav_msgs::OdometryPtr createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 
+                                            Vector3 linear_v, Vector3 angular_w, 
+                                            double time, int seq);
             
             /*
             Template member function to add landmark factors into factor graph
@@ -146,7 +164,6 @@ namespace tagslam_ros
                                     TagDetectionArrayPtr landmark_ptr,
                                     Pose3 & cur_pose_init)
             {
-                // auto t0 = std::chrono::system_clock::now();
                 Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
                 
                 // add prior factor for landmarks
@@ -168,7 +185,7 @@ namespace tagslam_ros
                             initial_estimate_.insert(landmark_key, landmark_prior);
 
                             // insert prior factor to the graph
-                            auto landmark_prior_noise = noiseModel::Gaussian::Covariance(landmark_prior_cov_);
+                            auto landmark_prior_noise = noiseModel::Gaussian::Covariance(landmark_cov_[landmark_key]);
                             factor_graph_.add(PriorFactor<Pose3>(landmark_key, landmark_prior, landmark_prior_noise));
 
                             // Equality Constraints can only use QR solver It is too slow
@@ -180,10 +197,6 @@ namespace tagslam_ros
                         }
                     }
                 }
-
-                // auto t1 = std::chrono::system_clock::now();
-                // auto d0 = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-                // ROS_INFO_STREAM("addOdomFactor takes "<<d0.count());
             }
         
         private:
@@ -196,6 +209,8 @@ namespace tagslam_ros
             loda map from load_map_path_
             */
             void loadMap();
+
+            
 
         protected:
             // system parameters
@@ -243,6 +258,11 @@ namespace tagslam_ros
             Vector3 prev_vel_;
             NavState prev_state_;
             imuBias::ConstantBias prev_bias_; // assume zero initial bias
+
+            // correct the acceleration and angular velocity using the bias
+            Vector3 correct_acc_ = Vector3::Zero();
+            Vector3 correct_gyro_ = Vector3::Zero();
+
             double prev_img_t_ = 0.0; 
             
     };

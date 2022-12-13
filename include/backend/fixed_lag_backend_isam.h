@@ -46,7 +46,6 @@
 #include <gtsam_unstable/nonlinear/IncrementalFixedLagSmoother.h>
 #include <gtsam_unstable/nonlinear/BatchFixedLagSmoother.h>
 #include <gtsam/nonlinear/NonlinearEquality.h>
-#include <gtsam/nonlinear/Marginals.h>
 
 /*
 This class implement a FixedLagBackend using the gtsam "IncrementalFixedLagSmoother".
@@ -77,13 +76,14 @@ namespace tagslam_ros
         private:
             void loadMap();
 
-            void updateLandmarkValues(Values& estimated_vals, Marginals & marginals);
+            void updateLandmarkValues(Values& estimated_vals);
+
 
         private:
             
             // Fixed lag smoother
-            // IncrementalFixedLagSmoother isam_;
-            BatchFixedLagSmoother smoother_;
+            IncrementalFixedLagSmoother smoother_;
+            // BatchFixedLagSmoother smoother_;
             FixedLagSmoother::KeyTimestampMap newTimestamps_;
             double t0_;
 

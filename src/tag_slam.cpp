@@ -144,7 +144,7 @@ namespace tagslam_ros
     }
     
     if(!detection_only_){
-      slam_pose_publisher_ = nh.advertise<geometry_msgs::PoseStamped>("slam_pose", 1);
+      slam_pose_publisher_ = nh.advertise<nav_msgs::Odometry>("slam_pose", 1);
     }
   }
 
@@ -193,17 +193,16 @@ namespace tagslam_ros
 
     // do one step of slam
     clock_t start = clock();
-    EigenPose optimized_pose = slam_backend_->updateSLAM(detection, vio_pose_delta, vio_cov);
+    auto slam_pose_msg = slam_backend_->updateSLAM(detection, vio_pose_delta, vio_cov);
     clock_t end = clock();
     double elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
     ROS_INFO_STREAM("SLAM update time: "<< elapsed_secs);
     
     //publish the pose message
     start = clock();
-    geometry_msgs::PoseStamped slam_pose_msg;
-    slam_pose_msg.header = image->header;
-    slam_pose_msg.pose = makePoseMsg(optimized_pose);
-    slam_pose_publisher_.publish(slam_pose_msg);
+    if(slam_pose_msg){
+      slam_pose_publisher_.publish(slam_pose_msg);
+    }
     end = clock();
     elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
     // ROS_INFO_STREAM("SLAM publish time: "<< elapsed_secs);

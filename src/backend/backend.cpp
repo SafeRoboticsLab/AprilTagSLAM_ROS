@@ -115,7 +115,7 @@ namespace tagslam_ros
 
         // Parse the file
         std::ifstream is(filename.c_str());
-             
+
         if (!is){
             std::cout<<"\033[1;31mbold parse: can not find file " <<filename<<"\033[0m\n"<<std::endl;
             return values;
@@ -202,9 +202,26 @@ namespace tagslam_ros
         return cur_pose_init;
     }
 
-    Pose3 Backend::addImuFactor(double cur_img_t)
+    Pose3 Backend::addOdomFactor(EigenPose odom, EigenPoseCov odom_cov)
     {
-        // auto t0 = std::chrono::system_clock::now();
+        Key prev_pose_key = Symbol(kPoseSymbol,pose_count_-1);
+        Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
+
+        Pose3 odom_factor = Pose3(odom);
+        auto odom_noise = noiseModel::Gaussian::Covariance(odom_cov);
+        factor_graph_.emplace_shared<BetweenFactor<Pose3>>(
+                    prev_pose_key, cur_pose_key, odom_factor, odom_noise);
+        
+        // calculate the initial pose of the current state based on the previous state
+        // Pose3 prev_pose = isam_.calculateEstimate<pose3>(prev_pose_key);
+        Pose3 cur_pose_init = prev_pose_ * odom_factor;
+        initial_estimate_.insert(cur_pose_key, cur_pose_init);
+        
+        return cur_pose_init;
+    }
+
+    Pose3 Backend::addImuFactor(EigenPose odom, EigenPoseCov odom_cov, double cur_img_t, bool use_odom)
+    {
         Key prev_pose_key = Symbol(kPoseSymbol,pose_count_-1);
         Key prev_vel_key = Symbol(kVelSymbol, pose_count_-1);
         Key prev_bias_key = Symbol(kBiasSymbol, pose_count_-1);
@@ -239,11 +256,14 @@ namespace tagslam_ros
                                 imu_msg_ptr->angular_velocity.z);
                 imu_count++;
                 preint_meas_->integrateMeasurement(accel, omega, dt);
-            }
-            // check if we should break the loop
-            if(msg_t>=cur_img_t)
-            {
-                break;
+                // check if we should break the loop
+                if(msg_t>=cur_img_t)
+                {
+                    auto corrected_imu = preint_meas_->correctMeasurementsBySensorPose(accel, omega);
+                    correct_acc_ = corrected_imu.first;
+                    correct_gyro_ = corrected_imu.second;
+                    break;
+                }
             }
         }
         
@@ -258,37 +278,25 @@ namespace tagslam_ros
         // from imu, estimate the next pose, velocity and bias
         NavState state_init = preint_meas_->predict(prev_state_, prev_bias_);
 
-        cur_pose_init = state_init.pose();
+        //create odom factor
+        if(use_odom){
+            Pose3 odom_factor = Pose3(odom);
+            auto odom_noise = noiseModel::Gaussian::Covariance(odom_cov);
+            factor_graph_.emplace_shared<BetweenFactor<Pose3>>(
+                        prev_pose_key, cur_pose_key, odom_factor, odom_noise);
+            
+            // calculate the initial pose of the current state based on the previous state
+            cur_pose_init = prev_pose_ * odom_factor;
+        }
+        else{
+            cur_pose_init = state_init.pose();
+        }
+
+        // cur_pose_init = state_init.pose();
         cur_vel_init = state_init.v();
         initial_estimate_.insert(cur_pose_key, cur_pose_init);
         initial_estimate_.insert(cur_vel_key, cur_vel_init);
         initial_estimate_.insert(cur_bias_key, prev_bias_);
-        // auto t1 = std::chrono::system_clock::now();
-        // auto d0 = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-        // ROS_INFO_STREAM("addImuFactor takes "<<d0.count());
-        return cur_pose_init;
-    }
-
-    Pose3 Backend::addOdomFactor(EigenPose odom, EigenPoseCov odom_cov)
-    {
-        // auto t0 = std::chrono::system_clock::now();
-        
-        Key prev_pose_key = Symbol(kPoseSymbol,pose_count_-1);
-        Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
-
-        Pose3 odom_factor = Pose3(odom);
-        auto odom_noise = noiseModel::Gaussian::Covariance(odom_cov);
-        factor_graph_.emplace_shared<BetweenFactor<Pose3>>(
-                    prev_pose_key, cur_pose_key, odom_factor, odom_noise);
-        
-        // calculate the initial pose of the current state based on the previous state
-        // Pose3 prev_pose = isam_.calculateEstimate<pose3>(prev_pose_key);
-        Pose3 cur_pose_init = prev_pose_ * odom_factor;
-        initial_estimate_.insert(cur_pose_key, cur_pose_init);
-        // auto t1 = std::chrono::system_clock::now();
-        // auto d0 = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-        // ROS_INFO_STREAM("addOdomFactor takes "<<d0.count());
-
         return cur_pose_init;
     }
 
@@ -362,8 +370,6 @@ namespace tagslam_ros
         ROS_INFO_STREAM("Initialize the gravity for IMU with: "<< gravity_trans);
     }
 
-    
-
     void Backend::write_to_file(const Values &estimate, const std::string &filename)
     {
         /*
@@ -402,15 +408,10 @@ namespace tagslam_ros
         // check if the landmark are loaded correctly
         int num_landmarks = landmark_values_.size();
 
-        EigenPoseSigma sigma_prior;
-        sigma_prior<< Vector3::Constant(landmark_prior_sigma_rot_),Vector3::Constant(landmark_prior_sigma_trans_);
-
-        EigenPoseCov cov_prior = sigma_prior.array().pow(2).matrix().asDiagonal();
-
-        // for(const auto key_value: landmark_values_) {
-        //     Key landmark_key = key_value.key;
-        //     landmark_cov_[landmark_key] = cov_prior;
-        // }
+        for(const auto key_value: landmark_values_) {
+            Key landmark_key = key_value.key;
+            landmark_cov_[landmark_key] = landmark_prior_cov_;
+        }
 
         if (num_landmarks < 1)
         {
@@ -422,4 +423,44 @@ namespace tagslam_ros
         // initialized_ = true;
         ROS_INFO_STREAM("Load " << num_landmarks << " landmarks from " << load_map_path_);
     }
+
+    nav_msgs::OdometryPtr Backend::createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 
+                                            Vector3 linear_v, Vector3 angular_w, 
+                                            double time, int seq)
+    {
+        nav_msgs::OdometryPtr odom_msg = boost::make_shared<nav_msgs::Odometry>();
+        odom_msg->header.stamp = ros::Time(time);
+        odom_msg->header.seq = seq;
+
+        // Pose information in the message
+        odom_msg->pose.pose.position.x = pose.x();
+        odom_msg->pose.pose.position.y = pose.y();
+        odom_msg->pose.pose.position.z = pose.z();
+
+        Eigen::Quaterniond q(pose.rotation().toQuaternion());
+        odom_msg->pose.pose.orientation.x = q.x();
+        odom_msg->pose.pose.orientation.y = q.y();
+        odom_msg->pose.pose.orientation.z = q.z();
+        odom_msg->pose.pose.orientation.w = q.w();
+
+        // covariance information in the message
+        for (int i = 0; i < 6; i++)
+        {
+            for (int j = 0; j < 6; j++)
+            {
+                odom_msg->pose.covariance[6 * i + j] = pose_cov(i, j);
+            }
+        }
+
+        // twist information in the message
+        odom_msg->twist.twist.linear.x = linear_v(0);
+        odom_msg->twist.twist.linear.y = linear_v(1);
+        odom_msg->twist.twist.linear.z = linear_v(2);
+
+        odom_msg->twist.twist.angular.x = angular_w(0);
+        odom_msg->twist.twist.angular.y = angular_w(1);
+        odom_msg->twist.twist.angular.z = angular_w(2);
+        return odom_msg;
+    }
+    
 }

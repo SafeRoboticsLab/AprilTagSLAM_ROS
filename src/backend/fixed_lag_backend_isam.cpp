@@ -28,7 +28,7 @@
 * Authors:    Zixu Zhang       ( zixuz@princeton.edu )
 
  **/
-#include "backend/fixed_lag_backend.h"
+#include "backend/fixed_lag_backend_isam.h"
 
 using namespace gtsam;
 
@@ -37,19 +37,29 @@ namespace tagslam_ros
     FixedLagBackend::FixedLagBackend(ros::NodeHandle pnh) : 
         Backend(pnh)
     {
-        LevenbergMarquardtParams lm_params;
-        lm_params.lambdaInitial = getRosOption<double>(pnh, "backend/lambda_initial", 1e-5);
-        lm_params.lambdaUpperBound = getRosOption<double>(pnh, "backend/lambda_upper_bound", 1e5);
-        lm_params.lambdaLowerBound = getRosOption<double>(pnh, "backend/lambda_lower_bound", 0);
-        lm_params.lambdaFactor = getRosOption<double>(pnh, "backend/lambda_factor", 10.0);
-        lm_params.maxIterations = getRosOption<int>(pnh, "backend/max_iterations", 100);
-        lm_params.errorTol = getRosOption<double>(pnh, "backend/error_tol", 1e-5);
-        lm_params.relativeErrorTol = getRosOption<double>(pnh, "backend/relative_error_tol", 1e-4);
-        lm_params.absoluteErrorTol = getRosOption<double>(pnh, "backend/absolute_error_tol", 1e-5);
-        bool local_optimal = getRosOption<bool>(pnh, "backend/local_optimal", false);
+        // LevenbergMarquardtParams lm_params;
+        // lm_params.lambdaInitial = getRosOption<double>(pnh, "backend/lambda_initial", 1e-5);
+        // lm_params.lambdaUpperBound = getRosOption<double>(pnh, "backend/lambda_upper_bound", 1e5);
+        // lm_params.lambdaLowerBound = getRosOption<double>(pnh, "backend/lambda_lower_bound", 0);
+        // lm_params.lambdaFactor = getRosOption<double>(pnh, "backend/lambda_factor", 10.0);
+        // lm_params.maxIterations = getRosOption<int>(pnh, "backend/max_iterations", 100);
+        // lm_params.errorTol = getRosOption<double>(pnh, "backend/error_tol", 1e-5);
+        // lm_params.relativeErrorTol = getRosOption<double>(pnh, "backend/relative_error_tol", 1e-4);
+        // lm_params.absoluteErrorTol = getRosOption<double>(pnh, "backend/absolute_error_tol", 1e-5);
+        // bool local_optimal = getRosOption<bool>(pnh, "backend/local_optimal", false);
         
         double lag = getRosOption<double>(pnh, "backend/lag", 1.0);
-        smoother_ = BatchFixedLagSmoother(lag, lm_params, true, local_optimal);
+
+        // smoother_ = BatchFixedLagSmoother(lag, lm_params, true, local_optimal);
+        // initialize ISAM2
+        ISAM2Params isam_params;
+        if(getRosOption<std::string>(pnh, "backend/optimizer", "GaussNewton") == "Dogleg"){
+            isam_params.optimizationParams = ISAM2DoglegParams();
+        }
+        isam_params.relinearizeSkip = std::max(getRosOption<int>(pnh, "backend/relinearize_skip", 10), 1);
+        isam_params.cacheLinearizedFactors=getRosOption<bool>(pnh, "backend/cacheLinearizedFactors", true);
+        isam_params.relinearizeThreshold = getRosOption<double>(pnh, "backend/relinearize_threshold", 0.1);
+        smoother_ = IncrementalFixedLagSmoother(lag, isam_params);
     }
 
     FixedLagBackend::~FixedLagBackend()
@@ -75,14 +85,14 @@ namespace tagslam_ros
             cur_pose_init = initSLAM(cur_img_t);
         }else{
             ROS_WARN_ONCE("System not initialized, waiting for landmarks");
-            return nullptr;
+            return EigenPose::Zero();
         }
 
         // create new timesampe map for the current pose
         newTimestamps_[cur_pose_key] = cur_img_t;
 
         // add prior factor for landmarks
-        addLandmarkFactor<BatchFixedLagSmoother>(smoother_, landmark_ptr, cur_pose_init);
+        addLandmarkFactor<IncrementalFixedLagSmoother>(smoother_, landmark_ptr, cur_pose_init);
 
         // update landmark timestamp
         for (auto &landmark : landmark_ptr->detections){
@@ -92,20 +102,16 @@ namespace tagslam_ros
 
         // do a batch optimization
         smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
-        
+        ROS_INFO_STREAM(__LINE__);
         // get the current pose and save it for next iteration
         Values estimated_vals = smoother_.calculateEstimate();
+        ROS_INFO_STREAM(__LINE__);
         
-        // get the marginals
-        Marginals marginals(smoother_.getFactors(), estimated_vals);
-
         prev_pose_ = estimated_vals.at<Pose3>(cur_pose_key);
-        EigenPoseCov pose_cov = marginals.marginalCovariance(cur_pose_key);
 
-        updateLandmarkValues(estimated_vals, marginals);
+        updateLandmarkValues(estimated_vals);
 
-        // make message
-        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, Vector3::Zero(), Vector3::Zero(), cur_img_t, pose_count_);
+        ROS_INFO_STREAM(__LINE__);
 
         pose_count_++;
 
@@ -114,7 +120,8 @@ namespace tagslam_ros
         initial_estimate_.clear();
         newTimestamps_.clear();
 
-        return odom_msg;
+        ROS_INFO_STREAM(__LINE__);
+        return prev_pose_.matrix();
     }
 
     nav_msgs::OdometryPtr FixedLagBackend::updateVIO(TagDetectionArrayPtr landmark_ptr, 
@@ -127,9 +134,6 @@ namespace tagslam_ros
         Key cur_bias_key = Symbol(kBiasSymbol, pose_count_);
 
         Pose3 cur_pose_init;
-
-        Vector3 corrected_acc = Vector3::Zero();
-        Vector3 corrected_gyro = Vector3::Zero();
         
         double cur_img_t = landmark_ptr->header.stamp.toSec();
 
@@ -149,7 +153,7 @@ namespace tagslam_ros
                     break;
                 }
             }
-            return nullptr;;
+            return EigenPose::Zero ();
         }
 
         // create new timesampe map for the current pose
@@ -158,7 +162,7 @@ namespace tagslam_ros
         newTimestamps_[cur_bias_key] = cur_img_t;
 
         // add prior factor for landmarks
-        addLandmarkFactor<BatchFixedLagSmoother>(smoother_, landmark_ptr, cur_pose_init);
+        addLandmarkFactor<IncrementalFixedLagSmoother>(smoother_, landmark_ptr, cur_pose_init);
 
         // update landmark timestamp
         for (auto &landmark : landmark_ptr->detections){
@@ -168,32 +172,24 @@ namespace tagslam_ros
 
         // do a batch optimization
         smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+
+        ROS_INFO_STREAM(__LINE__);
         
         // get the current pose and save it for next iteration
         Values estimated_vals = smoother_.calculateEstimate();
-
-        // calculate marginals based on the current estimate
-        Marginals marginals(smoother_.getFactors(), estimated_vals);
-
         prev_pose_ = estimated_vals.at<Pose3>(cur_pose_key);
         prev_vel_ = estimated_vals.at<Vector3>(cur_vel_key);
         prev_bias_ = estimated_vals.at<imuBias::ConstantBias>(cur_bias_key);
 
-        EigenPoseCov pose_cov = marginals.marginalCovariance(cur_pose_key);
-
-        // ROS_INFO_STREAM("Pose covariance: " << pose_cov);
-
         prev_state_ = NavState(prev_pose_, prev_vel_);
 
-        updateLandmarkValues(estimated_vals, marginals);
-
-        // make message
-        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, prev_vel_, correct_gyro_, cur_img_t, pose_count_);
+        updateLandmarkValues(estimated_vals);
 
         prev_img_t_ = cur_img_t;
 
         pose_count_++;
 
+        ROS_INFO_STREAM(__LINE__);
         // Reset the preintegration object.
         preint_meas_->resetIntegrationAndSetBias(prev_bias_);
 
@@ -202,7 +198,8 @@ namespace tagslam_ros
         initial_estimate_.clear();
         newTimestamps_.clear();
 
-        return odom_msg;
+        ROS_INFO_STREAM(__LINE__);
+        return prev_pose_.matrix();
     }
 
     void FixedLagBackend::getPoses(EigenPoseMap &container, const unsigned char filter_char){
@@ -213,22 +210,20 @@ namespace tagslam_ros
         }
     }
 
-    void FixedLagBackend::updateLandmarkValues(Values& estimated_vals, Marginals & marginals)
+    void FixedLagBackend::updateLandmarkValues(Values& estimated_vals)
     {
-
         Values estimated_landmarks = estimated_vals.filter(Symbol::ChrTest(kLandmarkSymbol));
-        
         // iterate through landmarks, and update them to priors
         for(const auto key_value: estimated_landmarks) {
             Key temp_key = key_value.key;
-            EigenPoseCov cov = marginals.marginalCovariance(temp_key);
+            // EigenPoseCov cov = smoother_.marginalCovariance(temp_key);
             if(landmark_values_.exists(temp_key))
             {
                 landmark_values_.update(temp_key, key_value.value);                
             }else{
                 landmark_values_.insert(temp_key, key_value.value);
             }
-            landmark_cov_[temp_key] = cov;
+            // landmark_cov_[temp_key] = cov;
         }
     }
 

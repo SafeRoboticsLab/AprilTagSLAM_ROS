@@ -149,7 +149,7 @@ namespace tagslam_ros {
             tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("tag_detections", 1);
 
         if(!detection_only_)
-            slam_pose_pub_ = pnh_.advertise<geometry_msgs::PoseStamped>("slam_pose", 1);
+            slam_pose_pub_ = pnh_.advertise<nav_msgs::Odometry>("slam_pose", 1);
 
         // // IMU Publishers
         if(use_imu_odom_)
@@ -218,26 +218,14 @@ namespace tagslam_ros {
         zed_pos_tracking_enabled_ = false;
         if(odom_type=="vision")
         {
+            use_imu_odom_ = false;
             zed_pos_tracking_enabled_ = true;
-            // -----> Depth
-            NODELET_INFO_STREAM("*** DEPTH PARAMETERS ***");
-            int depth_mode = getRosOption<int>(pnh_, "depth/quality", 1);
-            zed_depth_mode_ = static_cast<sl::DEPTH_MODE>(depth_mode);
-            NODELET_INFO_STREAM(" * Depth quality\t\t-> " << sl::toString(zed_depth_mode_).c_str());
-
-            int sensing_mode = getRosOption<int>(pnh_, "depth/sensing_mode", 0);
-            zed_sensing_mode_ = static_cast<sl::SENSING_MODE>(sensing_mode);
-            NODELET_INFO_STREAM(" * Depth Sensing mode\t\t-> " << sl::toString(zed_sensing_mode_).c_str());
-
-            zed_min_depth_ = getRosOption<double>(pnh_, "depth/min_depth", 0.5);
-            NODELET_INFO_STREAM(" * Minimum depth\t\t-> " << zed_min_depth_ << " m");
-
-            zed_max_depth_ = getRosOption<double>(pnh_, "depth/max_depth", 15.0);
-            NODELET_INFO_STREAM(" * Maximum depth\t\t-> " << zed_max_depth_ << " m");
         }else if(odom_type=="imu"){
             use_imu_odom_ = true;
-            // turn off the depth since only zed's odometry need it
-            zed_depth_mode_ = sl::DEPTH_MODE::NONE;
+            zed_pos_tracking_enabled_ = false;
+        }else if(odom_type=="vision+imu"){
+            zed_pos_tracking_enabled_ = true;
+            use_imu_odom_ = true;
         }
 
         std::string backend_type = getRosOption<std::string>(pnh_, "backend/smoother", "isam2");
@@ -254,7 +242,28 @@ namespace tagslam_ros {
             zed_pos_tracking_enabled_ = false;
             NODELET_INFO("Apriltag Detector Mode.");
         }else{
-            ROS_ERROR("Not supported backend type: %s", backend_type.c_str());
+            NODELET_ERROR("Not supported backend type: %s", backend_type.c_str());
+        }
+
+        if(zed_pos_tracking_enabled_)
+        {
+            // -----> Depth
+            NODELET_INFO_STREAM("*** DEPTH PARAMETERS ***");
+            int depth_mode = getRosOption<int>(pnh_, "depth/quality", 1);
+            zed_depth_mode_ = static_cast<sl::DEPTH_MODE>(depth_mode);
+            NODELET_INFO_STREAM(" * Depth quality\t\t-> " << sl::toString(zed_depth_mode_).c_str());
+
+            int sensing_mode = getRosOption<int>(pnh_, "depth/sensing_mode", 0);
+            zed_sensing_mode_ = static_cast<sl::SENSING_MODE>(sensing_mode);
+            NODELET_INFO_STREAM(" * Depth Sensing mode\t\t-> " << sl::toString(zed_sensing_mode_).c_str());
+
+            zed_min_depth_ = getRosOption<double>(pnh_, "depth/min_depth", 0.5);
+            NODELET_INFO_STREAM(" * Minimum depth\t\t-> " << zed_min_depth_ << " m");
+
+            zed_max_depth_ = getRosOption<double>(pnh_, "depth/max_depth", 15.0);
+            NODELET_INFO_STREAM(" * Maximum depth\t\t-> " << zed_max_depth_ << " m");
+        }else{
+            zed_depth_mode_ = sl::DEPTH_MODE::NONE;
         }
             
         // ros publication parameters
@@ -416,7 +425,7 @@ namespace tagslam_ros {
                 auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
                 auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
                 auto d = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t0);
-                if(d.count()>0){
+                if(d.count()>30){
                     NODELET_WARN_STREAM("GPU convert "<<d0.count() << " ms, detection "
                                     << d1.count() <<" ms, optimization "<< d2.count()
                                     <<" ms, total "<<d.count()<< " ms");
@@ -473,8 +482,8 @@ namespace tagslam_ros {
                 auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
                 auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
                 auto d = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t0);
-                if(d.count()>0){
-                    ROS_WARN_STREAM("CPU convert "<<d0.count() << " ms, detection "
+                if(d.count()>30){
+                    NODELET_WARN_STREAM("CPU convert "<<d0.count() << " ms, detection "
                                     << d1.count() <<" ms, optimization "<< d2.count()
                                     <<" ms, total "<<d.count()<< " ms");
                 }
@@ -560,7 +569,10 @@ namespace tagslam_ros {
 
     void TagSlamZED::estimateState(TagDetectionArrayPtr detection_ptr)
     {
-        EigenPose slam_pose;
+        nav_msgs::OdometryPtr slam_pose_msg;
+
+        EigenPose relative_pose;
+        EigenPoseCov pose_cur_cov;
                 
         // Retrieve pose
         if(zed_pos_tracking_enabled_)
@@ -569,19 +581,23 @@ namespace tagslam_ros {
             sl::Pose sl_pose_current;
             zed_camera_.getPosition(sl_pose_current, sl::REFERENCE_FRAME::WORLD);   
             EigenPose pose_cur = slPose2Eigen(sl_pose_current);
-            EigenPoseCov pose_cur_cov = slPose2Cov(sl_pose_current);
-            EigenPose relative_pose = pose_prev_.inverse()*pose_cur;
-            slam_pose = slam_backend_->updateSLAM(detection_ptr, relative_pose, pose_cur_cov);
+
+            pose_cur_cov = slPose2Cov(sl_pose_current);
+            relative_pose = pose_prev_.inverse()*pose_cur;
+            
             pose_prev_ = pose_cur; // only needed if we use ZED's visual odomtery 
-        }else if(use_imu_odom_){
-            slam_pose = slam_backend_->updateVIO(detection_ptr);
+        }
+
+        if(use_imu_odom_){
+            slam_pose_msg = slam_backend_->updateVIO(detection_ptr, relative_pose, pose_cur_cov, zed_pos_tracking_enabled_);
+        }else{
+            slam_pose_msg = slam_backend_->updateSLAM(detection_ptr, relative_pose, pose_cur_cov);
         }
 
         // publish the message
-        geometry_msgs::PoseStamped slam_pose_msg;
-        slam_pose_msg.header = detection_ptr->header;
-        slam_pose_msg.pose = makePoseMsg(slam_pose);
-        slam_pose_pub_.publish(slam_pose_msg);
+        if(slam_pose_msg){
+            slam_pose_pub_.publish(slam_pose_msg);
+        }
     }
 
     void TagSlamZED::publishImages(TagDetectionArrayPtr detection_ptr)

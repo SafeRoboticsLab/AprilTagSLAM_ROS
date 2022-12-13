@@ -60,8 +60,8 @@ namespace tagslam_ros
             std::cout<<"Graph saved to "<<save_map_path_<<std::endl;
         }
     }
- 
-    EigenPose iSAM2Backend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
+
+    nav_msgs::OdometryPtr iSAM2Backend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
     {
         int num_landmarks_detected = landmark_ptr->detections.size();
         Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
@@ -74,7 +74,7 @@ namespace tagslam_ros
             cur_pose_init = initSLAM(cur_img_t);
         }else{
             ROS_WARN_ONCE("System not initialized, waiting for landmarks");
-            return EigenPose::Zero();
+            return nullptr;
         }
 
         addLandmarkFactor<ISAM2>(isam_, landmark_ptr, cur_pose_init);
@@ -85,6 +85,9 @@ namespace tagslam_ros
 
         // get the current pose and save it for next iteration
         prev_pose_ = isam_.calculateEstimate<Pose3>(cur_pose_key);
+        EigenPoseCov pose_cov = isam_.marginalCovariance(cur_pose_key);
+
+        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, Vector3::Zero(), Vector3::Zero(), cur_img_t, pose_count_);
         
         pose_count_++;
 
@@ -92,10 +95,11 @@ namespace tagslam_ros
         factor_graph_.resize(0);
         initial_estimate_.clear();
 
-        return prev_pose_.matrix();
+        return odom_msg;
     }
 
-    EigenPose iSAM2Backend::updateVIO(TagDetectionArrayPtr landmark_ptr)
+    nav_msgs::OdometryPtr iSAM2Backend::updateVIO(TagDetectionArrayPtr landmark_ptr, 
+                                EigenPose odom, EigenPoseCov odom_cov, bool use_odom)
     {
         int num_landmarks_detected = landmark_ptr->detections.size();
 
@@ -108,7 +112,7 @@ namespace tagslam_ros
         double cur_img_t = landmark_ptr->header.stamp.toSec();
         
         if(initialized_){
-            cur_pose_init = addImuFactor(cur_img_t);
+            cur_pose_init = addImuFactor(odom, odom_cov, cur_img_t, use_odom);
         }else if(num_landmarks_detected>0){
             // if the system is not initialized, initialize the slam
             cur_pose_init = initSLAM(cur_img_t);
@@ -124,7 +128,7 @@ namespace tagslam_ros
                     break;
                 }
             }
-            return EigenPose::Zero ();
+            return nullptr;
         }
 
         addLandmarkFactor<ISAM2>(isam_, landmark_ptr, cur_pose_init);
@@ -138,6 +142,10 @@ namespace tagslam_ros
         prev_vel_ = isam_.calculateEstimate<Vector3>(cur_vel_key);
         prev_bias_ = isam_.calculateEstimate<imuBias::ConstantBias>(cur_bias_key);
         prev_state_ = NavState(prev_pose_, prev_vel_);
+
+        EigenPoseCov pose_cov = isam_.marginalCovariance(cur_pose_key);
+
+        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, prev_vel_, correct_gyro_, cur_img_t, pose_count_);
         
         prev_img_t_ = cur_img_t;
         
@@ -150,7 +158,7 @@ namespace tagslam_ros
         factor_graph_.resize(0);
         initial_estimate_.clear();
 
-        return prev_pose_.matrix();
+        return odom_msg;
     }
 
     
