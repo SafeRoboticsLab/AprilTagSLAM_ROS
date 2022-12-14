@@ -37,6 +37,12 @@ namespace tagslam_ros
 {   
     TagDetector::TagDetector(ros::NodeHandle pnh)
     {
+        // Transform from camera frame to ROS frame
+        T_cam_to_ros_ << 0, 0, 1, 0,
+                        -1, 0, 0, 0,
+                        0, -1, 0, 0,
+                        0, 0, 0, 1;
+
         // parse landmark tag group
         XmlRpc::XmlRpcValue landmark_groups;
         if(!pnh.getParam("landmark_tags", landmark_groups))

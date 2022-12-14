@@ -312,9 +312,10 @@ namespace tagslam_ros
       TagObjectPoints.push_back(cv::Point3d(cur_tag_size / 2, -cur_tag_size / 2, 0));
       TagObjectPoints.push_back(cv::Point3d(-cur_tag_size / 2, -cur_tag_size / 2, 0));
 
-      EigenPose transform = getRelativeTransform(TagObjectPoints,TagImagePoints, cameraMatrix_, distCoeffs_);
-
-      geometry_msgs::Pose tag_pose = makePoseMsg(transform);
+      EigenPose T_tag_to_cam = getRelativeTransform(TagObjectPoints,TagImagePoints, cameraMatrix_, distCoeffs_);
+      EigenPose T_tag_to_ros = T_cam_to_ros_ * T_tag_to_cam;
+      
+      geometry_msgs::Pose tag_pose = makePoseMsg(T_tag_to_ros);
 
       // create message
       AprilTagDetection tag_detection;

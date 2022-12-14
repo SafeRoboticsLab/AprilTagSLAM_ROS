@@ -46,7 +46,7 @@ backend:
     #smoother parameter
     smoother: "fixed_lag" # choose from "fixed_lag", "isam2", and "none"
     use_odom: true        # use ZED's odometry as motion priors, it can work with or without imu
-    use_imu: true         # use ZED's imu as motion priors, it can work with or without odometry
+    use_imu: false        # use ZED's imu as motion priors, it can work with or without odometry
 
     # Load and Save Maps
     prior_map: false

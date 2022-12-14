@@ -110,6 +110,8 @@ namespace tagslam_ros{
 
     protected:
       std::map<int, SizeStaticPair> tag_size_list_;
+
+      EigenPose T_cam_to_ros_;
   };
 } // namespace tagslam_ros
 #endif // APRILTAG_ROS_COMMON_FUNCTIONS_H

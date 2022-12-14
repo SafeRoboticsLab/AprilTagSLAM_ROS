@@ -274,7 +274,7 @@ namespace tagslam_ros {
         zed_init_param_.camera_resolution = static_cast<sl::RESOLUTION>(zed_resol_);
         
         // Set default coordinate system
-        zed_init_param_.coordinate_system = sl::COORDINATE_SYSTEM::IMAGE;
+        zed_init_param_.coordinate_system = sl::COORDINATE_SYSTEM::RIGHT_HANDED_Z_UP_X_FWD;
         NODELET_INFO_STREAM(" * Camera coordinate system\t-> " << sl::toString(zed_init_param_.coordinate_system));
 
         // set up camera parameters

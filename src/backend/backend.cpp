@@ -360,7 +360,7 @@ namespace tagslam_ros
 
     void Backend::setGravity(sensor_msgs::ImuPtr imu_msg_ptr)
     {
-        Eigen::Vector3d gravity(0, 9.81, 0);
+        Eigen::Vector3d gravity(0, 0, -9.81);
         Eigen::Matrix3d orientation = Eigen::Quaterniond(imu_msg_ptr->orientation.w,
                                                     imu_msg_ptr->orientation.x,
                                                     imu_msg_ptr->orientation.y,
