@@ -143,9 +143,11 @@ namespace tagslam_ros
         prev_bias_ = isam_.calculateEstimate<imuBias::ConstantBias>(cur_bias_key);
         prev_state_ = NavState(prev_pose_, prev_vel_);
 
-        EigenPoseCov pose_cov = isam_.marginalCovariance(cur_pose_key);
+        Vector3 body_vel = prev_state_.bodyVelocity();
 
-        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, prev_vel_, correct_gyro_, cur_img_t, pose_count_);
+        EigenPoseCov pose_cov = isam_.marginalCovariance(cur_pose_key);
+    
+        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, body_vel, correct_gyro_, cur_img_t, pose_count_);
         
         prev_img_t_ = cur_img_t;
         

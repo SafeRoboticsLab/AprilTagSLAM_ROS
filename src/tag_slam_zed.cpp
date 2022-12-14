@@ -68,7 +68,6 @@ namespace tagslam_ros {
         sl::Timestamp ts_imu = 0, ts_baro = 0, ts_mag = 0; // Initial values
     };
 
-
     TagSlamZED::TagSlamZED()
         : Nodelet()
     {
@@ -432,13 +431,7 @@ namespace tagslam_ros {
 
                 publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
 
-                if(static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
-                    static_tag_det_pub_.publish(*static_tag_array_ptr);
-                }
-
-                if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
-                    dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
-                }
+                publishDetectionArray(static_tag_array_ptr, dyn_tag_array_ptr);
 
                 frame_count_++;
             }
@@ -499,13 +492,8 @@ namespace tagslam_ros {
 
                 publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
 
-                if(static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
-                    static_tag_det_pub_.publish(*static_tag_array_ptr);
-                }
+                publishDetectionArray(static_tag_array_ptr, dyn_tag_array_ptr);
 
-                if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
-                    dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
-                }
                 frame_count_++;
             }
         }
@@ -604,7 +592,6 @@ namespace tagslam_ros {
         if(use_imu_odom_){
             slam_pose_msg = slam_backend_->updateVIO(tag_array_ptr, relative_pose, pose_cur_cov, zed_pos_tracking_enabled_);
         }else{
-            assert(zed_pos_tracking_enabled_);
             slam_pose_msg = slam_backend_->updateSLAM(tag_array_ptr, relative_pose, pose_cur_cov);
         }
 
@@ -651,6 +638,18 @@ namespace tagslam_ros {
             }
         }
 
+    }
+
+    void TagSlamZED::publishDetectionArray(TagDetectionArrayPtr static_tag_array_ptr,
+                                TagDetectionArrayPtr dyn_tag_array_ptr)
+    {
+        if(static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+            static_tag_det_pub_.publish(*static_tag_array_ptr);
+        }
+
+        if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+            dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
+        }
     }
 
     void TagSlamZED::checkResolFps()

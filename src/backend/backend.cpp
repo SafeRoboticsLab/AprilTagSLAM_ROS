@@ -452,6 +452,7 @@ namespace tagslam_ros
             }
         }
 
+        // NOTE: twist is in body frame
         // twist information in the message
         odom_msg->twist.twist.linear.x = linear_v(0);
         odom_msg->twist.twist.linear.y = linear_v(1);

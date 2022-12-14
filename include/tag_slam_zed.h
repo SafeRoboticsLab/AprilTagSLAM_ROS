@@ -132,6 +132,10 @@
         */
         void publishImages(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
+        /*! \brief publish the ros detection array
+        */
+        void publishDetectionArray(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
+
     private: 
         void estimateState(TagDetectionArrayPtr tag_array_ptr);
 

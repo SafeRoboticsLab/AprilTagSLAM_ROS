@@ -185,10 +185,12 @@ namespace tagslam_ros
 
         prev_state_ = NavState(prev_pose_, prev_vel_);
 
+        Vector3 body_vel = prev_state_.bodyVelocity();
+
         updateLandmarkValues(estimated_vals, marginals);
 
         // make message
-        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, prev_vel_, correct_gyro_, cur_img_t, pose_count_);
+        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, body_vel, correct_gyro_, cur_img_t, pose_count_);
 
         prev_img_t_ = cur_img_t;
 
