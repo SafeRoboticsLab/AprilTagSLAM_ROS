@@ -45,7 +45,8 @@ frontend:
 backend:
     #smoother parameter
     smoother: "fixed_lag" # choose from "fixed_lag", "isam2", and "none"
-    odom: "imu" # choose from "vision" and "imu"
+    use_odom: false        # use ZED's odometry as motion priors, it can work with or without imu
+    use_imu: true         # use ZED's imu as motion priors, it can work with or without odometry
 
     # Load and Save Maps
     prior_map: false
@@ -99,3 +100,38 @@ backend:
     # if this is true, we will accept the local optimal solution 
     # when the error no longer decrease rather than increase the lambda
     local_optimal: true 
+
+#################################
+### Parameters for the tags ####
+#################################
+
+# The tags are defined in the following format:
+# {
+#   id_start: beginning id (included)of a list of tags
+#   id_end: end id (include) of a list of tags
+#   tag_size: 0.2, # size of the tag in meters
+# }
+
+# The tags are used to define the landmarks 
+landmark_tags: [
+    {
+        id_start: 101, # include this tag
+        id_end: 110, # include this tag
+        tag_size: 0.2, # size of the tag in meters
+    },
+
+    {
+        id_start: 111, # include this tag
+        id_end: 120, # include this tag
+        tag_size: 0.5, # size of the tag in meters
+    }
+]
+
+# tags are ignored during slam
+ignore_tags: [
+    {
+        id_start: 121, # include this tag
+        id_end: 130, # include this tag
+        tag_size: 0.2, # size of the tag in meters
+    },
+]

@@ -136,7 +136,8 @@ namespace tagslam_ros
 
     // set up publishers for tag detections and visualization
     if (if_pub_tag_det_){
-      tag_det_pub_ = nh.advertise<AprilTagDetectionArray>("tag_detections", 1);
+      static_tag_det_pub_ = nh.advertise<AprilTagDetectionArray>("tag_detections", 1);
+      dyn_tag_det_pub_ = nh.advertise<AprilTagDetectionArray>("tag_detections_dynamic", 1);
     }
     
     if (if_pub_tag_det_image_){
@@ -153,15 +154,25 @@ namespace tagslam_ros
       const sensor_msgs::CameraInfoConstPtr& camera_info)
   {
     auto start = std::chrono::system_clock::now();
-    auto detection = tag_detector_->detectTags(image, camera_info);
+
+    auto static_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
+    auto dyn_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
+    tag_detector_->detectTags(image, camera_info,
+                        static_tag_array_ptr, dyn_tag_array_ptr);
+
     auto end = std::chrono::system_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     ROS_INFO_STREAM("detection "<<elapsed.count() << " ms");
     
     // publish tag detections
-    if (tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+    if (static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
       // Publish detected tags in the image by AprilTag 2
-      tag_det_pub_.publish(*detection);
+      static_tag_det_pub_.publish(*static_tag_array_ptr);
+    }
+
+    if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+      // Publish detected tags in the image by AprilTag 2
+      dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
     }
 
     // Publish the camera image overlaid by outlines of the detected tags and their ids
@@ -170,7 +181,7 @@ namespace tagslam_ros
         if_pub_tag_det_image_)
     {
       cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image, "bgr8");
-      tag_detector_->drawDetections(cv_ptr, detection);
+      tag_detector_->drawDetections(cv_ptr, static_tag_array_ptr);
       tag_detections_image_publisher_.publish(cv_ptr->toImageMsg());
     }
     num_frames_++;
@@ -181,8 +192,10 @@ namespace tagslam_ros
       const sensor_msgs::CameraInfoConstPtr& camera_info,
       const nav_msgs::OdometryConstPtr& odom)
   {
-    clock_t t0 = clock();
-    auto detection  = tag_detector_->detectTags(image, camera_info);
+    auto static_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
+    auto dyn_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
+    tag_detector_->detectTags(image, camera_info,
+                        static_tag_array_ptr, dyn_tag_array_ptr);
 
     // get the camera pose from VIO
     EigenPose vio_pose = getTransform(odom->pose.pose);
@@ -192,50 +205,38 @@ namespace tagslam_ros
     EigenPose vio_pose_delta = prev_vio_pose_.inverse() * vio_pose;
 
     // do one step of slam
-    clock_t start = clock();
-    auto slam_pose_msg = slam_backend_->updateSLAM(detection, vio_pose_delta, vio_cov);
-    clock_t end = clock();
-    double elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
-    ROS_INFO_STREAM("SLAM update time: "<< elapsed_secs);
+    auto slam_pose_msg = slam_backend_->updateSLAM(static_tag_array_ptr, vio_pose_delta, vio_cov);
     
     //publish the pose message
-    start = clock();
     if(slam_pose_msg){
       slam_pose_publisher_.publish(slam_pose_msg);
     }
-    end = clock();
-    elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
-    // ROS_INFO_STREAM("SLAM publish time: "<< elapsed_secs);
-
+    
     // publish tag detections
-    if (tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
-      start = clock();
+    if (static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
       // Publish detected tags in the image by AprilTag 2
-      tag_det_pub_.publish(*detection);
-      end = clock();
-      elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
-      // ROS_INFO_STREAM("detection publish time: "<< elapsed_secs);
+      static_tag_det_pub_.publish(*static_tag_array_ptr);
+    }
+
+    if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+      // Publish detected tags in the image by AprilTag 2
+      dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
     }
 
     // Publish the camera image overlaid by outlines of the detected tags and their ids
     if (tag_detections_image_publisher_.getNumSubscribers() > 0 && 
         if_pub_tag_det_image_)
     {
-      start = clock();
       cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image, "bgr8");
-      tag_detector_->drawDetections(cv_ptr, detection);
+      tag_detector_->drawDetections(cv_ptr, static_tag_array_ptr);
+      tag_detector_->drawDetections(cv_ptr, dyn_tag_array_ptr);
       tag_detections_image_publisher_.publish(cv_ptr->toImageMsg());
-      end = clock();
-      elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
-      // ROS_INFO_STREAM("detection image publish time: "<< elapsed_secs);
     }
 
     // record the current vio pose for the next frame
     prev_vio_pose_ = vio_pose;
     num_frames_++;
-    clock_t t1 = clock();
-    elapsed_secs = double(t1 - t0) / CLOCKS_PER_SEC;
-    ROS_INFO_STREAM("Total Callback time: "<< elapsed_secs);
+
   }
 
 } // namespace tagslam_ros

@@ -53,47 +53,26 @@ namespace tagslam_ros{
       ~TagDetectorCPU();
 
       // Detect tags in an image
-      TagDetectionArrayPtr detectTags(const sensor_msgs::ImageConstPtr&,
-          const sensor_msgs::CameraInfoConstPtr& msg_cam_info);
+      void detectTags(const sensor_msgs::ImageConstPtr&,
+          const sensor_msgs::CameraInfoConstPtr& msg_cam_info,
+          TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
 #ifndef NO_CUDA_OPENCV
-      TagDetectionArrayPtr detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header)
+      void detectTags(cv::cuda::GpuMat& cv_mat_gpu,
+        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+        TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
         {
           throw std::logic_error("CPU based Apriltag only support cv::Mat");
-          return nullptr;
         }
 #endif
       
-      TagDetectionArrayPtr detectTags(cv::Mat& cv_mat_cpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header);
+      void detectTags(cv::Mat& cv_mat_cpu, const sensor_msgs::CameraInfoConstPtr& msg_cam_info,
+          std_msgs::Header header,
+          TagDetectionArrayPtr static_tag_array_ptr,
+          TagDetectionArrayPtr dyn_tag_array_ptr);
 
       // Draw the detected tags' outlines and payload values on the image
       void drawDetections(cv_bridge::CvImagePtr image);
-
-    private:
-      
-      // Get the pose of the tag in the camera frame
-      // Returns homogeneous transformation matrix [R,t;[0 0 0 1]] which
-      // takes a point expressed in the tag frame to the same point
-      // expressed in the camera frame. As usual, R is the (passive)
-      // rotation from the tag frame to the camera frame and t is the
-      // vector from the camera frame origin to the tag frame origin,
-      // expressed in the camera frame.
-      EigenPose getRelativeTransform(
-          std::vector<cv::Point3d > objectPoints,
-          std::vector<cv::Point2d > imagePoints,
-          double fx, double fy, double cx, double cy) const;
-
-      EigenPose getRelativeTransform(
-          std::vector<cv::Point3d > objectPoints,
-          std::vector<cv::Point2d > imagePoints,
-          cv::Matx33d cameraMatrix, cv::Mat distCoeffs) const;
-      
-      void addImagePoints(apriltag_detection_t *detection,
-                            std::vector<cv::Point2d >& imagePoints) const;
-      void addObjectPoints(double s, cv::Matx44d T_oi,
-                            std::vector<cv::Point3d >& objectPoints) const;
 
     private:
       // AprilTag 2 code's attributes

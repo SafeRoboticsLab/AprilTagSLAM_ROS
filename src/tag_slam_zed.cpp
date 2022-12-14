@@ -146,7 +146,8 @@ namespace tagslam_ros {
             det_img_pub_ = it_zed.advertise("tag_detection_image", 1); // image with tag detection
         
         if(if_pub_tag_det_)
-            tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("tag_detections", 1);
+            static_tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("tag_detections", 1);
+            dyn_tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("tag_detections_dynamic", 1);
 
         if(!detection_only_)
             slam_pose_pub_ = pnh_.advertise<nav_msgs::Odometry>("slam_pose", 1);
@@ -212,20 +213,14 @@ namespace tagslam_ros {
         /*
         *********** Setup Backend **************
         */
-        std::string odom_type = getRosOption<std::string>(pnh_, "backend/odom", "vision");
+        // std::string odom_type = getRosOption<std::string>(pnh_, "backend/odom", "vision");
 
-        use_imu_odom_ = false;
-        zed_pos_tracking_enabled_ = false;
-        if(odom_type=="vision")
-        {
-            use_imu_odom_ = false;
-            zed_pos_tracking_enabled_ = true;
-        }else if(odom_type=="imu"){
-            use_imu_odom_ = true;
-            zed_pos_tracking_enabled_ = false;
-        }else if(odom_type=="vision+imu"){
-            zed_pos_tracking_enabled_ = true;
-            use_imu_odom_ = true;
+        use_imu_odom_ = getRosOption<bool>(pnh_, "backend/use_imu", true);
+        zed_pos_tracking_enabled_ = getRosOption<bool>(pnh_, "backend/use_odom", true);
+
+        if(!use_imu_odom_ && !zed_pos_tracking_enabled_){
+            NODELET_WARN("No odometry source is enabled, please enable at least one of them. Running in detection only mode.");
+            detection_only_ = true;
         }
 
         std::string backend_type = getRosOption<std::string>(pnh_, "backend/smoother", "isam2");
@@ -408,16 +403,20 @@ namespace tagslam_ros {
 
                 msg_header.stamp = slTime2Ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
                 msg_header.seq = frame_count_;
+
                 auto t1 = std::chrono::system_clock::now();
                 // Run detection
-                auto detection_ptr = tag_detector_->detectTags(cv_mat, cam_info_msg_, msg_header);
+                auto static_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
+                auto dyn_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
+                tag_detector_->detectTags(cv_mat, cam_info_msg_, msg_header,
+                                    static_tag_array_ptr, dyn_tag_array_ptr);
 
                 auto t2 = std::chrono::system_clock::now();
 
                 if(!detection_only_)
                 {
                     // Do a SLAM update to estimate current pose and publish the message
-                    estimateState(detection_ptr);    
+                    estimateState(static_tag_array_ptr);    
                 }
 
                 auto t3 = std::chrono::system_clock::now();
@@ -431,11 +430,16 @@ namespace tagslam_ros {
                                     <<" ms, total "<<d.count()<< " ms");
                 }
 
-                publishImages(detection_ptr);
+                publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
 
-                if(tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
-                    tag_det_pub_.publish(*detection_ptr);
+                if(static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+                    static_tag_det_pub_.publish(*static_tag_array_ptr);
                 }
+
+                if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+                    dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
+                }
+
                 frame_count_++;
             }
         }
@@ -465,15 +469,20 @@ namespace tagslam_ros {
                 // Run detection
                 msg_header.stamp = slTime2Ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
                 msg_header.seq = frame_count_;
+
                 auto t1 = std::chrono::system_clock::now();
-                auto detection_ptr = tag_detector_->detectTags(cv_mat_cpu, cam_info_msg_, msg_header);
+
+                auto static_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
+                auto dyn_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
+                tag_detector_->detectTags(cv_mat_cpu, cam_info_msg_, msg_header,
+                                    static_tag_array_ptr, dyn_tag_array_ptr);
                 
                 auto t2 = std::chrono::system_clock::now();
 
                 if(!detection_only_)
                 {
                     // Do a SLAM update to estimate current pose and publish the message
-                    estimateState(detection_ptr);    
+                    estimateState(static_tag_array_ptr);    
                 }
 
                 auto t3 = std::chrono::system_clock::now();
@@ -488,10 +497,14 @@ namespace tagslam_ros {
                                     <<" ms, total "<<d.count()<< " ms");
                 }
 
-                publishImages(detection_ptr);
+                publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
 
-                if(tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
-                    tag_det_pub_.publish(*detection_ptr);
+                if(static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+                    static_tag_det_pub_.publish(*static_tag_array_ptr);
+                }
+
+                if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+                    dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
                 }
                 frame_count_++;
             }
@@ -567,7 +580,7 @@ namespace tagslam_ros {
         }
     }
 
-    void TagSlamZED::estimateState(TagDetectionArrayPtr detection_ptr)
+    void TagSlamZED::estimateState(TagDetectionArrayPtr tag_array_ptr)
     {
         nav_msgs::OdometryPtr slam_pose_msg;
 
@@ -589,9 +602,10 @@ namespace tagslam_ros {
         }
 
         if(use_imu_odom_){
-            slam_pose_msg = slam_backend_->updateVIO(detection_ptr, relative_pose, pose_cur_cov, zed_pos_tracking_enabled_);
+            slam_pose_msg = slam_backend_->updateVIO(tag_array_ptr, relative_pose, pose_cur_cov, zed_pos_tracking_enabled_);
         }else{
-            slam_pose_msg = slam_backend_->updateSLAM(detection_ptr, relative_pose, pose_cur_cov);
+            assert(zed_pos_tracking_enabled_);
+            slam_pose_msg = slam_backend_->updateSLAM(tag_array_ptr, relative_pose, pose_cur_cov);
         }
 
         // publish the message
@@ -600,13 +614,14 @@ namespace tagslam_ros {
         }
     }
 
-    void TagSlamZED::publishImages(TagDetectionArrayPtr detection_ptr)
+    void TagSlamZED::publishImages(TagDetectionArrayPtr static_tag_array_ptr, 
+                                TagDetectionArrayPtr dyn_tag_array_ptr)
     {
         // Publish ros messages    
         int num_image_subscriber = img_pub_.getNumSubscribers();
         int num_detection_subscriber = det_img_pub_.getNumSubscribers();
         
-        std_msgs::Header header = detection_ptr->header;
+        std_msgs::Header header = static_tag_array_ptr->header;
 
         if(num_image_subscriber||num_detection_subscriber){
             // Download the image to cpu
@@ -625,7 +640,8 @@ namespace tagslam_ros {
             if(num_detection_subscriber > 0 && if_pub_tag_det_image_){
 
                 cv::Mat detectionMat = slMat2cvMat(sl_mat_cpu).clone();
-                tag_detector_->drawDetections(detectionMat, detection_ptr);
+                tag_detector_->drawDetections(detectionMat, static_tag_array_ptr);
+                tag_detector_->drawDetections(detectionMat, dyn_tag_array_ptr);
 
                 cv_bridge::CvImage detectionImgMsg;
                 detectionImgMsg.header = header;

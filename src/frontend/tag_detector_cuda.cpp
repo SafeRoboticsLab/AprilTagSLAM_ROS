@@ -142,7 +142,7 @@ namespace tagslam_ros
   };
 
   TagDetectorCUDA::TagDetectorCUDA(ros::NodeHandle pnh):
-    TagDetector(),
+    TagDetector(pnh),
     // parameter
     tag_size_(getRosOption<double>(pnh, "frontend/tag_size", 1.0)),
     max_tags_(getRosOption<int>(pnh, "frontend/max_tags", 20))
@@ -151,8 +151,9 @@ namespace tagslam_ros
     impl_ = std::make_unique<AprilTagsImpl>();
   }
 
-  TagDetectionArrayPtr TagDetectorCUDA::detectTags(const sensor_msgs::ImageConstPtr& msg_img,
-      const sensor_msgs::CameraInfoConstPtr& msg_cam_info)
+  void TagDetectorCUDA::detectTags(const sensor_msgs::ImageConstPtr& msg_img,
+      const sensor_msgs::CameraInfoConstPtr& msg_cam_info, 
+      TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     /*
     Perform Detection from a sensor_msgs::ImageConstPtr on CPU
@@ -164,16 +165,32 @@ namespace tagslam_ros
       img_rgba8 = cv_bridge::toCvShare(msg_img, "rgba8")->image;
     }catch (cv_bridge::Exception& e){
       ROS_ERROR("cv_bridge exception: %s", e.what());
-      return nullptr;
     }
 
-    return detectTags(img_rgba8, msg_cam_info, msg_img->header);
+    detectTags(img_rgba8, msg_cam_info, msg_img->header,
+            static_tag_array_ptr, dyn_tag_array_ptr);
   }
 
 #ifndef NO_CUDA_OPENCV
-  TagDetectionArrayPtr TagDetectorCUDA::detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-      const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header)
+  void TagDetectorCUDA::detectTags(cv::cuda::GpuMat& cv_mat_gpu,
+      const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header, 
+      TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
+    image_geometry::PinholeCameraModel camera_model;
+    camera_model.fromCameraInfo(msg_cam_info);
+
+    // Get camera intrinsic properties for rectified image.
+    double fx = camera_model.fx(); // focal length in camera x-direction [px]
+    double fy = camera_model.fy(); // focal length in camera y-direction [px]
+    double cx = camera_model.cx(); // optical center x-coordinate [px]
+    double cy = camera_model.cy(); // optical center y-coordinate [px]
+
+    cameraMatrix_ = cv::Matx33d(fx, 0, cx,
+                              0, fy, cy,
+                              0, 0, 1);
+
+    distCoeffs_ = camera_model.distortionCoeffs();
+    
     // Setup detector on first frame
     if (impl_->april_tags_handle == nullptr) {
       size_t buffer_size = cv_mat_gpu.rows*cv_mat_gpu.cols*cv_mat_gpu.elemSize();
@@ -189,18 +206,33 @@ namespace tagslam_ros
     // assign the pointer to gpu mat
     impl_->assign_image(cv_mat_gpu);
     
-    auto tag_detection_array = runDetection();
+    runDetection();
 
-    if(tag_detection_array)
-      tag_detection_array->header = header;
+    static_tag_array_ptr->header = header;
+    dyn_tag_array_ptr->header = header;
 
-    return tag_detection_array;
   }
 #endif
 
-  TagDetectionArrayPtr TagDetectorCUDA::detectTags(cv::Mat& cv_mat_cpu,
-          const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header)
+  void TagDetectorCUDA::detectTags(cv::Mat& cv_mat_cpu,
+          const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+          TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
+    image_geometry::PinholeCameraModel camera_model;
+    camera_model.fromCameraInfo(msg_cam_info);
+
+    // Get camera intrinsic properties for rectified image.
+    double fx = camera_model.fx(); // focal length in camera x-direction [px]
+    double fy = camera_model.fy(); // focal length in camera y-direction [px]
+    double cx = camera_model.cx(); // optical center x-coordinate [px]
+    double cy = camera_model.cy(); // optical center y-coordinate [px]
+
+    cameraMatrix_ = cv::Matx33d(fx, 0, cx,
+                              0, fy, cy,
+                              0, 0, 1);
+
+    distCoeffs_ = camera_model.distortionCoeffs();
+    
     // Setup detector on first frame
     if (impl_->april_tags_handle == nullptr) {
       impl_->initialize(
@@ -209,21 +241,22 @@ namespace tagslam_ros
           cv_mat_cpu.total() * cv_mat_cpu.elemSize(), 
           cv_mat_cpu.step,
           msg_cam_info);
+
       ROS_INFO("CUDA Apriltag Detector Initialized.");
     }
 
     impl_->copy_to_buffer(cv_mat_cpu);
     
-    auto tag_detection_array = runDetection();
-    if(tag_detection_array)
-      tag_detection_array->header = header;
-
-    return tag_detection_array;
+    runDetection(static_tag_array_ptr, dyn_tag_array_ptr);
+    
+    static_tag_array_ptr->header = header;
+    dyn_tag_array_ptr->header = header;
 
   }
 
-  TagDetectionArrayPtr TagDetectorCUDA::runDetection(){
-    auto start = std::chrono::system_clock::now();
+  void TagDetectorCUDA::runDetection(TagDetectionArrayPtr static_tag_array_ptr,
+                              TagDetectionArrayPtr dyn_tag_array_ptr){
+
     // Perform detection
     uint32_t num_detections;
     const int error = nvAprilTagsDetect(
@@ -231,24 +264,63 @@ namespace tagslam_ros
       &num_detections, max_tags_, impl_->main_stream);
     if (error != 0) {
       ROS_ERROR("Failed to run AprilTags detector (error code %d)", error);
-      return nullptr;
+      return;
     }
     
     // Parse detections into published protos
-    auto tag_detection_array = std::make_shared<AprilTagDetectionArray>();
-    
     
     for (uint32_t i = 0; i < num_detections; i++) {
       // detection
       const nvAprilTagsID_t & detection = impl_->tags[i];
 
+      int tagID = detection.id;
+      double cur_tag_size = tag_size_;
+      bool cur_tag_static = true;
+      // try to see if the tag is in the list of tags to be detected
+      if(tag_size_list_.find(tagID) != tag_size_list_.end())
+      {
+        cur_tag_size = tag_size_list_[tagID].first;
+        cur_tag_static = tag_size_list_[tagID].second;
+      }
+
       //make pose
-      geometry_msgs::Pose tag_pose = DetectionToPose(detection);
+      // geometry_msgs::Pose tag_pose = DetectionToPose(detection);
+      // instead of pose generated from detection, we solve them us PnP due to various tag size
+
+      // Get estimated tag pose in the camera frame.
+      //
+      // Note on frames:
+      // we want:
+      //   - camera frame: looking from behind the camera (like a
+      //     photographer), x is right, y is down and z is straight
+      //     ahead
+      //   - tag frame: looking straight at the tag (oriented correctly),
+      //     x is right, y is up and z is towards you (out of the tag).
+      
+      //from top left to bottom left and going clockwise
+      std::vector<cv::Point2d> TagImagePoints;
+      for (int corner_idx = 0; corner_idx < 4; corner_idx++) {
+        TagImagePoints.push_back(cv::Point2d(detection.corners[corner_idx].x,
+                                    detection.corners[corner_idx].y));
+      }
+
+      std::vector<cv::Point3d> TagObjectPoints;
+
+       //from top left to bottom left and going clockwise
+      TagObjectPoints.push_back(cv::Point3d(-cur_tag_size / 2, cur_tag_size / 2, 0));
+      TagObjectPoints.push_back(cv::Point3d(cur_tag_size / 2, cur_tag_size / 2, 0));
+      TagObjectPoints.push_back(cv::Point3d(cur_tag_size / 2, -cur_tag_size / 2, 0));
+      TagObjectPoints.push_back(cv::Point3d(-cur_tag_size / 2, -cur_tag_size / 2, 0));
+
+      EigenPose transform = getRelativeTransform(TagObjectPoints,TagImagePoints, cameraMatrix_, distCoeffs_);
+
+      geometry_msgs::Pose tag_pose = makePoseMsg(transform);
 
       // create message
       AprilTagDetection tag_detection;
       tag_detection.id = detection.id;
-      tag_detection.size = tag_size_;
+      tag_detection.size = cur_tag_size;
+      tag_detection.static_tag = cur_tag_static;
       tag_detection.pose = tag_pose;
       
       // corners
@@ -272,10 +344,12 @@ namespace tagslam_ros
       tag_detection.center.y = (slope_2 * intercept_1 - slope_1 * intercept_2) /
         (slope_2 - slope_1);
 
-          
-      tag_detection_array->detections.push_back(tag_detection);
+      if(cur_tag_static){
+        static_tag_array_ptr->detections.push_back(tag_detection);
+      }else{
+        dyn_tag_array_ptr->detections.push_back(tag_detection);
+      }
     }
-    return tag_detection_array;
   }
 
   geometry_msgs::Pose TagDetectorCUDA::DetectionToPose(const nvAprilTagsID_t & detection)
@@ -299,6 +373,8 @@ namespace tagslam_ros
   }
 
   TagDetectorCUDA::~TagDetectorCUDA() = default;
+
+
 
 }  // namespace tagslam_ros
 

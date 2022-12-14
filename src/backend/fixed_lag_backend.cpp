@@ -68,7 +68,7 @@ namespace tagslam_ros
         Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
         Pose3 cur_pose_init;
         double cur_img_t = landmark_ptr->header.stamp.toSec();
-
+        
         if (initialized_){
             cur_pose_init = addOdomFactor(odom, odom_cov);
         }else if (num_landmarks_detected > 0){

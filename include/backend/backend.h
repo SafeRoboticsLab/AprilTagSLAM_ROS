@@ -168,6 +168,12 @@ namespace tagslam_ros
                 
                 // add prior factor for landmarks
                 for (auto &landmark : landmark_ptr->detections){
+                    if (!landmark.static_tag)
+                    {
+                        // skip non-static tags
+                        ROS_WARN("Found no static tag! This should not happen! Check the tag detection result.");
+                        continue;
+                    }
                     Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);
                     // landmark.pose is geometry_msgs::Pose
                     Pose3 landmark_factor = Pose3(getTransform(landmark.pose));

@@ -57,22 +57,25 @@ public:
 
   ~TagDetectorCUDA();
 
-  TagDetectionArrayPtr detectTags(const sensor_msgs::ImageConstPtr&,
-    const sensor_msgs::CameraInfoConstPtr& msg_cam_info);
+  void detectTags(const sensor_msgs::ImageConstPtr&,
+    const sensor_msgs::CameraInfoConstPtr& msg_cam_info,
+    TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
 #ifndef NO_CUDA_OPENCV
   // takes in RGBA8 cv::cuda::GpuMat
-  TagDetectionArrayPtr detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-    const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header);
+  void detectTags(cv::cuda::GpuMat& cv_mat_gpu,
+    const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+    TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 #endif
 
-  TagDetectionArrayPtr detectTags(cv::Mat& cv_mat_cpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header);
+  void detectTags(cv::Mat& cv_mat_cpu,
+        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+        TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
     
 private:
   geometry_msgs::Pose DetectionToPose(const nvAprilTagsID_t & detection);
 
-  TagDetectionArrayPtr runDetection();
+  void runDetection(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
 
   const std::string tag_family_ = "36h11"; // cuda version only support this family
@@ -81,6 +84,9 @@ private:
 
   struct AprilTagsImpl;
   std::unique_ptr<AprilTagsImpl> impl_;
+
+  cv::Matx33d cameraMatrix_;
+  cv::Mat distCoeffs_;
 };
 
 }  // namespace tagslam_ros

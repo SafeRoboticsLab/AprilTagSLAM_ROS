@@ -34,7 +34,6 @@ Code is adapted from the AprilTag_ROS package by Danylo Malyuta, JPL
  */
 #include "frontend/tag_detector_cpu.h"
 
-#include "image_geometry/pinhole_camera_model.h"
 #include "common/homography.h"
 #include "tagStandard52h13.h"
 #include "tagStandard41h12.h"
@@ -49,7 +48,7 @@ namespace tagslam_ros
 {
 
   TagDetectorCPU::TagDetectorCPU(ros::NodeHandle pnh) : 
-    TagDetector(),
+    TagDetector(pnh),
     family_(getRosOption<std::string>(pnh, "frontend/tag_family", "tag36h11")),
     threads_(getRosOption<int>(pnh, "frontend/tag_threads", 4)),
     decimate_(getRosOption<double>(pnh, "frontend/tag_decimate", 1.0)),
@@ -168,9 +167,9 @@ namespace tagslam_ros
   }
 
   // detect april tag from image
-  TagDetectionArrayPtr TagDetectorCPU::detectTags(
-      const sensor_msgs::ImageConstPtr& msg_img,
-      const sensor_msgs::CameraInfoConstPtr &camera_info)
+  void TagDetectorCPU::detectTags(const sensor_msgs::ImageConstPtr& msg_img, 
+      const sensor_msgs::CameraInfoConstPtr &camera_info,
+      TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     // Convert image to AprilTag code's format
     cv::Mat gray_image;
@@ -178,14 +177,15 @@ namespace tagslam_ros
       gray_image = cv_bridge::toCvShare(msg_img, "mono8")->image;
     }catch (cv_bridge::Exception& e){
       ROS_ERROR("cv_bridge exception: %s", e.what());
-      return nullptr;
+      return;
     }
 
-    return detectTags(gray_image, camera_info, msg_img->header);
+    detectTags(gray_image, camera_info, msg_img->header, static_tag_array_ptr, dyn_tag_array_ptr);
   }
   
-  TagDetectionArrayPtr TagDetectorCPU::detectTags(cv::Mat& cv_mat_cpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header)
+  void TagDetectorCPU::detectTags(cv::Mat& cv_mat_cpu,
+        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+        TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     image_u8_t apriltag_image = {.width = cv_mat_cpu.cols,
                                   .height = cv_mat_cpu.rows,
@@ -220,8 +220,8 @@ namespace tagslam_ros
 
     // Compute the estimated translation and rotation individually for each
     // detected tag
-    auto tag_detection_array = std::make_shared<AprilTagDetectionArray>();
-    tag_detection_array->header = header;
+    static_tag_array_ptr->header = header;
+    dyn_tag_array_ptr->header = header;
 
     for (int i = 0; i < zarray_size(detections_); i++)
     {
@@ -231,40 +231,49 @@ namespace tagslam_ros
 
       // Get the tag ID
       int tagID = detection->id;
+      
+      double cur_tag_size = tag_size_;
+      bool cur_tag_static = true;
+      // try to see if the tag is in the list of tags to be detected
+      if(tag_size_list_.find(tagID) != tag_size_list_.end())
+      {
+        cur_tag_size = tag_size_list_[tagID].first;
+        cur_tag_static = tag_size_list_[tagID].second;
+      }
 
       // Get estimated tag pose in the camera frame.
       //
       // Note on frames:
-      // The raw AprilTag 2 uses the following frames:
-      //   - camera frame: looking from behind the camera (like a
-      //     photographer), x is right, y is up and z is towards you
-      //     (i.e. the back of camera)
-      //   - tag frame: looking straight at the tag (oriented correctly),
-      //     x is right, y is down and z is away from you (into the tag).
-      // But we want:
+      // we want:
       //   - camera frame: looking from behind the camera (like a
       //     photographer), x is right, y is down and z is straight
       //     ahead
       //   - tag frame: looking straight at the tag (oriented correctly),
       //     x is right, y is up and z is towards you (out of the tag).
-      // Using these frames together with cv::solvePnP directly avoids
-      // AprilTag 2's frames altogether.
-      // TODO solvePnP[Ransac] better?
-      std::vector<cv::Point3d> standaloneTagObjectPoints;
-      std::vector<cv::Point2d> standaloneTagImagePoints;
-      addObjectPoints(tag_size_ / 2, cv::Matx44d::eye(), standaloneTagObjectPoints);
-      addImagePoints(detection, standaloneTagImagePoints);
-      EigenPose transform = getRelativeTransform(standaloneTagObjectPoints,
-                                                        standaloneTagImagePoints,
-                                                        cameraMatrix, distCoeffs);
+      
+      std::vector<cv::Point2d> TagImagePoints;
+      for (int corner_idx = 0; corner_idx < 4; corner_idx++) {
+        TagImagePoints.push_back(cv::Point2d(detection->p[corner_idx][0],
+                                    detection->p[corner_idx][1]));
+      }
+
+      std::vector<cv::Point3d> TagObjectPoints;
+      // from bottom left to bottom left and going counter clockwise
+      TagObjectPoints.push_back(cv::Point3d(-cur_tag_size / 2, -cur_tag_size / 2, 0));
+      TagObjectPoints.push_back(cv::Point3d(cur_tag_size / 2, -cur_tag_size / 2, 0));
+      TagObjectPoints.push_back(cv::Point3d(cur_tag_size / 2, cur_tag_size / 2, 0));
+      TagObjectPoints.push_back(cv::Point3d(-cur_tag_size / 2, cur_tag_size / 2, 0));
+
+      EigenPose transform = getRelativeTransform(TagObjectPoints,TagImagePoints,cameraMatrix, distCoeffs);
 
       geometry_msgs::Pose tag_pose = makePoseMsg(transform);
 
       // Add the detection to the back of the tag detection array
       AprilTagDetection tag_detection;
       tag_detection.pose = tag_pose;
-      tag_detection.id = detection->id;
-      tag_detection.size = tag_size_;
+      tag_detection.id = tagID;
+      tag_detection.static_tag = cur_tag_static;
+      tag_detection.size = cur_tag_size;
 
       // corners
       for (int corner_idx = 0; corner_idx < 4; corner_idx++) {
@@ -275,92 +284,16 @@ namespace tagslam_ros
       // center
       tag_detection.center.x = detection->c[0];
       tag_detection.center.y = detection->c[1];
-      tag_detection_array->detections.push_back(tag_detection);
-    }
-    return tag_detection_array;
-  }
-  
-  void TagDetectorCPU::addObjectPoints(
-      double s, cv::Matx44d T_oi, std::vector<cv::Point3d> &objectPoints) const
-  {
-    // Add to object point vector the tag corner coordinates in the bundle frame
-    // Going counterclockwise starting from the bottom left corner
-    objectPoints.push_back(T_oi.get_minor<3, 4>(0, 0) * cv::Vec4d(-s, -s, 0, 1));
-    objectPoints.push_back(T_oi.get_minor<3, 4>(0, 0) * cv::Vec4d(s, -s, 0, 1));
-    objectPoints.push_back(T_oi.get_minor<3, 4>(0, 0) * cv::Vec4d(s, s, 0, 1));
-    objectPoints.push_back(T_oi.get_minor<3, 4>(0, 0) * cv::Vec4d(-s, s, 0, 1));
-  }
-
-  void TagDetectorCPU::addImagePoints(
-      apriltag_detection_t *detection,
-      std::vector<cv::Point2d> &imagePoints) const
-  {
-    // Add to image point vector the tag corners in the image frame
-    // Going counterclockwise starting from the bottom left corner
-    double tag_x[4] = {-1, 1, 1, -1};
-    double tag_y[4] = {1, 1, -1, -1}; // Negated because AprilTag tag local
-                                      // frame has y-axis pointing DOWN
-                                      // while we use the tag local frame
-                                      // with y-axis pointing UP
-    for (int i = 0; i < 4; i++)
-    {
-      // Homography projection taking tag local frame coordinates to image pixels
-      double im_x, im_y;
-      homography_project(detection->H, tag_x[i], tag_y[i], &im_x, &im_y);
-      imagePoints.push_back(cv::Point2d(im_x, im_y));
+      
+      if(cur_tag_static)
+      {
+        static_tag_array_ptr->detections.push_back(tag_detection);
+      }
+      else
+      {
+        dyn_tag_array_ptr->detections.push_back(tag_detection);
+      }
     }
   }
 
-  EigenPose TagDetectorCPU::getRelativeTransform(
-      std::vector<cv::Point3d> objectPoints,
-      std::vector<cv::Point2d> imagePoints,
-      double fx, double fy, double cx, double cy) const
-  {
-    // perform Perspective-n-Point camera pose estimation using the
-    // above 3D-2D point correspondences
-    cv::Mat rvec, tvec;
-    cv::Matx33d cameraMatrix(fx, 0, cx,
-                              0, fy, cy,
-                              0, 0, 1);
-    cv::Vec4f distCoeffs(0, 0, 0, 0); // distortion coefficients
-    // TODO Perhaps something like SOLVEPNP_EPNP would be faster? Would
-    // need to first check WHAT is a bottleneck in this code, and only
-    // do this if PnP solution is the bottleneck.
-    cv::solvePnP(objectPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec);
-    cv::Matx33d R;
-    cv::Rodrigues(rvec, R);
-    Eigen::Matrix3d wRo;
-    wRo << R(0, 0), R(0, 1), R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2);
-
-    EigenPose T; // homogeneous transformation matrix
-    T.topLeftCorner(3, 3) = wRo;
-    T.col(3).head(3) << tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2);
-    T.row(3) << 0, 0, 0, 1;
-    return T;
-  }
-
-  EigenPose TagDetectorCPU::getRelativeTransform(
-      std::vector<cv::Point3d> objectPoints,
-      std::vector<cv::Point2d> imagePoints,
-      cv::Matx33d cameraMatrix, cv::Mat distCoeffs) const
-  {
-    // perform Perspective-n-Point camera pose estimation using the
-    // above 3D-2D point correspondences
-    cv::Mat rvec, tvec;
-
-    // TODO Perhaps something like SOLVEPNP_EPNP would be faster? Would
-    // need to first check WHAT is a bottleneck in this code, and only
-    // do this if PnP solution is the bottleneck.
-    cv::solvePnP(objectPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec, false, 6);
-    cv::Matx33d R;
-    cv::Rodrigues(rvec, R);
-    Eigen::Matrix3d wRo;
-    wRo << R(0, 0), R(0, 1), R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2);
-
-    EigenPose T; // homogeneous transformation matrix
-    T.topLeftCorner(3, 3) = wRo;
-    T.col(3).head(3) << tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2);
-    T.row(3) << 0, 0, 0, 1;
-    return T;
-  }
 } // namespace tagslam_ros

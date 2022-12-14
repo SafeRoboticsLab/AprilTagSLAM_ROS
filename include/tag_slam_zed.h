@@ -130,10 +130,10 @@
 
         /*! \brief publish the ros image
         */
-        void publishImages(TagDetectionArrayPtr detection_ptr);
+        void publishImages(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
     private: 
-        void estimateState(TagDetectionArrayPtr detection_ptr);
+        void estimateState(TagDetectionArrayPtr tag_array_ptr);
 
         void checkResolFps();
 
@@ -198,7 +198,8 @@
         image_transport::CameraPublisher img_pub_; //
         image_transport::Publisher det_img_pub_; //
 
-        ros::Publisher tag_det_pub_;
+        ros::Publisher static_tag_det_pub_;
+        ros::Publisher dyn_tag_det_pub_;
         // ros::Publisher zed_pose_pub_;
         ros::Publisher slam_pose_pub_;
         ros::Publisher imu_pub_;

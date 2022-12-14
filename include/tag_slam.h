@@ -134,7 +134,8 @@ namespace tagslam_ros
 
     // publishers
     image_transport::Publisher tag_detections_image_publisher_;
-    ros::Publisher tag_det_pub_;
+    ros::Publisher static_tag_det_pub_;
+    ros::Publisher dyn_tag_det_pub_;
     ros::Publisher slam_pose_publisher_;
 
     // back end

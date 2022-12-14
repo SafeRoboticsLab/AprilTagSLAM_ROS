@@ -44,6 +44,8 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 
+#include "image_geometry/pinhole_camera_model.h"
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core/core.hpp>
@@ -56,30 +58,58 @@
 
 
 namespace tagslam_ros{
+  using SizeStaticPair = std::pair<double, bool>;
   class TagDetector
   {
     public:
-      TagDetector() = default;
+      TagDetector(ros::NodeHandle pnh);
 
       ~TagDetector() = default;
 
       // Detect tags in an image
-      virtual TagDetectionArrayPtr detectTags(const sensor_msgs::ImageConstPtr& msg_img,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info) = 0;
+      virtual void detectTags(const sensor_msgs::ImageConstPtr& msg_img,
+        const sensor_msgs::CameraInfoConstPtr& msg_cam_info,
+        TagDetectionArrayPtr static_tag_array_ptr,
+        TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 
 #ifndef NO_CUDA_OPENCV
-      virtual TagDetectionArrayPtr detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header) = 0;
+      virtual void detectTags(cv::cuda::GpuMat& cv_mat_gpu,
+        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header,
+        TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 #endif
 
-      virtual TagDetectionArrayPtr detectTags(cv::Mat& cv_mat_cpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header) = 0;
+      virtual void detectTags(cv::Mat& cv_mat_cpu,
+        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header, 
+        TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 
       void drawDetections(cv_bridge::CvImagePtr image, 
                   TagDetectionArrayPtr tag_detection);
 
       void drawDetections(cv::Mat & image,
             TagDetectionArrayPtr tag_detection);
+
+    protected:
+      void praseTagGroup(std::map<int, SizeStaticPair> & tag_group_map, XmlRpc::XmlRpcValue& tag_groups, bool static_tag);
+
+      // Get the pose of the tag in the camera frame
+      // Returns homogeneous transformation matrix [R,t;[0 0 0 1]] which
+      // takes a point expressed in the tag frame to the same point
+      // expressed in the camera frame. As usual, R is the (passive)
+      // rotation from the tag frame to the camera frame and t is the
+      // vector from the camera frame origin to the tag frame origin,
+      // expressed in the camera frame.
+      EigenPose getRelativeTransform(
+          std::vector<cv::Point3d > objectPoints,
+          std::vector<cv::Point2d > imagePoints,
+          double fx, double fy, double cx, double cy) const;
+
+      EigenPose getRelativeTransform(
+          std::vector<cv::Point3d > objectPoints,
+          std::vector<cv::Point2d > imagePoints,
+          cv::Matx33d cameraMatrix, cv::Mat distCoeffs) const;
+
+    protected:
+      std::map<int, SizeStaticPair> tag_size_list_;
   };
 } // namespace tagslam_ros
 #endif // APRILTAG_ROS_COMMON_FUNCTIONS_H

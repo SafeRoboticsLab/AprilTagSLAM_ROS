@@ -30,9 +30,47 @@
  **/
 
 #include "frontend/tag_detector.h"
+#include <XmlRpcException.h>
+
 
 namespace tagslam_ros
 {   
+    TagDetector::TagDetector(ros::NodeHandle pnh)
+    {
+        // parse landmark tag group
+        XmlRpc::XmlRpcValue landmark_groups;
+        if(!pnh.getParam("landmark_tags", landmark_groups))
+        {
+            ROS_WARN("Failed to get landmark_tags");
+        }else
+        {
+            try{
+                praseTagGroup(tag_size_list_, landmark_groups, true); 
+            }
+            catch(XmlRpc::XmlRpcException e)
+            {
+                ROS_ERROR_STREAM("Error loading landmark_tags descriptions: " <<
+                            e.getMessage().c_str());
+            }
+        }
+
+        XmlRpc::XmlRpcValue ignore_groups;
+        if(!pnh.getParam("ignore_tags", ignore_groups))
+        {
+            ROS_WARN("Failed to get ignore_tags");
+        }else
+        {
+            try{
+                praseTagGroup(tag_size_list_, ignore_groups, false); 
+            }
+            catch(XmlRpc::XmlRpcException e)
+            {
+                ROS_ERROR_STREAM("Error loading ignore_tags descriptions: " <<
+                            e.getMessage().c_str());
+            }
+        }
+    }
+
     void TagDetector::drawDetections(cv_bridge::CvImagePtr image,
             TagDetectionArrayPtr tag_detection)
     {
@@ -73,5 +111,83 @@ namespace tagslam_ros
         cv::putText(image, text, center,
                     fontface, fontscale, cv::Scalar(0xff, 0x99, 0), 2);
         }
+    }
+
+    void TagDetector::praseTagGroup(std::map<int, SizeStaticPair> & tag_group_map, 
+                        XmlRpc::XmlRpcValue& tag_groups, bool static_tag)
+    {
+        for (int i = 0; i < tag_groups.size(); i++)
+        {
+            XmlRpc::XmlRpcValue& tag_group = tag_groups[i];
+            int id_start = tag_group["id_start"];
+            int id_end = tag_group["id_end"];
+            double tag_size = tag_group["tag_size"];
+            ROS_INFO_STREAM("Tag group from " << id_start << " to " << id_end << " has size " << tag_size);
+            
+            if(id_end<id_start)
+                ROS_ERROR("id_start %d should be less than id_end %d", id_start, id_end);
+
+            for (int id = id_start; id <= id_end; id++)
+            {
+                if (tag_group_map.find(id) != tag_group_map.end())
+                {
+                    ROS_WARN("Tag id %d is already in tag group, will be overwritten", id);
+                }
+                tag_group_map[id] = std::make_pair(tag_size, static_tag);
+            }
+        }
+    }
+
+    EigenPose TagDetector::getRelativeTransform(
+        std::vector<cv::Point3d> objectPoints,
+        std::vector<cv::Point2d> imagePoints,
+        double fx, double fy, double cx, double cy) const
+    {
+        // perform Perspective-n-Point camera pose estimation using the
+        // above 3D-2D point correspondences
+        cv::Mat rvec, tvec;
+        cv::Matx33d cameraMatrix(fx, 0, cx,
+                                0, fy, cy,
+                                0, 0, 1);
+        cv::Vec4f distCoeffs(0, 0, 0, 0); // distortion coefficients
+        // TODO Perhaps something like SOLVEPNP_EPNP would be faster? Would
+        // need to first check WHAT is a bottleneck in this code, and only
+        // do this if PnP solution is the bottleneck.
+        cv::solvePnP(objectPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec);
+        cv::Matx33d R;
+        cv::Rodrigues(rvec, R);
+        Eigen::Matrix3d wRo;
+        wRo << R(0, 0), R(0, 1), R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2);
+
+        EigenPose T; // homogeneous transformation matrix
+        T.topLeftCorner(3, 3) = wRo;
+        T.col(3).head(3) << tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2);
+        T.row(3) << 0, 0, 0, 1;
+        return T;
+    }
+
+    EigenPose TagDetector::getRelativeTransform(
+        std::vector<cv::Point3d> objectPoints,
+        std::vector<cv::Point2d> imagePoints,
+        cv::Matx33d cameraMatrix, cv::Mat distCoeffs) const
+    {
+        // perform Perspective-n-Point camera pose estimation using the
+        // above 3D-2D point correspondences
+        cv::Mat rvec, tvec;
+
+        // TODO Perhaps something like SOLVEPNP_EPNP would be faster? Would
+        // need to first check WHAT is a bottleneck in this code, and only
+        // do this if PnP solution is the bottleneck.
+        cv::solvePnP(objectPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec, false, 6);
+        cv::Matx33d R;
+        cv::Rodrigues(rvec, R);
+        Eigen::Matrix3d wRo;
+        wRo << R(0, 0), R(0, 1), R(0, 2), R(1, 0), R(1, 1), R(1, 2), R(2, 0), R(2, 1), R(2, 2);
+
+        EigenPose T; // homogeneous transformation matrix
+        T.topLeftCorner(3, 3) = wRo;
+        T.col(3).head(3) << tvec.at<double>(0), tvec.at<double>(1), tvec.at<double>(2);
+        T.row(3) << 0, 0, 0, 1;
+        return T;
     }
 }
