@@ -206,7 +206,7 @@ namespace tagslam_ros
     // assign the pointer to gpu mat
     impl_->assign_image(cv_mat_gpu);
     
-    runDetection();
+    runDetection(static_tag_array_ptr, dyn_tag_array_ptr);
 
     static_tag_array_ptr->header = header;
     dyn_tag_array_ptr->header = header;
