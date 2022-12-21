@@ -423,7 +423,7 @@ namespace tagslam_ros {
                 auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
                 auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
                 auto d = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t0);
-                if(d.count()>30){
+                if(d.count()>0){
                     NODELET_WARN_STREAM("GPU convert "<<d0.count() << " ms, detection "
                                     << d1.count() <<" ms, optimization "<< d2.count()
                                     <<" ms, total "<<d.count()<< " ms");
@@ -484,7 +484,7 @@ namespace tagslam_ros {
                 auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
                 auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
                 auto d = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t0);
-                if(d.count()>30){
+                if(d.count()>0){
                     NODELET_WARN_STREAM("CPU convert "<<d0.count() << " ms, detection "
                                     << d1.count() <<" ms, optimization "<< d2.count()
                                     <<" ms, total "<<d.count()<< " ms");

@@ -26,27 +26,27 @@ publish:
     publish_tags:               true                            # Publish the tags detected
     use_approx_sync:            false                           # Allow ROS subscriber to use approximate sync 
 frontend:
-    type: "GPU"                # "CPU" or "GPU"         
+    type: "CPU"                # "CPU" or "GPU"         
     # AprilTag parameters
-    tag_size: 0.19                 # Size of the tag in meters, default: 0.1 m
+    tag_size: 0.241                # Size of the tag in meters, default: 0.1 m
 
     # CPU detector only parameters
     tag_family:        'tag36h11' # options: tagStandard52h13, tagStandard41h12, tag36h11, tag25h9, tag16h5, tagCustom48h12, tagCircle21h7, tagCircle49h12
-    tag_threads:       2          # default: 2
-    tag_decimate:      2.0        # default: 1.0
-    tag_blur:          0.0        # default: 0.0
+    tag_threads:       4          # default: 2
+    tag_decimate:      4.0        # default: 1.0
+    tag_blur:          1.0        # default: 0.0
     tag_refine_edges:  1          # default: 1
     tag_debug:         0          # default: 0
-    max_hamming_dist:  1          # default: 2 (Tunable parameter with 2 being a good choice - values >=3 consume large amounts of memory. Choose the largest value possible.)
+    max_hamming_dist:  2          # default: 2 (Tunable parameter with 2 being a good choice - values >=3 consume large amounts of memory. Choose the largest value possible.)
     
     # GPU detector only parameters
     max_tags:          20
 
 backend:
     #smoother parameter
-    smoother: "fixed_lag" # choose from "fixed_lag", "isam2", and "none"
+    smoother: "isam2" # choose from "fixed_lag", "isam2", and "none"
     use_odom: true        # use ZED's odometry as motion priors, it can work with or without imu
-    use_imu: false        # use ZED's imu as motion priors, it can work with or without odometry
+    use_imu: true        # use ZED's imu as motion priors, it can work with or without odometry
 
     # Load and Save Maps
     prior_map: false
@@ -54,16 +54,21 @@ backend:
     load_path: ""    # prior map
     save_path: ""                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
 
+    pose_offset:    [1.0, 0.0, 0.0, -0.357, # camera center offset
+                    0.0, 1.0, 0.0, -0.06,
+                    0.0, 0.0, 1.0, 0, #wheelbase
+                    0.0, 0.0, 0.0, 1.0] # camera to rear axis transform
+
     ################# Uncertainty parameters ####################
 
     # variance of tag pose estimation
     landmark_sigma_trans: 0.1   
-    landmark_sigma_rot: 0.3
+    landmark_sigma_rot: 0.2
 
     # variance of prior landmark loaded from file
     #(smaller value to enforce the landmark are not updated)
-    landmark_prior_sigma_trans: 0.1 
-    landmark_prior_sigma_rot: 0.3
+    landmark_prior_sigma_trans: 0.05 
+    landmark_prior_sigma_rot: 0.1
 
     # variance of initial pose if no map is loaded
     pose_prior_sigma_trans: 0.1
@@ -87,7 +92,7 @@ backend:
     cacheLinearizedFactors: true
 
     # LM parameter for fixed_lag smoother
-    lag: 0.1 # parameter for fix lag only
+    lag: 0.2 # parameter for fix lag only
     lambda_initial: 1e-5
     lambda_upper_bound: 100.0
     lambda_lower_bound: 1e-10

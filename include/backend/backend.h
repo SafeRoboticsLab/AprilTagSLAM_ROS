@@ -270,6 +270,11 @@ namespace tagslam_ros
             Vector3 correct_gyro_ = Vector3::Zero();
 
             double prev_img_t_ = 0.0; 
+
+            // Pose offset
+            bool need_pose_offset = false;
+            EigenPose pose_offset = EigenPose::Identity();
+            EigenPose pose_offset_inv = EigenPose::Identity();
             
     };
     

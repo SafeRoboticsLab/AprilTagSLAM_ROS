@@ -71,6 +71,15 @@ namespace tagslam_ros
         bias_prior_sigma_(getRosOption<double>(pnh, "backend/bias_prior_sigma", 0.1)),
         initialized_(false), pose_count_(0)
     {
+        // get pose_offset
+        std::vector<double> pose_offset_vec;
+        if(pnh.getParam("backend/pose_offset", pose_offset_vec))
+        {
+            need_pose_offset = true;
+            pose_offset = EigenPose(pose_offset_vec.data()).transpose();
+            pose_offset_inv = pose_offset.inverse();
+        }
+
         // reset graph and values
         factor_graph_.resize(0);
         initial_estimate_.clear();
@@ -153,7 +162,7 @@ namespace tagslam_ros
 
         // if the system is not initialized, the first pose will be the origin
         // initialize the first pose as the origin with small covariance
-        Pose3 cur_pose_init = Pose3(Rot3::RzRyRx(0, 0, 0), Point3(0, 0, 0));
+        Pose3 cur_pose_init = Pose3(pose_offset_inv); //Pose3(Rot3::RzRyRx(0, 0, 0), Point3(0, 0, 0));
 
         // in gtsam, covariacen order are rotx, roty, rotz, x, y, z
         auto pose_prior_noise = noiseModel::Diagonal::Sigmas((Vector(6) << Vector3::Constant(pose_prior_sigma_rot_),
@@ -428,9 +437,22 @@ namespace tagslam_ros
                                             Vector3 linear_v, Vector3 angular_w, 
                                             double time, int seq)
     {
+
+        if(need_pose_offset)
+        {
+            pose = Pose3(pose.matrix() * pose_offset);
+
+            Eigen::Matrix4d twist;
+            twist << 0, -angular_w[2], angular_w[1], linear_v[0], 
+                    angular_w[2], 0, -angular_w[0], linear_v[1],
+                    -angular_w[1], angular_w[0], 0, linear_v[2],
+                    0,0,0,0;
+   
+        }
         nav_msgs::OdometryPtr odom_msg = boost::make_shared<nav_msgs::Odometry>();
         odom_msg->header.stamp = ros::Time(time);
         odom_msg->header.seq = seq;
+        odom_msg->header.frame_id = "vicon/world";
 
         // Pose information in the message
         odom_msg->pose.pose.position.x = pose.x();
