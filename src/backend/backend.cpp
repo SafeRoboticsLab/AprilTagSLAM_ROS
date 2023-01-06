@@ -442,13 +442,17 @@ namespace tagslam_ros
         {
             pose = Pose3(pose.matrix() * pose_offset);
 
-            Eigen::Matrix4d twist;
-            twist << 0, -angular_w[2], angular_w[1], linear_v[0], 
+            Eigen::Matrix4d twist_cam;
+            twist_cam << 0, -angular_w[2], angular_w[1], linear_v[0], 
                     angular_w[2], 0, -angular_w[0], linear_v[1],
                     -angular_w[1], angular_w[0], 0, linear_v[2],
                     0,0,0,0;
-   
+
+            Eigen::Matrix4d twist = pose_offset.inverse() * twist_cam * pose_offset;
+            linear_v << twist(0,3), twist(1,3), twist(2,3);
+            angular_w << twist(2,1), twist(0,2), twist(1,0);
         }
+
         nav_msgs::OdometryPtr odom_msg = boost::make_shared<nav_msgs::Odometry>();
         odom_msg->header.stamp = ros::Time(time);
         odom_msg->header.seq = seq;
