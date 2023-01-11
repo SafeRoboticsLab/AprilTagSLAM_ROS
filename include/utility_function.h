@@ -67,7 +67,8 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
-
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include "tagslam_ros/AprilTagDetection.h"
 #include "tagslam_ros/AprilTagDetectionArray.h"
@@ -163,7 +164,7 @@ namespace tagslam_ros{
     return std::make_pair(transform, sigma);
   }
 
-  static inline geometry_msgs::Pose makePoseMsg(const EigenPose &transform)
+  static inline geometry_msgs::Pose createPoseMsg(const EigenPose &transform)
   {
     geometry_msgs::Pose pose;
     // translation
@@ -180,6 +181,5 @@ namespace tagslam_ros{
     pose.orientation.w = rot_quaternion.w();
     return pose;
   }
-
 } // namespace tagslam_ros
 #endif /* util_h */

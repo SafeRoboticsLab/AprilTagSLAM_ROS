@@ -155,6 +155,10 @@ namespace tagslam_ros {
         if(use_imu_odom_)
             imu_pub_ = pnh_.advertise<sensor_msgs::Imu>(imu_topic, 1);
 
+        // landmark publisher
+        if(if_pub_landmark_)
+            landmark_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("slam_landmarks", 1);
+
     }
 
     void TagSlamZED::readParameters(){
@@ -264,6 +268,7 @@ namespace tagslam_ros {
         if_pub_tag_det_ = getRosOption<bool>(pnh_, "publish/publish_tags", true);
         if_pub_tag_det_image_ = getRosOption<bool>(pnh_, "publish/publish_image_with_tags", true);
         if_pub_image_ = getRosOption<bool>(pnh_, "publish/publish_image", true);
+        if_pub_landmark_ = getRosOption<bool>(pnh_, "publish/publish_landmarks", true);
     }
 
     void TagSlamZED::turn_on_zed()
@@ -598,6 +603,13 @@ namespace tagslam_ros {
         // publish the message
         if(slam_pose_msg){
             slam_pose_pub_.publish(slam_pose_msg);
+        }
+
+        if(if_pub_landmark_)
+        {
+            // publish landmark
+            visualization_msgs::MarkerArrayPtr landmark_msg_ptr = slam_backend_->createMarkerArray(tag_array_ptr->header);
+            landmark_pub_.publish(landmark_msg_ptr);
         }
     }
 

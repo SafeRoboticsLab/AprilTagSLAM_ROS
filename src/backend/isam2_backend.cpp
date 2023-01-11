@@ -50,17 +50,6 @@ namespace tagslam_ros
         isam_ = ISAM2(isam_params);
     }
 
-    iSAM2Backend::~iSAM2Backend()
-    {
-        // write map and pose to file
-        if(save_graph_)
-        {
-            Values isam_solution = isam_.calculateEstimate();
-            write_to_file(isam_solution, save_map_path_);
-            std::cout<<"Graph saved to "<<save_map_path_<<std::endl;
-        }
-    }
-
     nav_msgs::OdometryPtr iSAM2Backend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
     {
         int num_landmarks_detected = landmark_ptr->detections.size();
@@ -84,7 +73,12 @@ namespace tagslam_ros
         isam_.update();
 
         // get the current pose and save it for next iteration
-        prev_pose_ = isam_.calculateEstimate<Pose3>(cur_pose_key);
+        Values current_estimate = isam_.calculateEstimate();
+        prev_pose_ = current_estimate.at<Pose3>(cur_pose_key);
+        
+        landmark_values_ = current_estimate.filter(Symbol::ChrTest(kLandmarkSymbol));
+
+        // prev_pose_ = isam_.calculateEstimate<Pose3>(cur_pose_key);
         EigenPoseCov pose_cov = isam_.marginalCovariance(cur_pose_key);
 
         auto odom_msg = createOdomMsg(prev_pose_, pose_cov, Vector3::Zero(), Vector3::Zero(), cur_img_t, pose_count_);
@@ -138,15 +132,22 @@ namespace tagslam_ros
         isam_.update();
 
         // get the current pose and save it for next iteration
-        prev_pose_ = isam_.calculateEstimate<Pose3>(cur_pose_key);
-        prev_vel_ = isam_.calculateEstimate<Vector3>(cur_vel_key);
-        prev_bias_ = isam_.calculateEstimate<imuBias::ConstantBias>(cur_bias_key);
+        Values current_estimate = isam_.calculateEstimate();
+        prev_pose_ = current_estimate.at<Pose3>(cur_pose_key);
+        prev_vel_ = current_estimate.at<Vector3>(cur_vel_key);
+        prev_bias_ = current_estimate.at<imuBias::ConstantBias>(cur_bias_key);
+
+        landmark_values_ = current_estimate.filter(Symbol::ChrTest(kLandmarkSymbol));
+
+        // prev_pose_ = isam_.calculateEstimate<Pose3>(cur_pose_key);
+        // prev_vel_ = isam_.calculateEstimate<Vector3>(cur_vel_key);
+        // prev_bias_ = isam_.calculateEstimate<imuBias::ConstantBias>(cur_bias_key);
         prev_state_ = NavState(prev_pose_, prev_vel_);
 
         Vector3 body_vel = prev_state_.bodyVelocity();
 
         EigenPoseCov pose_cov = isam_.marginalCovariance(cur_pose_key);
-    
+
         auto odom_msg = createOdomMsg(prev_pose_, pose_cov, body_vel, correct_gyro_, cur_img_t, pose_count_);
         
         prev_img_t_ = cur_img_t;

@@ -31,7 +31,7 @@
 
 #include "backend/backend.h"
 
-
+using namespace gtsam;
 
 namespace tagslam_ros
 {    
@@ -75,11 +75,11 @@ namespace tagslam_ros
         std::vector<double> pose_offset_vec;
         if(pnh.getParam("backend/pose_offset", pose_offset_vec))
         {
-            need_pose_offset = true;
-            pose_offset = EigenPose(pose_offset_vec.data()).transpose();
-            pose_offset_inv = pose_offset.inverse();
+            need_pose_offset_ = true;
+            pose_offset_ = EigenPose(pose_offset_vec.data()).transpose();
+            pose_offset_inv_ = pose_offset_.inverse();
         }
-
+        
         // reset graph and values
         factor_graph_.resize(0);
         initial_estimate_.clear();
@@ -117,6 +117,16 @@ namespace tagslam_ros
         }
     }
 
+    Backend::~Backend()
+    {
+        // write map and pose to file
+        if (save_graph_)
+        {
+            write_to_file(landmark_values_, save_map_path_);
+            std::cout << "Graph saved to " << save_map_path_ << std::endl;
+        }
+    }
+    
     Values::shared_ptr Backend::read_from_file(const std::string &filename)
     {  
         // Pointer to GTSAM Values
@@ -162,7 +172,7 @@ namespace tagslam_ros
 
         // if the system is not initialized, the first pose will be the origin
         // initialize the first pose as the origin with small covariance
-        Pose3 cur_pose_init = Pose3(pose_offset_inv); //Pose3(Rot3::RzRyRx(0, 0, 0), Point3(0, 0, 0));
+        Pose3 cur_pose_init = Pose3(pose_offset_inv_); //Pose3(Rot3::RzRyRx(0, 0, 0), Point3(0, 0, 0));
 
         // in gtsam, covariacen order are rotx, roty, rotz, x, y, z
         auto pose_prior_noise = noiseModel::Diagonal::Sigmas((Vector(6) << Vector3::Constant(pose_prior_sigma_rot_),
@@ -438,9 +448,9 @@ namespace tagslam_ros
                                             double time, int seq)
     {
 
-        if(need_pose_offset)
+        if(need_pose_offset_)
         {
-            pose = Pose3(pose.matrix() * pose_offset);
+            pose = Pose3(pose.matrix() * pose_offset_);
 
             Eigen::Matrix4d twist_cam;
             twist_cam << 0, -angular_w[2], angular_w[1], linear_v[0], 
@@ -448,7 +458,7 @@ namespace tagslam_ros
                     -angular_w[1], angular_w[0], 0, linear_v[2],
                     0,0,0,0;
 
-            Eigen::Matrix4d twist = pose_offset.inverse() * twist_cam * pose_offset;
+            Eigen::Matrix4d twist = pose_offset_inv_ * twist_cam * pose_offset_;
             linear_v << twist(0,3), twist(1,3), twist(2,3);
             angular_w << twist(2,1), twist(0,2), twist(1,0);
         }
@@ -456,7 +466,7 @@ namespace tagslam_ros
         nav_msgs::OdometryPtr odom_msg = boost::make_shared<nav_msgs::Odometry>();
         odom_msg->header.stamp = ros::Time(time);
         odom_msg->header.seq = seq;
-        odom_msg->header.frame_id = "vicon/world";
+        odom_msg->header.frame_id = "map";
 
         // Pose information in the message
         odom_msg->pose.pose.position.x = pose.x();
@@ -489,5 +499,76 @@ namespace tagslam_ros
         odom_msg->twist.twist.angular.z = angular_w(2);
         return odom_msg;
     }
-    
+
+    visualization_msgs::MarkerArrayPtr Backend::createMarkerArray(std_msgs::Header header)
+    {
+        // initialize the marker array
+        visualization_msgs::MarkerArrayPtr marker_array_ptr = boost::make_shared<visualization_msgs::MarkerArray>();
+        
+        // iterate through landmarks, and update them to priors
+        for(const auto key_value: landmark_values_) {
+            Key temp_key = key_value.key;
+            Pose3 temp_pose = landmark_values_.at<Pose3>(temp_key);
+            
+            visualization_msgs::Marker marker;
+            visualization_msgs::Marker id;
+            marker.header = header;
+            marker.header.frame_id = "map";
+
+            id.header = header;
+            id.header.frame_id = "map";
+
+            Eigen::Quaterniond q(temp_pose.rotation().toQuaternion());
+
+            marker.ns = "landmarks";
+            marker.id = static_cast<int>(temp_key);
+            marker.type = 1; //Cubic
+            marker.action = 0; //add/modify
+            marker.lifetime = ros::Duration();
+            marker.scale.x = 0.2;
+            marker.scale.y = 0.2;
+            marker.scale.z = 0.01;
+            // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+            marker.pose.position.x = temp_pose.x();
+            marker.pose.position.y = temp_pose.y();
+            marker.pose.position.z = temp_pose.z();
+
+            marker.pose.orientation.x = q.x();
+            marker.pose.orientation.y = q.y();
+            marker.pose.orientation.z = q.z();
+            marker.pose.orientation.w = q.w();
+
+            marker.color.r = 1.0f;
+            marker.color.g = 1.0f;
+            marker.color.b = 1.0f;
+            marker.color.a = 0.5f;
+
+            id.ns = "landmark_id";
+            id.id = static_cast<int>(temp_key);
+            id.type = 9; //Text
+            id.action = 0; //add/modify
+            id.lifetime = ros::Duration();
+            id.scale.z = 0.04;
+            // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+            id.pose.position.x = temp_pose.x();
+            id.pose.position.y = temp_pose.y();
+            id.pose.position.z = temp_pose.z();
+
+            id.pose.orientation.x = q.x();
+            id.pose.orientation.y = q.y();
+            id.pose.orientation.z = q.z();
+            id.pose.orientation.w = q.w();
+
+            id.color.r = 0.0f;  
+            id.color.g = 0.0f;
+            id.color.b = 0.0f;
+            id.color.a = 1.0f;
+
+            id.text = "Tag " + std::to_string(static_cast<int>(temp_key));
+
+            marker_array_ptr->markers.push_back(id);
+            marker_array_ptr->markers.push_back(marker);
+        }
+        return marker_array_ptr;
+    }
 }

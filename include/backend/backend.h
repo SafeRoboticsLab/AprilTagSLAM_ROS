@@ -29,7 +29,7 @@
 
  **/
 
- /***************************** backend.h ************************************
+/***************************** backend.h ************************************
  *
  * Header file of Backend base class.
  *
@@ -70,216 +70,210 @@ We assume that the front end will provide the following information:
 Using April Tag as landmark alleviates the uncertainty in data association.
 */
 namespace tagslam_ros
-{   
-    struct FullState
-    {
-        EigenPose pose;
-        EigenPoseCov pose_cov;
-    };
-    
-
+{
     class Backend
     {
-        
-        public:
-            Backend(ros::NodeHandle pnh);
-            
-            virtual ~Backend()
-            {
-                std::cout<<"Default deconstructor of Backend is called."<<std::endl;
-            };
 
-            /*
-            Update the smoother with landmark detections and odometry measurement.
-            */
-            virtual nav_msgs::OdometryPtr updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov) = 0;
+    public:
+        Backend(ros::NodeHandle pnh);
 
-            // /*
-            // Update the smoother with landmark detections and preintegrated IMU factor
-            // */
-            // virtual EigenPose updateVIO(TagDetectionArrayPtr landmark_ptr) = 0;
+        ~Backend();
+        /*
+        Update the smoother with landmark detections and odometry measurement.
+        */
+        virtual nav_msgs::OdometryPtr updateSLAM(TagDetectionArrayPtr landmark_ptr, 
+                                    EigenPose odom, EigenPoseCov odom_cov) = 0;
 
-            /*
-            Update the smoother with landmark detections, preintegrated IMU factor and odometry measurement.
-            */
-            virtual nav_msgs::OdometryPtr updateVIO(TagDetectionArrayPtr landmark_ptr,
+        /*
+        Update the smoother with landmark detections, preintegrated IMU factor and odometry measurement.
+        */
+        virtual nav_msgs::OdometryPtr updateVIO(TagDetectionArrayPtr landmark_ptr,
                                     EigenPose odom, EigenPoseCov odom_cov, bool use_odom) = 0;
 
-            void setupIMU(double accel_noise_sigma, double accel_bias_rw_sigma,
-                            double gyro_noise_sigma, double gyro_bias_rw_sigma, EigenPose T_sensor2cam);
+        void setupIMU(double accel_noise_sigma, double accel_bias_rw_sigma,
+                    double gyro_noise_sigma, double gyro_bias_rw_sigma, EigenPose T_sensor2cam);
 
-            /*
-            Add IMU message to the queue
-            */
-            void updateIMU(sensor_msgs::ImuPtr imu_msg_ptr);
+        /*
+        Add IMU message to the queue
+        */
+        void updateIMU(sensor_msgs::ImuPtr imu_msg_ptr);
 
-            /*
-            Retrive the smoothed poses from the smoother as Eigen::Matrix4d, and save it to the given container.
-            */
-            virtual void getPoses(EigenPoseMap & container, const unsigned char filter_char) = 0;
-        
-        protected:
-            /*
-            read Values from a file
-            */
-            Values::shared_ptr read_from_file(const string &filename);
+        /*
+        Retrive the smoothed poses from the smoother as Eigen::Matrix4d, and save it to the given container.
+        */
+        virtual void getPoses(EigenPoseMap &container, const unsigned char filter_char) = 0;
 
-            /*
-            write Values to a file
-            */
-            void write_to_file(const Values &estimate, const string &filename);
+        Values getLandmarks()
+        {
+            return landmark_values_;
+        }
 
-            /*
-            initialize the slam
-            */
-            Pose3 initSLAM(double cur_img_t);
+        /*
+        create visualization_msgs/MarkerArray message from landmark_values_
+        */
+        visualization_msgs::MarkerArrayPtr createMarkerArray(std_msgs::Header header);
 
-            // /*
-            // add combined imu factor to connect previous NavState to current NavState
-            // */
-            // Pose3 addImuFactor(double cur_img_t);
+    protected:
+        /*
+        read Values from a file
+        */
+        Values::shared_ptr read_from_file(const string &filename);
 
-            /*
-            add odometry factor to connect previous Pose3 to current Pose3
-            */
-            Pose3 addOdomFactor(EigenPose odom, EigenPoseCov odom_cov);
+        /*
+        write Values to a file
+        */
+        void write_to_file(const Values &estimate, const string &filename);
 
-            /* 
-            add odometry factor to connect previous Pose3 to current Pose3 along with IMU preintegration
-            */
-            Pose3 addImuFactor(EigenPose odom, EigenPoseCov odom_cov, double cur_img_t, bool use_odom);
+        /*
+        initialize the slam
+        */
+        Pose3 initSLAM(double cur_img_t);
 
-            /*
-            create nav_msg/odometry message from Eigen::Matrix4d
-            */
-            nav_msgs::OdometryPtr createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 
+        /*
+        add combined imu factor to connect previous NavState to current NavState
+        */
+        Pose3 addImuFactor(double cur_img_t);
+
+        /*
+        add odometry factor to connect previous Pose3 to current Pose3
+        */
+        Pose3 addOdomFactor(EigenPose odom, EigenPoseCov odom_cov);
+
+        /*
+        add odometry factor to connect previous Pose3 to current Pose3 along with IMU preintegration
+        */
+        Pose3 addImuFactor(EigenPose odom, EigenPoseCov odom_cov, double cur_img_t, bool use_odom);
+
+        /*
+        create nav_msg/odometry message from Eigen::Matrix4d
+        */
+        nav_msgs::OdometryPtr createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 
                                             Vector3 linear_v, Vector3 angular_w, 
                                             double time, int seq);
-            
-            /*
-            Template member function to add landmark factors into factor graph
-            */
-            template <typename T>
-            void addLandmarkFactor(T & smoother, 
-                                    TagDetectionArrayPtr landmark_ptr,
-                                    Pose3 & cur_pose_init)
+    
+        /*
+        Template member function to add landmark factors into factor graph
+        */
+        template <typename T>
+        void addLandmarkFactor(T &smoother,
+                            TagDetectionArrayPtr landmark_ptr,
+                            Pose3 &cur_pose_init)
+        {
+            Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
+
+            // add prior factor for landmarks
+            for (auto &landmark : landmark_ptr->detections)
             {
-                Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
-                
-                // add prior factor for landmarks
-                for (auto &landmark : landmark_ptr->detections){
-                    if (!landmark.static_tag)
+                if (!landmark.static_tag)
+                {
+                    // skip non-static tags
+                    ROS_WARN("Found no static tag! This should not happen! Check the tag detection result.");
+                    continue;
+                }
+                Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);
+                // landmark.pose is geometry_msgs::Pose
+                Pose3 landmark_factor = Pose3(getTransform(landmark.pose));
+                auto landmark_noise = noiseModel::Gaussian::Covariance(landmark_factor_cov_);
+
+                // add prior factor to the local graph
+                factor_graph_.emplace_shared<BetweenFactor<Pose3>>(
+                    cur_pose_key, landmark_key, landmark_factor, landmark_noise);
+
+                if (!smoother.valueExists(landmark_key))
+                {
+                    // check if the landmark is in the prior map
+                    if (landmark_values_.exists(landmark_key))
                     {
-                        // skip non-static tags
-                        ROS_WARN("Found no static tag! This should not happen! Check the tag detection result.");
-                        continue;
+                        // if the landmark is in the prior map, we add it to the initial estimate
+                        Pose3 landmark_prior = landmark_values_.at<Pose3>(landmark_key);
+                        initial_estimate_.insert(landmark_key, landmark_prior);
+
+                        // insert prior factor to the graph
+                        auto landmark_prior_noise = noiseModel::Gaussian::Covariance(landmark_cov_[landmark_key]);
+                        factor_graph_.add(PriorFactor<Pose3>(landmark_key, landmark_prior, landmark_prior_noise));
+
+                        // Equality Constraints can only use QR solver It is too slow
+                        // factor_graph_.add(NonlinearEquality1<Pose3>(landmark_prior, landmark_key));
                     }
-                    Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);
-                    // landmark.pose is geometry_msgs::Pose
-                    Pose3 landmark_factor = Pose3(getTransform(landmark.pose));
-                    auto landmark_noise = noiseModel::Gaussian::Covariance(landmark_factor_cov_);
-
-                    // add prior factor to the local graph
-                    factor_graph_.emplace_shared<BetweenFactor<Pose3>>(
-                            cur_pose_key, landmark_key, landmark_factor, landmark_noise);
-
-                    if (!smoother.valueExists(landmark_key)){
-                        // check if the landmark is in the prior map
-                        if (landmark_values_.exists(landmark_key)){
-                            // if the landmark is in the prior map, we add it to the initial estimate
-                            Pose3 landmark_prior = landmark_values_.at<Pose3>(landmark_key);
-                            initial_estimate_.insert(landmark_key, landmark_prior);
-
-                            // insert prior factor to the graph
-                            auto landmark_prior_noise = noiseModel::Gaussian::Covariance(landmark_cov_[landmark_key]);
-                            factor_graph_.add(PriorFactor<Pose3>(landmark_key, landmark_prior, landmark_prior_noise));
-
-                            // Equality Constraints can only use QR solver It is too slow
-                            //factor_graph_.add(NonlinearEquality1<Pose3>(landmark_prior, landmark_key));
-                        }else{
-                            // if this a new landmark, we add it by reprojecting the landmark from the current predicted pose
-                            Pose3 landmark_init = cur_pose_init * landmark_factor;
-                            initial_estimate_.insert(landmark_key, landmark_init);
-                        }
+                    else
+                    {
+                        // if this a new landmark, we add it by reprojecting the landmark from the current predicted pose
+                        Pose3 landmark_init = cur_pose_init * landmark_factor;
+                        initial_estimate_.insert(landmark_key, landmark_init);
                     }
                 }
             }
-        
-        private:
-            /*
-            set the gravity vector for preint_param_ using the imu message
-            */
-            void setGravity(sensor_msgs::ImuPtr imu_msg_ptr);
+        }
 
-            /*
-            loda map from load_map_path_
-            */
-            void loadMap();
+    private:
+        /*
+        set the gravity vector for preint_param_ using the imu message
+        */
+        void setGravity(sensor_msgs::ImuPtr imu_msg_ptr);
 
-            
+        /*
+        loda map from load_map_path_
+        */
+        void loadMap();
 
-        protected:
-            // system parameters
-            bool initialized_;
-            bool prior_map_; // if true, the system will use prior factor to initialize the map
-            bool save_graph_; // if true, the system will save the factor graph to a file
+    protected:
+        // system parameters
+        bool initialized_;
+        bool prior_map_;  // if true, the system will use prior factor to initialize the map
+        bool save_graph_; // if true, the system will save the factor graph to a file
 
-            // file path to the map file
-            // if the map file is not empty, the system will load the map from the file
-            // the robot will localize or do SLAM based using the loaded map as prior
-            std::string load_map_path_;
-            std::string save_map_path_;
+        // file path to the map file
+        // if the map file is not empty, the system will load the map from the file
+        // the robot will localize or do SLAM based using the loaded map as prior
+        std::string load_map_path_;
+        std::string save_map_path_;
 
-            // Factor graph and inital value of each variables
-            NonlinearFactorGraph factor_graph_;
-            Values initial_estimate_;
+        // Factor graph and inital value of each variables
+        NonlinearFactorGraph factor_graph_;
+        Values initial_estimate_;
 
-            Values landmark_values_;
-            std::unordered_map<Key, EigenPoseCov> landmark_cov_;
-            
-            // keep track of the number of poses
-            int pose_count_;
+        Values landmark_values_;
+        std::unordered_map<Key, EigenPoseCov> landmark_cov_;
 
-            // noise parameters
-            double landmark_factor_sigma_trans_;
-            double landmark_factor_sigma_rot_;
-            EigenPoseCov landmark_factor_cov_;
+        // keep track of the number of poses
+        int pose_count_;
 
-            double landmark_prior_sigma_trans_;
-            double landmark_prior_sigma_rot_;
-            EigenPoseCov landmark_prior_cov_;
+        // noise parameters
+        double landmark_factor_sigma_trans_;
+        double landmark_factor_sigma_rot_;
+        EigenPoseCov landmark_factor_cov_;
 
-            double pose_prior_sigma_trans_;
-            double pose_prior_sigma_rot_;
-            double vel_prior_sigma_;
-            double bias_prior_sigma_;
+        double landmark_prior_sigma_trans_;
+        double landmark_prior_sigma_rot_;
+        EigenPoseCov landmark_prior_cov_;
 
-            // concurrent queue for imu data
-            tbb::concurrent_queue <sensor_msgs::ImuPtr> imu_queue_;
-            boost::shared_ptr<PreintegrationCombinedParams> preint_param_;
-            std::shared_ptr<PreintegratedCombinedMeasurements> preint_meas_ = nullptr;
-            
-            // values to track of previous states
-            Pose3 prev_pose_;
-            Vector3 prev_vel_;
-            NavState prev_state_;
-            imuBias::ConstantBias prev_bias_; // assume zero initial bias
+        double pose_prior_sigma_trans_;
+        double pose_prior_sigma_rot_;
+        double vel_prior_sigma_;
+        double bias_prior_sigma_;
 
-            // correct the acceleration and angular velocity using the bias
-            Vector3 correct_acc_ = Vector3::Zero();
-            Vector3 correct_gyro_ = Vector3::Zero();
+        // concurrent queue for imu data
+        tbb::concurrent_queue<sensor_msgs::ImuPtr> imu_queue_;
+        boost::shared_ptr<PreintegrationCombinedParams> preint_param_;
+        std::shared_ptr<PreintegratedCombinedMeasurements> preint_meas_ = nullptr;
 
-            double prev_img_t_ = 0.0; 
+        // values to track of previous states
+        Pose3 prev_pose_;
+        Vector3 prev_vel_;
+        NavState prev_state_;
+        imuBias::ConstantBias prev_bias_; // assume zero initial bias
 
-            // Pose offset
-            bool need_pose_offset = false;
-            EigenPose pose_offset = EigenPose::Identity();
-            EigenPose pose_offset_inv = EigenPose::Identity();
-            
+        bool need_pose_offset_ = false;
+        EigenPose pose_offset_ = EigenPose::Identity();
+        EigenPose pose_offset_inv_ = EigenPose::Identity();
+
+        // correct the acceleration and angular velocity using the bias
+        Vector3 correct_acc_ = Vector3::Zero();
+        Vector3 correct_gyro_ = Vector3::Zero();
+
+        double prev_img_t_ = 0.0;
     };
-    
+
 }
-
-
 
 #endif

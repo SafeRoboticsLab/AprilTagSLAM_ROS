@@ -315,7 +315,7 @@ namespace tagslam_ros
       EigenPose T_tag_to_cam = getRelativeTransform(TagObjectPoints,TagImagePoints, cameraMatrix_, distCoeffs_);
       EigenPose T_tag_to_ros = T_cam_to_ros_ * T_tag_to_cam;
       
-      geometry_msgs::Pose tag_pose = makePoseMsg(T_tag_to_ros);
+      geometry_msgs::Pose tag_pose = createPoseMsg(T_tag_to_ros);
 
       // create message
       AprilTagDetection tag_detection;

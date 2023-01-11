@@ -199,6 +199,7 @@
         bool if_pub_image_;
         bool if_pub_tag_det_;
         bool if_pub_tag_det_image_;
+        bool if_pub_landmark_;
         image_transport::CameraPublisher img_pub_; //
         image_transport::Publisher det_img_pub_; //
 
@@ -208,6 +209,7 @@
         ros::Publisher slam_pose_pub_;
         ros::Publisher imu_pub_;
         // ros::Publisher imu_pub_Raw;
+        ros::Publisher landmark_pub_;
 
         // Services
         ros::ServiceServer mSrvSetInitPose;

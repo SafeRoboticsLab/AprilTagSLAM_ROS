@@ -78,7 +78,7 @@ namespace tagslam_ros
     // private function
   private:
     void DetectionOnlyCallback(const sensor_msgs::ImageConstPtr &image,
-                               const sensor_msgs::CameraInfoConstPtr &camera_info);
+                                const sensor_msgs::CameraInfoConstPtr &camera_info);
 
     void imageOdomCallback(
         const sensor_msgs::ImageConstPtr &image,
