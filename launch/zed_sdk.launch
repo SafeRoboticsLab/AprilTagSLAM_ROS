@@ -1,28 +1,37 @@
 <launch>
-  <arg name="launch_prefix" default="" /> <!-- set to value="gdbserver localhost:10000" for remote debugging -->
-  <arg name="node_namespace" default="tagslam_ros_node" />
+    <arg name="node_namespace" default="SLAM" />
+    <arg name="rviz" default="false" />
+    <!-- load other parameters from yaml-->
+    <rosparam command="load" file="$(find tagslam_ros)/config/config.yaml" ns="$(arg node_namespace)" />
 
-  <!-- load other parameters from yaml-->
-  <rosparam command="load" file="$(find tagslam_ros)/config/config.yaml" ns="$(arg node_namespace)" />
+    <node pkg="tagslam_ros" type="tagslam_ros_zed_node" name="$(arg node_namespace)" 
+        clear_params="true" output="screen" >
+    </node>
 
-  <node pkg="tagslam_ros" type="tagslam_ros_zed_node" name="$(arg node_namespace)" clear_params="true" output="screen" launch-prefix="$(arg launch_prefix)" >
-  </node>
+    <group if="$(arg rviz)">
+        <node type="rviz" name="rviz" pkg="rviz" 
+            args="-d $(find tagslam_ros)/config/rviz.rviz" />
+        <node type="rqt_gui" name="rqt_gui" pkg="rqt_gui" 
+            args="--perspective-file $(find tagslam_ros)/config/rqt.perspective"
+            launch-prefix="bash -c 'sleep 3; $0 $@' "/>
+    </group>
+    
 
-  <group ns="$(arg node_namespace)/image">
-      <rosparam param="disable_pub_plugins">
-          - 'image_transport/compressedDepth'
-          - 'image_transport/compressed'
-          - 'image_transport/theora'
-      </rosparam>
-  </group>
+    <group ns="$(arg node_namespace)/image">
+        <rosparam param="disable_pub_plugins">
+            - 'image_transport/compressedDepth'
+            - 'image_transport/compressed'
+            - 'image_transport/theora'
+        </rosparam>
+    </group>
 
-  <group ns="$(arg node_namespace)/tag_detection_image" >
-      <rosparam param="disable_pub_plugins">
-          - 'image_transport/compressedDepth'
-          - 'image_transport/compressed'
-          - 'image_transport/theora'
-      </rosparam>
-  </group>
+    <group ns="$(arg node_namespace)/tag_detection_image" >
+        <rosparam param="disable_pub_plugins">
+            - 'image_transport/compressedDepth'
+            - 'image_transport/compressed'
+            - 'image_transport/theora'
+        </rosparam>
+    </group>
 
 </launch>
 

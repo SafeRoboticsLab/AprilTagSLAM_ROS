@@ -55,6 +55,8 @@
 #include <fstream>
 #include <iostream>
 #include <ctime>
+#include <mutex>
+#include <thread>
 
 using namespace std;
 using namespace gtsam;
@@ -102,6 +104,8 @@ namespace tagslam_ros
         Retrive the smoothed poses from the smoother as Eigen::Matrix4d, and save it to the given container.
         */
         virtual void getPoses(EigenPoseMap &container, const unsigned char filter_char) = 0;
+
+        virtual void reset() = 0;
 
         Values getLandmarks()
         {
@@ -272,6 +276,9 @@ namespace tagslam_ros
         Vector3 correct_gyro_ = Vector3::Zero();
 
         double prev_img_t_ = 0.0;
+
+        // mutex for reset
+        std::mutex reset_mutex_;
     };
 
 }

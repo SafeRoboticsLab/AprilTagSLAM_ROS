@@ -50,8 +50,6 @@
 #include "frontend/tag_detector.h"
 #include "frontend/tag_detector_cpu.h"
 
-
-
 #include "backend/backend.h"
 #include "backend/fixed_lag_backend.h"
 #include "backend/isam2_backend.h"
@@ -62,6 +60,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <std_srvs/Trigger.h>
 
 #include <condition_variable>
 #include <memory>
@@ -74,6 +73,8 @@
     #include <opencv2/core/cuda.hpp>
     #include <opencv2/cudaimgproc.hpp>
 #endif
+
+using Trigger = std_srvs::Trigger; 
 
 #ifndef NO_ZED
     // zed include
@@ -108,6 +109,10 @@
         */
         void setup_publisher();
 
+        /*! \brief Set up ros publisher
+        */
+        void setup_service();
+        
         /*! \brief Set up ros dynamic reconfigure
         */
         void setup_dynmaic_reconfig();
@@ -157,6 +162,34 @@
 
         cv::Mat slMat2cvMat(sl::Mat& input);
 
+        bool resetCallback(Trigger::Request& req, Trigger::Response& res)
+        {
+            run_slam_ = false;
+            // wait for one second to allow the slam thread to finish current computation
+            slam_backend_->reset();
+            res.success = true;
+            res.message = "reset slam.";
+            return true;
+        }
+
+        bool startCallback(Trigger::Request& req, Trigger::Response& res)
+        {
+            run_slam_ = true;
+            res.success = true;
+            res.message = "Start slam.";
+            NODELET_INFO("SLAM Started.");
+            return true;
+        }
+
+        bool stopCallback(Trigger::Request& req, Trigger::Response& res)
+        {
+            run_slam_ = false;
+            res.success = true;
+            res.message = "Stop slam.";
+            NODELET_INFO("SLAM Stopped.");
+            return true;
+        }
+
 #ifndef NO_CUDA_OPENCV
         cv::cuda::GpuMat slMat2cvMatGPU(sl::Mat& input);
 #endif
@@ -200,23 +233,25 @@
         bool if_pub_tag_det_;
         bool if_pub_tag_det_image_;
         bool if_pub_landmark_;
+        bool if_pub_latency_;
         image_transport::CameraPublisher img_pub_; //
         image_transport::Publisher det_img_pub_; //
 
         ros::Publisher static_tag_det_pub_;
         ros::Publisher dyn_tag_det_pub_;
-        // ros::Publisher zed_pose_pub_;
         ros::Publisher slam_pose_pub_;
         ros::Publisher imu_pub_;
-        // ros::Publisher imu_pub_Raw;
         ros::Publisher landmark_pub_;
 
-        // Services
-        ros::ServiceServer mSrvSetInitPose;
-        ros::ServiceServer mSrvResetOdometry;
-        ros::ServiceServer mSrvResetTracking;
+        ros::Publisher debug_convert_pub_;
+        ros::Publisher debug_det_pub_;
+        ros::Publisher debug_opt_pub_;
+        ros::Publisher debug_total_pub_;
 
-        bool mStopNode = false;
+        // Services
+        ros::ServiceServer srv_start_slam_;
+        ros::ServiceServer srv_stop_slam_;
+        ros::ServiceServer srv_reset_slam_;
 
         /*
         *** SLAM Parameters ****
@@ -236,17 +271,8 @@
         // Camera info
         sensor_msgs::CameraInfoPtr cam_info_msg_;
 
-        // Thread Sync
-        std::mutex mCloseZedMutex;
-        std::mutex mCamDataMutex;
-        std::mutex mPcMutex;
-        std::mutex mRecMutex;
-        std::mutex mPosTrkMutex;
-        std::mutex mDynParMutex;
-        std::mutex mMappingMutex;
-        std::mutex mObjDetMutex;
-        std::condition_variable mPcDataReadyCondVar;
-        bool mPcDataReady;
+        // ROS services parameters
+        std::atomic<bool> run_slam_ = false;
 
     };
     } 

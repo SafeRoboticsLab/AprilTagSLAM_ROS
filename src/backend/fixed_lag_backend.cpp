@@ -36,178 +36,206 @@ namespace tagslam_ros
 {
     FixedLagBackend::FixedLagBackend(ros::NodeHandle pnh) : Backend(pnh)
     {
-        LevenbergMarquardtParams lm_params;
-        lm_params.lambdaInitial = getRosOption<double>(pnh, "backend/lambda_initial", 1e-5);
-        lm_params.lambdaUpperBound = getRosOption<double>(pnh, "backend/lambda_upper_bound", 1e5);
-        lm_params.lambdaLowerBound = getRosOption<double>(pnh, "backend/lambda_lower_bound", 0);
-        lm_params.lambdaFactor = getRosOption<double>(pnh, "backend/lambda_factor", 10.0);
-        lm_params.maxIterations = getRosOption<int>(pnh, "backend/max_iterations", 100);
-        lm_params.errorTol = getRosOption<double>(pnh, "backend/error_tol", 1e-5);
-        lm_params.relativeErrorTol = getRosOption<double>(pnh, "backend/relative_error_tol", 1e-4);
-        lm_params.absoluteErrorTol = getRosOption<double>(pnh, "backend/absolute_error_tol", 1e-5);
-        bool local_optimal = getRosOption<bool>(pnh, "backend/local_optimal", false);
+        lm_params_.lambdaInitial = getRosOption<double>(pnh, "backend/lambda_initial", 1e-5);
+        lm_params_.lambdaUpperBound = getRosOption<double>(pnh, "backend/lambda_upper_bound", 1e5);
+        lm_params_.lambdaLowerBound = getRosOption<double>(pnh, "backend/lambda_lower_bound", 0);
+        lm_params_.lambdaFactor = getRosOption<double>(pnh, "backend/lambda_factor", 10.0);
+        lm_params_.maxIterations = getRosOption<int>(pnh, "backend/max_iterations", 100);
+        lm_params_.errorTol = getRosOption<double>(pnh, "backend/error_tol", 1e-5);
+        lm_params_.relativeErrorTol = getRosOption<double>(pnh, "backend/relative_error_tol", 1e-4);
+        lm_params_.absoluteErrorTol = getRosOption<double>(pnh, "backend/absolute_error_tol", 1e-5);
+        local_optimal_ = getRosOption<bool>(pnh, "backend/local_optimal", false);
 
-        double lag = getRosOption<double>(pnh, "backend/lag", 1.0);
-        smoother_ = BatchFixedLagSmoother(lag, lm_params, true, local_optimal);
+        lag_ = getRosOption<double>(pnh, "backend/lag", 1.0);
+        smoother_ = BatchFixedLagSmoother(lag_, lm_params_, true, local_optimal_);
+    }
+
+    void FixedLagBackend::reset()
+    {
+        reset_mutex_.lock();
+        initialized_ = false;
+        pose_count_ = 0;
+        prev_img_t_ = 0.0;
+        imu_queue_.clear();
+        landmark_values_.clear();
+        landmark_cov_.clear();
+        if (prior_map_){
+            loadMap();
+        }
+        smoother_ = BatchFixedLagSmoother(lag_, lm_params_, true, local_optimal_);
+        ROS_INFO("Reset iSAM2");
+        reset_mutex_.unlock();
     }
 
     nav_msgs::OdometryPtr FixedLagBackend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
     {
-        int num_landmarks_detected = landmark_ptr->detections.size();
-        Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
-        Pose3 cur_pose_init;
-        double cur_img_t = landmark_ptr->header.stamp.toSec();
+        if(reset_mutex_.try_lock()){
+            int num_landmarks_detected = landmark_ptr->detections.size();
+            Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
+            Pose3 cur_pose_init;
+            double cur_img_t = landmark_ptr->header.stamp.toSec();
 
-        if (initialized_)
-        {
-            cur_pose_init = addOdomFactor(odom, odom_cov);
+            if (initialized_)
+            {
+                cur_pose_init = addOdomFactor(odom, odom_cov);
+            }
+            else if (num_landmarks_detected > 0)
+            {
+                cur_pose_init = initSLAM(cur_img_t);
+            }
+            else
+            {
+                ROS_WARN_ONCE("System not initialized, waiting for landmarks");
+                return nullptr;
+            }
+
+            // create new timesampe map for the current pose
+            newTimestamps_[cur_pose_key] = cur_img_t;
+
+            // add prior factor for landmarks
+            addLandmarkFactor<BatchFixedLagSmoother>(smoother_, landmark_ptr, cur_pose_init);
+
+            // update landmark timestamp
+            for (auto &landmark : landmark_ptr->detections)
+            {
+                Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);
+                newTimestamps_[landmark_key] = cur_img_t;
+            }
+
+            // do a batch optimization
+            smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+
+            // get the current pose and save it for next iteration
+            Values estimated_vals = smoother_.calculateEstimate();
+
+            // get the marginals
+            Marginals marginals(smoother_.getFactors(), estimated_vals);
+
+            prev_pose_ = estimated_vals.at<Pose3>(cur_pose_key);
+            EigenPoseCov pose_cov = marginals.marginalCovariance(cur_pose_key);
+
+            updateLandmarkValues(estimated_vals, marginals);
+
+            // make message
+            auto odom_msg = createOdomMsg(prev_pose_, pose_cov, Vector3::Zero(), Vector3::Zero(), cur_img_t, pose_count_);
+
+            pose_count_++;
+
+            // reset local graph and values
+            factor_graph_.resize(0);
+            initial_estimate_.clear();
+            newTimestamps_.clear();
+            reset_mutex_.unlock();
+            return odom_msg;
         }
-        else if (num_landmarks_detected > 0)
-        {
-            cur_pose_init = initSLAM(cur_img_t);
-        }
-        else
-        {
-            ROS_WARN_ONCE("System not initialized, waiting for landmarks");
+        else{
+            ROS_WARN_ONCE("Resetting, waiting for reset to finish");
             return nullptr;
         }
-
-        // create new timesampe map for the current pose
-        newTimestamps_[cur_pose_key] = cur_img_t;
-
-        // add prior factor for landmarks
-        addLandmarkFactor<BatchFixedLagSmoother>(smoother_, landmark_ptr, cur_pose_init);
-
-        // update landmark timestamp
-        for (auto &landmark : landmark_ptr->detections)
-        {
-            Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);
-            newTimestamps_[landmark_key] = cur_img_t;
-        }
-
-        // do a batch optimization
-        smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
-
-        // get the current pose and save it for next iteration
-        Values estimated_vals = smoother_.calculateEstimate();
-
-        // get the marginals
-        Marginals marginals(smoother_.getFactors(), estimated_vals);
-
-        prev_pose_ = estimated_vals.at<Pose3>(cur_pose_key);
-        EigenPoseCov pose_cov = marginals.marginalCovariance(cur_pose_key);
-
-        updateLandmarkValues(estimated_vals, marginals);
-
-        // make message
-        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, Vector3::Zero(), Vector3::Zero(), cur_img_t, pose_count_);
-
-        pose_count_++;
-
-        // reset local graph and values
-        factor_graph_.resize(0);
-        initial_estimate_.clear();
-        newTimestamps_.clear();
-
-        return odom_msg;
     }
 
     nav_msgs::OdometryPtr FixedLagBackend::updateVIO(TagDetectionArrayPtr landmark_ptr, 
                                     EigenPose odom, EigenPoseCov odom_cov, bool use_odom)
     {
-        int num_landmarks_detected = landmark_ptr->detections.size();
+        if(reset_mutex_.try_lock()){
+                
+            int num_landmarks_detected = landmark_ptr->detections.size();
 
-        Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
-        Key cur_vel_key = Symbol(kVelSymbol, pose_count_);
-        Key cur_bias_key = Symbol(kBiasSymbol, pose_count_);
+            Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
+            Key cur_vel_key = Symbol(kVelSymbol, pose_count_);
+            Key cur_bias_key = Symbol(kBiasSymbol, pose_count_);
 
-        Pose3 cur_pose_init;
+            Pose3 cur_pose_init;
 
-        Vector3 corrected_acc = Vector3::Zero();
-        Vector3 corrected_gyro = Vector3::Zero();
+            Vector3 corrected_acc = Vector3::Zero();
+            Vector3 corrected_gyro = Vector3::Zero();
 
-        double cur_img_t = landmark_ptr->header.stamp.toSec();
+            double cur_img_t = landmark_ptr->header.stamp.toSec();
 
-        if (initialized_)
-        {
-            cur_pose_init = addImuFactor(odom, odom_cov, cur_img_t, use_odom);
-        }
-        else if (num_landmarks_detected > 0)
-        {
-            cur_pose_init = initSLAM(cur_img_t);
-        }
-        else
-        {
-            ROS_WARN_ONCE("System not initialized, waiting for landmarks");
-            // dump all previous inserted imu measurement
-            while (!imu_queue_.empty())
+            if (initialized_)
             {
-                sensor_msgs::ImuPtr imu_msg_ptr;
-                while (!imu_queue_.try_pop(imu_msg_ptr))
-                {
-                }
-                if (imu_msg_ptr->header.stamp.toSec() >= cur_img_t)
-                {
-                    break;
-                }
+                cur_pose_init = addImuFactor(odom, odom_cov, cur_img_t, use_odom);
             }
+            else if (num_landmarks_detected > 0)
+            {
+                cur_pose_init = initSLAM(cur_img_t);
+            }
+            else
+            {
+                ROS_WARN_ONCE("System not initialized, waiting for landmarks");
+                // dump all previous inserted imu measurement
+                while (!imu_queue_.empty())
+                {
+                    sensor_msgs::ImuPtr imu_msg_ptr;
+                    while (!imu_queue_.try_pop(imu_msg_ptr))
+                    {
+                    }
+                    if (imu_msg_ptr->header.stamp.toSec() >= cur_img_t)
+                    {
+                        break;
+                    }
+                }
+                return nullptr;
+            }
+
+            // create new timesampe map for the current pose
+            newTimestamps_[cur_pose_key] = cur_img_t;
+            newTimestamps_[cur_vel_key] = cur_img_t;
+            newTimestamps_[cur_bias_key] = cur_img_t;
+
+            // add prior factor for landmarks
+            addLandmarkFactor<BatchFixedLagSmoother>(smoother_, landmark_ptr, cur_pose_init);
+
+            // update landmark timestamp
+            for (auto &landmark : landmark_ptr->detections)
+            {
+                Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);
+                newTimestamps_[landmark_key] = cur_img_t;
+            }
+
+            // do a batch optimization
+            smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+
+            // get the current pose and save it for next iteration
+            Values estimated_vals = smoother_.calculateEstimate();
+
+            // calculate marginals based on the current estimate
+            Marginals marginals(smoother_.getFactors(), estimated_vals);
+
+            prev_pose_ = estimated_vals.at<Pose3>(cur_pose_key);
+            prev_vel_ = estimated_vals.at<Vector3>(cur_vel_key);
+            prev_bias_ = estimated_vals.at<imuBias::ConstantBias>(cur_bias_key);
+
+            EigenPoseCov pose_cov = marginals.marginalCovariance(cur_pose_key);
+
+            // ROS_INFO_STREAM("Pose covariance: " << pose_cov);
+
+            prev_state_ = NavState(prev_pose_, prev_vel_);
+
+            Vector3 body_vel = prev_state_.bodyVelocity();
+
+            updateLandmarkValues(estimated_vals, marginals);
+
+            // make message
+            auto odom_msg = createOdomMsg(prev_pose_, pose_cov, body_vel, correct_gyro_, cur_img_t, pose_count_);
+
+            prev_img_t_ = cur_img_t;
+
+            pose_count_++;
+
+            // Reset the preintegration object.
+            preint_meas_->resetIntegrationAndSetBias(prev_bias_);
+
+            // reset local graph and values
+            factor_graph_.resize(0);
+            initial_estimate_.clear();
+            newTimestamps_.clear();
+            reset_mutex_.unlock();
+            return odom_msg;
+        }else{
+            ROS_WARN_ONCE("Resetting, waiting for reset to finish");
             return nullptr;
         }
-
-        // create new timesampe map for the current pose
-        newTimestamps_[cur_pose_key] = cur_img_t;
-        newTimestamps_[cur_vel_key] = cur_img_t;
-        newTimestamps_[cur_bias_key] = cur_img_t;
-
-        // add prior factor for landmarks
-        addLandmarkFactor<BatchFixedLagSmoother>(smoother_, landmark_ptr, cur_pose_init);
-
-        // update landmark timestamp
-        for (auto &landmark : landmark_ptr->detections)
-        {
-            Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);
-            newTimestamps_[landmark_key] = cur_img_t;
-        }
-
-        // do a batch optimization
-        smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
-
-        // get the current pose and save it for next iteration
-        Values estimated_vals = smoother_.calculateEstimate();
-
-        // calculate marginals based on the current estimate
-        Marginals marginals(smoother_.getFactors(), estimated_vals);
-
-        prev_pose_ = estimated_vals.at<Pose3>(cur_pose_key);
-        prev_vel_ = estimated_vals.at<Vector3>(cur_vel_key);
-        prev_bias_ = estimated_vals.at<imuBias::ConstantBias>(cur_bias_key);
-
-        EigenPoseCov pose_cov = marginals.marginalCovariance(cur_pose_key);
-
-        // ROS_INFO_STREAM("Pose covariance: " << pose_cov);
-
-        prev_state_ = NavState(prev_pose_, prev_vel_);
-
-        Vector3 body_vel = prev_state_.bodyVelocity();
-
-        updateLandmarkValues(estimated_vals, marginals);
-
-        // make message
-        auto odom_msg = createOdomMsg(prev_pose_, pose_cov, body_vel, correct_gyro_, cur_img_t, pose_count_);
-
-        prev_img_t_ = cur_img_t;
-
-        pose_count_++;
-
-        // Reset the preintegration object.
-        preint_meas_->resetIntegrationAndSetBias(prev_bias_);
-
-        // reset local graph and values
-        factor_graph_.resize(0);
-        initial_estimate_.clear();
-        newTimestamps_.clear();
-
-        return odom_msg;
     }
 
     void FixedLagBackend::getPoses(EigenPoseMap &container, const unsigned char filter_char)

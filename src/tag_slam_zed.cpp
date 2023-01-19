@@ -95,8 +95,6 @@ namespace tagslam_ros {
         nh_ = getMTNodeHandle();
         pnh_ = getMTPrivateNodeHandle();
 
-        mStopNode = false;
-
         NODELET_INFO("********** Starting nodelet '%s' **********", getName().c_str());
 
         readParameters();
@@ -104,6 +102,8 @@ namespace tagslam_ros {
         turn_on_zed();
 
         setup_publisher();
+
+        setup_service();
         
         // Start pool thread
         if(use_gpu_detector_){
@@ -115,6 +115,14 @@ namespace tagslam_ros {
         // Start Sensors thread
         if(use_imu_odom_)
             sens_thread_ = std::thread(&TagSlamZED::sensors_thread_func, this);
+    }
+
+    void TagSlamZED::setup_service()
+    {
+        // Set the service to reset the map
+        srv_reset_slam_ = pnh_.advertiseService("reset_slam", &TagSlamZED::resetCallback, this);
+        srv_start_slam_ = pnh_.advertiseService("start_slam", &TagSlamZED::startCallback, this);
+        srv_stop_slam_ = pnh_.advertiseService("stop_slam", &TagSlamZED::stopCallback, this);
     }
 
     void TagSlamZED::setup_publisher()
@@ -159,6 +167,13 @@ namespace tagslam_ros {
         if(if_pub_landmark_)
             landmark_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("slam_landmarks", 1);
 
+        if (if_pub_latency_)
+        {
+            debug_convert_pub_ = pnh_.advertise<std_msgs::Float32>("debug/convert", 1);
+            debug_det_pub_ = pnh_.advertise<std_msgs::Float32>("debug/detect", 1);
+            debug_opt_pub_ = pnh_.advertise<std_msgs::Float32>("debug/optimize", 1);
+            debug_total_pub_ = pnh_.advertise<std_msgs::Float32>("debug/total", 1);
+        }
     }
 
     void TagSlamZED::readParameters(){
@@ -226,21 +241,21 @@ namespace tagslam_ros {
             detection_only_ = true;
         }
 
-        std::string backend_type = getRosOption<std::string>(pnh_, "backend/smoother", "isam2");
-        if (backend_type =="isam2") {
+        backend_type_ = getRosOption<std::string>(pnh_, "backend/smoother", "isam2");
+        if (backend_type_ =="isam2") {
             slam_backend_ = std::make_unique<iSAM2Backend>(pnh_);
             NODELET_INFO("Using iSAM2 backend.");
-        }else if (backend_type == "fixed_lag"){
+        }else if (backend_type_ == "fixed_lag"){
             slam_backend_ = std::make_unique<FixedLagBackend>(pnh_);
             NODELET_INFO("Using fixed-lag backend.");
-        }else if (backend_type == "none"){
+        }else if (backend_type_ == "none"){
             slam_backend_ = nullptr;
             detection_only_ = true;
             use_imu_odom_ = false;
             zed_pos_tracking_enabled_ = false;
             NODELET_INFO("Apriltag Detector Mode.");
         }else{
-            NODELET_ERROR("Not supported backend type: %s", backend_type.c_str());
+            NODELET_ERROR("Not supported backend type: %s", backend_type_.c_str());
         }
 
         if(zed_pos_tracking_enabled_)
@@ -269,6 +284,7 @@ namespace tagslam_ros {
         if_pub_tag_det_image_ = getRosOption<bool>(pnh_, "publish/publish_image_with_tags", true);
         if_pub_image_ = getRosOption<bool>(pnh_, "publish/publish_image", true);
         if_pub_landmark_ = getRosOption<bool>(pnh_, "publish/publish_landmarks", true);
+        if_pub_latency_ = getRosOption<bool>(pnh_, "publish/publish_latency", true);
     }
 
     void TagSlamZED::turn_on_zed()
@@ -300,9 +316,6 @@ namespace tagslam_ros {
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
             if (!pnh_.ok()) {
-                // mStopNode = true; // Stops other threads
-
-                std::lock_guard<std::mutex> lock(mCloseZedMutex);
                 NODELET_DEBUG("Closing ZED");
                 zed_camera_.close();
                 NODELET_DEBUG("ZED pool thread finished");
@@ -424,14 +437,22 @@ namespace tagslam_ros {
                 }
 
                 auto t3 = std::chrono::system_clock::now();
-                auto d0 = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-                auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-                auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
-                auto d = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t0);
-                if(d.count()>0){
-                    NODELET_WARN_STREAM("GPU convert "<<d0.count() << " ms, detection "
-                                    << d1.count() <<" ms, optimization "<< d2.count()
-                                    <<" ms, total "<<d.count()<< " ms");
+                
+                if(if_pub_latency_)
+                {
+                    float d0 = std::chrono::duration<float, std::milli>(t1 - t0).count();
+                    float d1 = std::chrono::duration<float, std::milli>(t2 - t1).count();
+                    float d2 = std::chrono::duration<float, std::milli>(t3 - t2).count();
+                    float d = std::chrono::duration<float, std::milli>(t3 - t0).count();
+                    std_msgs::Float32 temp;
+                    temp.data = d0;
+                    debug_convert_pub_.publish(temp);
+                    temp.data = d1;
+                    debug_det_pub_.publish(temp);
+                    temp.data = d2;
+                    debug_opt_pub_.publish(temp);
+                    temp.data = d;
+                    debug_total_pub_.publish(temp);
                 }
 
                 publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
@@ -477,7 +498,7 @@ namespace tagslam_ros {
                 
                 auto t2 = std::chrono::system_clock::now();
 
-                if(!detection_only_)
+                if(!detection_only_ && run_slam_)
                 {
                     // Do a SLAM update to estimate current pose and publish the message
                     estimateState(static_tag_array_ptr);    
@@ -485,14 +506,21 @@ namespace tagslam_ros {
 
                 auto t3 = std::chrono::system_clock::now();
 
-                auto d0 = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
-                auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-                auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
-                auto d = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t0);
-                if(d.count()>0){
-                    NODELET_WARN_STREAM("CPU convert "<<d0.count() << " ms, detection "
-                                    << d1.count() <<" ms, optimization "<< d2.count()
-                                    <<" ms, total "<<d.count()<< " ms");
+                if(if_pub_latency_)
+                {
+                    float d0 = std::chrono::duration<float, std::milli>(t1 - t0).count();
+                    float d1 = std::chrono::duration<float, std::milli>(t2 - t1).count();
+                    float d2 = std::chrono::duration<float, std::milli>(t3 - t2).count();
+                    float d = std::chrono::duration<float, std::milli>(t3 - t0).count();
+                    std_msgs::Float32 temp;
+                    temp.data = d0;
+                    debug_convert_pub_.publish(temp);
+                    temp.data = d1;
+                    debug_det_pub_.publish(temp);
+                    temp.data = d2;
+                    debug_opt_pub_.publish(temp);
+                    temp.data = d;
+                    debug_total_pub_.publish(temp);
                 }
 
                 publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
@@ -562,8 +590,7 @@ namespace tagslam_ros {
                     imu_msg_ptr->angular_velocity_covariance[i * 3 + 2] =
                         sensor_data.imu.angular_velocity_covariance.r[r * 3 + 2] * DEG2RAD * DEG2RAD;
                 }
-                if(use_imu_odom_)
-                {
+                if(use_imu_odom_){
                     slam_backend_->updateIMU(imu_msg_ptr);
                 }
 
@@ -594,6 +621,7 @@ namespace tagslam_ros {
             pose_prev_ = pose_cur; // only needed if we use ZED's visual odomtery 
         }
 
+        
         if(use_imu_odom_){
             slam_pose_msg = slam_backend_->updateVIO(tag_array_ptr, relative_pose, pose_cur_cov, zed_pos_tracking_enabled_);
         }else{
@@ -611,6 +639,7 @@ namespace tagslam_ros {
             visualization_msgs::MarkerArrayPtr landmark_msg_ptr = slam_backend_->createMarkerArray(tag_array_ptr->header);
             landmark_pub_.publish(landmark_msg_ptr);
         }
+        
     }
 
     void TagSlamZED::publishImages(TagDetectionArrayPtr static_tag_array_ptr, 

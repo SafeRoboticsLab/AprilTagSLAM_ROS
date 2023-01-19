@@ -72,11 +72,14 @@ namespace tagslam_ros
 
             void updateIMU(sensor_msgs::ImuPtr imu_msg_ptr);
 
+            void reset();
+
         private:
             void loadMap();
 
         private:
             // The ISAM2 smoother
+            ISAM2Params isam_params_;
             ISAM2 isam_;
             
     };  // class FactorGraph    

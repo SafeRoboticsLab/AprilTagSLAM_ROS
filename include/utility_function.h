@@ -61,6 +61,7 @@
 #include <nodelet/nodelet.h>
 
 #include <std_msgs/Header.h>
+#include <std_msgs/Float32.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseStamped.h>

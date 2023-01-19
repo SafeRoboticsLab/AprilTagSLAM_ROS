@@ -24,6 +24,8 @@ publish:
     publish_image:              true                            # Publish the camera image
     publish_image_with_tags:    true                            # Publish the camera image with the tags detected
     publish_tags:               true                            # Publish the tags detected
+    publish_landmarks:          true                            # Publish the landmarks detected
+    publish_latency:            true                            # Publish the latency between the camera and the computer
     use_approx_sync:            false                           # Allow ROS subscriber to use approximate sync 
 frontend:
     type: "CPU"                # "CPU" or "GPU"         

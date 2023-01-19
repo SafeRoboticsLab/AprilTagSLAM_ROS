@@ -321,7 +321,9 @@ namespace tagslam_ros
 
     void Backend::updateIMU(sensor_msgs::ImuPtr imu_msg_ptr)
     {
+        // this queue is thread safe
         imu_queue_.push(imu_msg_ptr);
+        reset_mutex_.unlock();
     }
 
     /*
@@ -504,71 +506,75 @@ namespace tagslam_ros
     {
         // initialize the marker array
         visualization_msgs::MarkerArrayPtr marker_array_ptr = boost::make_shared<visualization_msgs::MarkerArray>();
-        
-        // iterate through landmarks, and update them to priors
-        for(const auto key_value: landmark_values_) {
-            Key temp_key = key_value.key;
-            Pose3 temp_pose = landmark_values_.at<Pose3>(temp_key);
-            
-            visualization_msgs::Marker marker;
-            visualization_msgs::Marker id;
-            marker.header = header;
-            marker.header.frame_id = "map";
+        if(reset_mutex_.try_lock())
+        {
+            // iterate through landmarks, and update them to priors
+            for(const auto key_value: landmark_values_) {
+                Key temp_key = key_value.key;
+                Pose3 temp_pose = landmark_values_.at<Pose3>(temp_key);
+                
+                visualization_msgs::Marker marker;
+                visualization_msgs::Marker id;
+                marker.header = header;
+                marker.header.frame_id = "map";
 
-            id.header = header;
-            id.header.frame_id = "map";
+                id.header = header;
+                id.header.frame_id = "map";
 
-            Eigen::Quaterniond q(temp_pose.rotation().toQuaternion());
+                Eigen::Quaterniond q(temp_pose.rotation().toQuaternion());
 
-            marker.ns = "landmarks";
-            marker.id = static_cast<int>(temp_key);
-            marker.type = 1; //Cubic
-            marker.action = 0; //add/modify
-            marker.lifetime = ros::Duration();
-            marker.scale.x = 0.2;
-            marker.scale.y = 0.2;
-            marker.scale.z = 0.01;
-            // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
-            marker.pose.position.x = temp_pose.x();
-            marker.pose.position.y = temp_pose.y();
-            marker.pose.position.z = temp_pose.z();
+                marker.ns = "landmarks";
+                marker.id = static_cast<int>(temp_key);
+                marker.type = 1; //Cubic
+                marker.action = 0; //add/modify
+                marker.lifetime = ros::Duration();
+                marker.scale.x = 0.2;
+                marker.scale.y = 0.2;
+                marker.scale.z = 0.01;
+                // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+                marker.pose.position.x = temp_pose.x();
+                marker.pose.position.y = temp_pose.y();
+                marker.pose.position.z = temp_pose.z();
 
-            marker.pose.orientation.x = q.x();
-            marker.pose.orientation.y = q.y();
-            marker.pose.orientation.z = q.z();
-            marker.pose.orientation.w = q.w();
+                marker.pose.orientation.x = q.x();
+                marker.pose.orientation.y = q.y();
+                marker.pose.orientation.z = q.z();
+                marker.pose.orientation.w = q.w();
 
-            marker.color.r = 1.0f;
-            marker.color.g = 1.0f;
-            marker.color.b = 1.0f;
-            marker.color.a = 0.5f;
+                marker.color.r = 1.0f;
+                marker.color.g = 1.0f;
+                marker.color.b = 1.0f;
+                marker.color.a = 0.5f;
 
-            id.ns = "landmark_id";
-            id.id = static_cast<int>(temp_key);
-            id.type = 9; //Text
-            id.action = 0; //add/modify
-            id.lifetime = ros::Duration();
-            id.scale.z = 0.04;
-            // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
-            id.pose.position.x = temp_pose.x();
-            id.pose.position.y = temp_pose.y();
-            id.pose.position.z = temp_pose.z();
+                id.ns = "landmark_id";
+                id.id = static_cast<int>(temp_key);
+                id.type = 9; //Text
+                id.action = 0; //add/modify
+                id.lifetime = ros::Duration();
+                id.scale.z = 0.04;
+                // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
+                id.pose.position.x = temp_pose.x();
+                id.pose.position.y = temp_pose.y();
+                id.pose.position.z = temp_pose.z();
 
-            id.pose.orientation.x = q.x();
-            id.pose.orientation.y = q.y();
-            id.pose.orientation.z = q.z();
-            id.pose.orientation.w = q.w();
+                id.pose.orientation.x = q.x();
+                id.pose.orientation.y = q.y();
+                id.pose.orientation.z = q.z();
+                id.pose.orientation.w = q.w();
 
-            id.color.r = 0.0f;  
-            id.color.g = 0.0f;
-            id.color.b = 0.0f;
-            id.color.a = 1.0f;
+                id.color.r = 0.0f;  
+                id.color.g = 0.0f;
+                id.color.b = 0.0f;
+                id.color.a = 1.0f;
 
-            id.text = "Tag " + std::to_string(static_cast<int>(temp_key));
+                id.text = "Tag " + std::to_string(static_cast<int>(temp_key));
 
-            marker_array_ptr->markers.push_back(id);
-            marker_array_ptr->markers.push_back(marker);
+                marker_array_ptr->markers.push_back(id);
+                marker_array_ptr->markers.push_back(marker);
+            }
+            reset_mutex_.unlock();
         }
+
         return marker_array_ptr;
     }
 }
