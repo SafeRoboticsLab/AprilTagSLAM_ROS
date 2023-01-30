@@ -3,11 +3,11 @@
 #############################################
 camera:
     camera_model:               zed2                            # A name for the camera (can be different from camera model and node name and can be overwritten by the launch file)
-    frame_rate:                 30                              # Camera frame rate (can be overwritten by the launch file)
-    resolution:                 1                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
+    frame_rate:                 15                              # Camera frame rate (can be overwritten by the launch file)
+    resolution:                 0                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
     
 depth:
-    quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
+    quality:                    2                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
     sensing_mode:               0                               # '0': STANDARD, '1': FILL (not use FILL for robotic applications)
     min_depth:                  0.5                             # Minimum depth in meters
     max_depth:                  15.0                            # Maximum depth in meters
@@ -51,21 +51,25 @@ backend:
     use_imu: false        # use ZED's imu as motion priors, it can work with or without odometry
 
     # Load and Save Maps
-    prior_map: false
+    prior_map: true
     save_graph: true
-    load_path: ""    # prior map
-    save_path: ""                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
+    load_path: "track3.g2o"    # prior map
+    save_path: "track3.g2o"                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
 
-    pose_offset:    [1.0, 0.0, 0.0, -0.357, # camera center offset
-                    0.0, 1.0, 0.0, -0.06,
+    # pose_offset:    [1.0, 0.0, 0.0, -0.357, # camera center offset
+    #                 0.0, 1.0, 0.0, -0.06,
+    #                 0.0, 0.0, 1.0, 0, #wheelbase
+    #                 0.0, 0.0, 0.0, 1.0] # camera to rear axis transform
+    pose_offset:    [1.0, 0.0, 0.0, 0, # camera center offset
+                    0.0, 1.0, 0.0, 0,
                     0.0, 0.0, 1.0, 0, #wheelbase
                     0.0, 0.0, 0.0, 1.0] # camera to rear axis transform
 
     ################# Uncertainty parameters ####################
 
     # variance of tag pose estimation
-    landmark_sigma_trans: 0.1   
-    landmark_sigma_rot: 0.2
+    landmark_sigma_trans: 0.05   
+    landmark_sigma_rot: 0.1
 
     # variance of prior landmark loaded from file
     #(smaller value to enforce the landmark are not updated)
@@ -73,7 +77,7 @@ backend:
     landmark_prior_sigma_rot: 0.1
 
     # variance of initial pose if no map is loaded
-    pose_prior_sigma_trans: 0.1
+    pose_prior_sigma_trans: 0.2
     pose_prior_sigma_rot: 0.3
 
     # ** VIO only parameters **
@@ -137,8 +141,8 @@ landmark_tags: [
 # tags are ignored during slam
 ignore_tags: [
     {
-        id_start: 201, # include this tag
-        id_end: 210, # include this tag
+        id_start: 17, # include this tag
+        id_end: 10000, # include this tag
         tag_size: 0.2, # size of the tag in meters
     },
 ]

@@ -3,8 +3,8 @@
 #############################################
 camera:
     camera_model:               zed2                            # A name for the camera (can be different from camera model and node name and can be overwritten by the launch file)
-    frame_rate:                 30                              # Camera frame rate (can be overwritten by the launch file)
-    resolution:                 2                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
+    frame_rate:                 15                              # Camera frame rate (can be overwritten by the launch file)
+    resolution:                 0                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
     
 depth:
     quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
@@ -28,9 +28,9 @@ publish:
     publish_latency:            true                            # Publish the latency between the camera and the computer
     use_approx_sync:            false                           # Allow ROS subscriber to use approximate sync 
 frontend:
-    type: "GPU"                # "CPU" or "GPU"         
+    type: "CPU"                # "CPU" or "GPU"         
     # AprilTag parameters
-    tag_size: 0.241                # Size of the tag in meters, default: 0.1 m
+    tag_size: 0.262                # Size of the tag in meters, default: 0.1 m
 
     # CPU detector only parameters
     tag_family:        'tag36h11' # options: tagStandard52h13, tagStandard41h12, tag36h11, tag25h9, tag16h5, tagCustom48h12, tagCircle21h7, tagCircle49h12
@@ -51,9 +51,9 @@ backend:
     use_imu: true        # use ZED's imu as motion priors, it can work with or without odometry
 
     # Load and Save Maps
-    prior_map: false
+    prior_map: true
     save_graph: false
-    load_path: ""    # prior map
+    load_path: "track.g2o"    # prior map
     save_path: ""                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
 
     pose_offset:    [1.0, 0.0, 0.0, -0.357, # camera center offset
@@ -94,7 +94,7 @@ backend:
     cacheLinearizedFactors: true
 
     # LM parameter for fixed_lag smoother
-    lag: 0.2 # parameter for fix lag only
+    lag: 0.5 # parameter for fix lag only
     lambda_initial: 1e-5
     lambda_upper_bound: 100.0
     lambda_lower_bound: 1e-10
