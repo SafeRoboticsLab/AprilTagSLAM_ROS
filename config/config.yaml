@@ -28,7 +28,7 @@ publish:
     publish_latency:            true                            # Publish the latency between the camera and the computer
     use_approx_sync:            false                           # Allow ROS subscriber to use approximate sync 
 frontend:
-    type: "CPU"                # "CPU" or "GPU"         
+    type: "GPU"                # "CPU" or "GPU"         
     # AprilTag parameters
     tag_size: 0.241                # Size of the tag in meters, default: 0.1 m
 
@@ -46,7 +46,7 @@ frontend:
 
 backend:
     #smoother parameter
-    smoother: "isam2" # choose from "fixed_lag", "isam2", and "none"
+    smoother: "fixed_lag" # choose from "fixed_lag", "isam2", and "none"
     use_odom: true        # use ZED's odometry as motion priors, it can work with or without imu
     use_imu: true        # use ZED's imu as motion priors, it can work with or without odometry
 
@@ -122,15 +122,15 @@ backend:
 # The tags are used to define the landmarks 
 landmark_tags: [
     {
-        id_start: 100, # include this tag
-        id_end: 110, # include this tag
-        tag_size: 0.2, # size of the tag in meters
+        id_start: 1, # include this tag
+        id_end: 1, # include this tag
+        tag_size: 0.254, # size of the tag in meters
     },
 
     {
-        id_start: 111, # include this tag
-        id_end: 120, # include this tag
-        tag_size: 0.5, # size of the tag in meters
+        id_start: 2, # include this tag
+        id_end: 16, # include this tag
+        tag_size: 0.262, # size of the tag in meters
     }
 ]
 

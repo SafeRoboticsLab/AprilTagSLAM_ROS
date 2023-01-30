@@ -415,7 +415,7 @@ namespace tagslam_ros {
 
                 auto t2 = std::chrono::system_clock::now();
 
-                if(!detection_only_)
+                if(!detection_only_ && run_slam_)
                 {
                     // Do a SLAM update to estimate current pose and publish the message
                     estimateState(static_tag_array_ptr);    

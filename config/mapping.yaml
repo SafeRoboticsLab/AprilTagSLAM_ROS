@@ -122,15 +122,15 @@ backend:
 # The tags are used to define the landmarks 
 landmark_tags: [
     {
-        id_start: 100, # include this tag
-        id_end: 110, # include this tag
-        tag_size: 0.2, # size of the tag in meters
+        id_start: 1, # include this tag
+        id_end: 1, # include this tag
+        tag_size: 0.254, # size of the tag in meters
     },
 
     {
-        id_start: 111, # include this tag
-        id_end: 120, # include this tag
-        tag_size: 0.5, # size of the tag in meters
+        id_start: 2, # include this tag
+        id_end: 16, # include this tag
+        tag_size: 0.262, # size of the tag in meters
     }
 ]
 
