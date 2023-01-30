@@ -68,7 +68,7 @@ Visualization Manager:
       Value: false
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /SLAM/slam_landmarks
+      Marker Topic: /SLAM/Landmarks
       Name: MarkerArray
       Namespaces:
         landmark_id: true
@@ -107,7 +107,7 @@ Visualization Manager:
         Shaft Length: 0.10000000149011612
         Shaft Radius: 0.019999999552965164
         Value: Arrow
-      Topic: /SLAM/slam_pose
+      Topic: /SLAM/Pose
       Unreliable: false
       Value: true
   Enabled: true

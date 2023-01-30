@@ -127,52 +127,37 @@ namespace tagslam_ros {
 
     void TagSlamZED::setup_publisher()
     {
-
-        // Set the positional tracking topic names
-        std::string poseTopic = "pose";
-        std::string pose_cov_topic;
-        pose_cov_topic = poseTopic + "_with_covariance";
-
-        std::string odometryTopic = "odom";
-        std::string odom_path_topic = "path_odom";
-        std::string map_path_topic = "path_map";
-
-        // Set the IMU topic names using real camera model
-        std::string imu_topic = "imu/data";
-        std::string imu_topic_raw = "imu/data_raw";
-        std::string imu_mag_topic = "imu/mag";
-
         // Create all the publishers
         // Image publishers
         image_transport::ImageTransport it_zed(pnh_);
 
         if(if_pub_image_)
-            img_pub_ = it_zed.advertiseCamera("image", 1); // raw image
+            img_pub_ = it_zed.advertiseCamera("Image", 1); // raw image
         
         if(if_pub_tag_det_image_)
-            det_img_pub_ = it_zed.advertise("tag_detection_image", 1); // image with tag detection
+            det_img_pub_ = it_zed.advertise("Tag_Detection_Image", 1); // image with tag detection
         
         if(if_pub_tag_det_)
-            static_tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("tag_detections", 1);
-            dyn_tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("tag_detections_dynamic", 1);
+            static_tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("Tag_Detections", 1);
+            dyn_tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("Tag_Detections_Dynamic", 1);
 
         if(!detection_only_)
-            slam_pose_pub_ = pnh_.advertise<nav_msgs::Odometry>("slam_pose", 1);
+            slam_pose_pub_ = pnh_.advertise<nav_msgs::Odometry>("Pose", 1);
 
         // // IMU Publishers
         if(use_imu_odom_)
-            imu_pub_ = pnh_.advertise<sensor_msgs::Imu>(imu_topic, 1);
+            imu_pub_ = pnh_.advertise<sensor_msgs::Imu>("IMU/Data", 1);
 
         // landmark publisher
         if(if_pub_landmark_)
-            landmark_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("slam_landmarks", 1);
+            landmark_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("Landmarks", 1);
 
         if (if_pub_latency_)
         {
-            debug_convert_pub_ = pnh_.advertise<std_msgs::Float32>("debug/convert", 1);
-            debug_det_pub_ = pnh_.advertise<std_msgs::Float32>("debug/detect", 1);
-            debug_opt_pub_ = pnh_.advertise<std_msgs::Float32>("debug/optimize", 1);
-            debug_total_pub_ = pnh_.advertise<std_msgs::Float32>("debug/total", 1);
+            debug_convert_pub_ = pnh_.advertise<std_msgs::Float32>("Debug/Convert", 1);
+            debug_det_pub_ = pnh_.advertise<std_msgs::Float32>("Debug/Detect", 1);
+            debug_opt_pub_ = pnh_.advertise<std_msgs::Float32>("Debug/Optimize", 1);
+            debug_total_pub_ = pnh_.advertise<std_msgs::Float32>("Debug/Total", 1);
         }
     }
 

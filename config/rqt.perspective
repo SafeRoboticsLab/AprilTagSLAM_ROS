@@ -152,7 +152,7 @@
                   "type": "repr"
                 },
                 "topics": {
-                  "repr": "['/SLAM/debug/convert/data', '/SLAM/debug/optimize/data', '/SLAM/debug/detect/data', '/SLAM/debug/total/data']",
+                  "repr": "['/SLAM/Debug/Convert/data', '/SLAM/Debug/Optimize/data', '/SLAM/Debug/Detect/data', '/SLAM/Debug/Total/data']",
                   "type": "repr"
                 },
                 "x_limits": {
