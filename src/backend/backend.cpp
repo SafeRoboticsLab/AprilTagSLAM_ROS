@@ -69,6 +69,7 @@ namespace tagslam_ros
         pose_prior_sigma_rot_(getRosOption<double>(pnh, "backend/pose_prior_sigma_rot", 0.3)),
         vel_prior_sigma_(getRosOption<double>(pnh, "backend/vel_prior_sigma", 0.1)),
         bias_prior_sigma_(getRosOption<double>(pnh, "backend/bias_prior_sigma", 0.1)),
+        fix_prior_(getRosOption<bool>(pnh, "backend/fix_prior", true)),
         initialized_(false), pose_count_(0)
     {
         // get pose_offset
@@ -425,6 +426,10 @@ namespace tagslam_ros
         // prior factor graph contains both landmark, poses and their between factors
         // we only need the landmark factors and add them to the factor graph
         landmark_values_ = prior_values->filter(Symbol::ChrTest(kLandmarkSymbol));
+        if (fix_prior_)
+        {
+            fixed_landmark_ = landmark_values_;
+        }
 
         // check if the landmark are loaded correctly
         int num_landmarks = landmark_values_.size();

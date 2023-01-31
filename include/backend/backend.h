@@ -236,6 +236,8 @@ namespace tagslam_ros
         NonlinearFactorGraph factor_graph_;
         Values initial_estimate_;
 
+        bool fix_prior_;  // if true, the system will fix the prior factor for fixed lag smoother
+        Values fixed_landmark_;
         Values landmark_values_;
         std::unordered_map<Key, EigenPoseCov> landmark_cov_;
 

@@ -36,6 +36,7 @@ namespace tagslam_ros
 {
     FixedLagBackend::FixedLagBackend(ros::NodeHandle pnh) : Backend(pnh)
     {
+        // load backend parameters
         lm_params_.lambdaInitial = getRosOption<double>(pnh, "backend/lambda_initial", 1e-5);
         lm_params_.lambdaUpperBound = getRosOption<double>(pnh, "backend/lambda_upper_bound", 1e5);
         lm_params_.lambdaLowerBound = getRosOption<double>(pnh, "backend/lambda_lower_bound", 0);
@@ -46,6 +47,7 @@ namespace tagslam_ros
         lm_params_.absoluteErrorTol = getRosOption<double>(pnh, "backend/absolute_error_tol", 1e-5);
         local_optimal_ = getRosOption<bool>(pnh, "backend/local_optimal", false);
 
+        
         lag_ = getRosOption<double>(pnh, "backend/lag", 1.0);
         smoother_ = BatchFixedLagSmoother(lag_, lm_params_, true, local_optimal_);
     }
@@ -258,7 +260,10 @@ namespace tagslam_ros
         {
             Key temp_key = key_value.key;
             EigenPoseCov cov = marginals.marginalCovariance(temp_key);
-            if (landmark_values_.exists(temp_key))
+            if(fixed_landmark_.exists(temp_key)){
+                continue;
+            }
+            else if (landmark_values_.exists(temp_key))
             {
                 landmark_values_.update(temp_key, key_value.value);
             }

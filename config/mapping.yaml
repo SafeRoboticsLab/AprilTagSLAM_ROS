@@ -55,7 +55,7 @@ backend:
     save_graph: true
     load_path: "track3.g2o"    # prior map
     save_path: "track3.g2o"                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
-
+    fix_prior: false
     # pose_offset:    [1.0, 0.0, 0.0, -0.357, # camera center offset
     #                 0.0, 1.0, 0.0, -0.06,
     #                 0.0, 0.0, 1.0, 0, #wheelbase

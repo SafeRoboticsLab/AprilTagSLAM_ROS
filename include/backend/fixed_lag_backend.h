@@ -88,11 +88,13 @@ namespace tagslam_ros
             // Fixed lag smoother
             // IncrementalFixedLagSmoother isam_;
             bool local_optimal_;
+            
             double lag_;
             LevenbergMarquardtParams lm_params_;
             BatchFixedLagSmoother smoother_;
             FixedLagSmoother::KeyTimestampMap newTimestamps_;
             double t0_;
+            
 
     };  // class FactorGraph    
 } // namespace backend
