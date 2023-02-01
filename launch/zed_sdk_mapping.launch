@@ -12,8 +12,8 @@
         <node type="rviz" name="rviz" pkg="rviz" 
             args="-d $(find tagslam_ros)/config/rviz.rviz" />
         <node type="rqt_gui" name="rqt_gui" pkg="rqt_gui" 
-            args="--perspective-file $(find tagslam_ros)/config/rqt.perspective"
-            launch-prefix="bash -c 'sleep 3; $0 $@' "/>
+            args="--perspective-file $(find tagslam_ros)/config/rqt.perspective"/>
+            <!-- launch-prefix="bash -c 'sleep 3; $0 $@' "/> -->
     </group>
     
 

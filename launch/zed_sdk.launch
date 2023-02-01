@@ -6,6 +6,7 @@
 
     <node pkg="tagslam_ros" type="tagslam_ros_zed_node" name="$(arg node_namespace)" 
         clear_params="true" output="screen" >
+        <param name="backend/load_path" value="$(find tagslam_ros)/config/track_landmark.g2o" />
     </node>
 
     <group if="$(arg rviz)">

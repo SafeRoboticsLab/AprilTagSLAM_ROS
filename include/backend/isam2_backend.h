@@ -77,6 +77,8 @@ namespace tagslam_ros
         private:
             void loadMap();
 
+            void updateLandmarkValues(Values& estimated_vals);
+
         private:
             // The ISAM2 smoother
             ISAM2Params isam_params_;

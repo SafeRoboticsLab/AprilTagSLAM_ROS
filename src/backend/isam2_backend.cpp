@@ -93,7 +93,8 @@ namespace tagslam_ros
             Values current_estimate = isam_.calculateEstimate();
             prev_pose_ = current_estimate.at<Pose3>(cur_pose_key);
             
-            landmark_values_ = current_estimate.filter(Symbol::ChrTest(kLandmarkSymbol));
+            // landmark_values_ = current_estimate.filter(Symbol::ChrTest(kLandmarkSymbol));
+            updateLandmarkValues(current_estimate);
 
             // prev_pose_ = isam_.calculateEstimate<Pose3>(cur_pose_key);
             EigenPoseCov pose_cov = isam_.marginalCovariance(cur_pose_key);
@@ -159,7 +160,8 @@ namespace tagslam_ros
             prev_vel_ = current_estimate.at<Vector3>(cur_vel_key);
             prev_bias_ = current_estimate.at<imuBias::ConstantBias>(cur_bias_key);
 
-            landmark_values_ = current_estimate.filter(Symbol::ChrTest(kLandmarkSymbol));
+            updateLandmarkValues(current_estimate);
+            // landmark_values_ = current_estimate.filter(Symbol::ChrTest(kLandmarkSymbol));
 
             prev_state_ = NavState(prev_pose_, prev_vel_);
 
@@ -196,6 +198,26 @@ namespace tagslam_ros
             int landmark_id = Symbol(landmark_key).index();
             Pose3 landmark_pose = landmark_values.at<Pose3>(landmark_key);   
             container[landmark_id] = landmark_pose.matrix();
+        }
+    }
+
+    void iSAM2Backend::updateLandmarkValues(Values &estimated_vals)
+    {
+
+        Values estimated_landmarks = estimated_vals.filter(Symbol::ChrTest(kLandmarkSymbol));
+
+        // iterate through landmarks, and update them to priors
+        for (const auto key_value : estimated_landmarks)
+        {
+            Key temp_key = key_value.key;
+            if (landmark_values_.exists(temp_key))
+            {
+                landmark_values_.update(temp_key, key_value.value);
+            }
+            else
+            {
+                landmark_values_.insert(temp_key, key_value.value);
+            }
         }
     }
 

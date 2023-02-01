@@ -191,7 +191,6 @@ namespace tagslam_ros
                         // if the landmark is in the prior map, we add it to the initial estimate
                         Pose3 landmark_prior = landmark_values_.at<Pose3>(landmark_key);
                         initial_estimate_.insert(landmark_key, landmark_prior);
-
                         // insert prior factor to the graph
                         auto landmark_prior_noise = noiseModel::Gaussian::Covariance(landmark_cov_[landmark_key]);
                         factor_graph_.add(PriorFactor<Pose3>(landmark_key, landmark_prior, landmark_prior_noise));

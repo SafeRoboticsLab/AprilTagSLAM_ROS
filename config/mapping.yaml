@@ -53,8 +53,8 @@ backend:
     # Load and Save Maps
     prior_map: true
     save_graph: true
-    load_path: "track3.g2o"    # prior map
-    save_path: "track3.g2o"                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
+    load_path: "track_prior.g2o"    # prior map
+    save_path: "track4.g2o"                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
     fix_prior: false
     # pose_offset:    [1.0, 0.0, 0.0, -0.357, # camera center offset
     #                 0.0, 1.0, 0.0, -0.06,
@@ -73,12 +73,12 @@ backend:
 
     # variance of prior landmark loaded from file
     #(smaller value to enforce the landmark are not updated)
-    landmark_prior_sigma_trans: 0.05 
-    landmark_prior_sigma_rot: 0.1
+    landmark_prior_sigma_trans: 0.01
+    landmark_prior_sigma_rot: 0.05
 
     # variance of initial pose if no map is loaded
-    pose_prior_sigma_trans: 0.2
-    pose_prior_sigma_rot: 0.3
+    pose_prior_sigma_trans: 0.1
+    pose_prior_sigma_rot: 0.2
 
     # ** VIO only parameters **
     # variance of velocity assosciated with the first pose
@@ -133,15 +133,26 @@ landmark_tags: [
 
     {
         id_start: 2, # include this tag
-        id_end: 16, # include this tag
-        tag_size: 0.262, # size of the tag in meters
+        id_end: 26, # include this tag
+        tag_size: 0.259, # size of the tag in meters
+    },
+    {
+        id_start: 100, # include this tag
+        id_end: 103, # include this tag
+        tag_size: 0.12, # size of the tag in meters
     }
+
 ]
 
 # tags are ignored during slam
 ignore_tags: [
     {
-        id_start: 17, # include this tag
+        id_start: 27, # include this tag
+        id_end: 99, # include this tag
+        tag_size: 0.2, # size of the tag in meters
+    },
+    {
+        id_start: 104, # include this tag
         id_end: 10000, # include this tag
         tag_size: 0.2, # size of the tag in meters
     },
