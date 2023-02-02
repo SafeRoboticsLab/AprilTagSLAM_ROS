@@ -3,8 +3,8 @@
 #############################################
 camera:
     camera_model:               zed2                            # A name for the camera (can be different from camera model and node name and can be overwritten by the launch file)
-    frame_rate:                 15                              # Camera frame rate (can be overwritten by the launch file)
-    resolution:                 0                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
+    frame_rate:                 30                              # Camera frame rate (can be overwritten by the launch file)
+    resolution:                 2                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
     
 depth:
     quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
