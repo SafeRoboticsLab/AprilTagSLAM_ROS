@@ -94,7 +94,7 @@ backend:
     cacheLinearizedFactors: true
 
     # LM parameter for fixed_lag smoother
-    lag: 0.5 # parameter for fix lag only
+    lag: 0.2 # parameter for fix lag only
     lambda_initial: 1e-5
     lambda_upper_bound: 100.0
     lambda_lower_bound: 1e-10
