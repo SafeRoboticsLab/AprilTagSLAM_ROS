@@ -105,7 +105,14 @@ namespace tagslam_ros
             }
 
             // do a batch optimization
-            smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+            try{
+                smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+            }
+            catch(gtsam::IndeterminantLinearSystemException)
+            {
+                ROS_WARN("SLAM Update Failed. Re-try next time step.");
+                return nullptr;
+            }
 
             // get the current pose and save it for next iteration
             Values estimated_vals = smoother_.calculateEstimate();
@@ -196,7 +203,14 @@ namespace tagslam_ros
             }
 
             // do a batch optimization
-            smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+            try{
+                smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+            }
+            catch(gtsam::IndeterminantLinearSystemException)
+            {
+                ROS_WARN("SLAM Update Failed. Re-try next time step.");
+                return nullptr;
+            }
 
             // get the current pose and save it for next iteration
             Values estimated_vals = smoother_.calculateEstimate();

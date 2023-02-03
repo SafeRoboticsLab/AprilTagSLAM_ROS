@@ -186,6 +186,8 @@ namespace tagslam_ros {
             NODELET_ERROR_STREAM("Camera model not valid: " << camera_model);
         }
 
+        zed_exposure_ = getRosOption<int>(pnh_, "camera/exposure", 20);
+
         int resol = getRosOption<int>(pnh_, "camera/resolution", 2); // defulat to HD720
         zed_resol_ = static_cast<sl::RESOLUTION>(resol);
         NODELET_INFO_STREAM(" * Camera Resolution\t\t-> " << sl::toString(zed_resol_).c_str());
@@ -312,7 +314,7 @@ namespace tagslam_ros {
         // Disable AEC_AGC and Auto Whitebalance to trigger it if use set to automatic
         // zed_camera_.setCameraSettings(sl::VIDEO_SETTINGS::AEC_AGC, 0);
         // zed_camera_.setCameraSettings(sl::VIDEO_SETTINGS::WHITEBALANCE_AUTO, 0);
-
+        zed_camera_.setCameraSettings(sl::VIDEO_SETTINGS::EXPOSURE, zed_exposure_);
         zed_real_model_ = zed_camera_.getCameraInformation().camera_model;
         if (zed_real_model_ == sl::MODEL::ZED)
         {
@@ -451,7 +453,7 @@ namespace tagslam_ros {
 
     void TagSlamZED::cpu_image_thread_func(){
         // initialize the image container
-        sl::Mat sl_mat_cpu;
+        sl::Mat sl_mat;
 
         std_msgs::Header msg_header;
         msg_header.frame_id = "left_rect";
@@ -463,19 +465,30 @@ namespace tagslam_ros {
             if(zed_grab_status == sl::ERROR_CODE::SUCCESS)
             {
                 auto t0 = std::chrono::system_clock::now();
+
+#ifndef NO_CUDA_OPENCV
                 // Retrieve left image
-                zed_camera_.retrieveImage(sl_mat_cpu, zed_imge_type_, sl::MEM::CPU);
+                zed_camera_.retrieveImage(sl_mat, zed_imge_type_, sl::MEM::GPU);
+                // store the image as a cv_mat
+                cv::cuda::GpuMat cv_mat_gpu = slMat2cvMatGPU(sl_mat);
+                cv::Mat cv_mat_cpu;
+                cv_mat_gpu.download(cv_mat_cpu);
+                // // change from BGRA to RGBA
+                // cv::cuda::cvtColor(cv_mat, cv_mat, cv::COLOR_BGRA2RGBA);
+#else 
+                // Retrieve left image
+                zed_camera_.retrieveImage(sl_mat, zed_imge_type_, sl::MEM::CPU);
             
                 // store the image as a cv_mat
                 // this is a gray scale image
-                cv::Mat cv_mat_cpu = slMat2cvMat(sl_mat_cpu);
-                
-                // Run detection
+                cv::Mat cv_mat_cpu = slMat2cvMat(sl_mat);
+#endif
                 msg_header.stamp = slTime2Ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
                 msg_header.seq = frame_count_;
 
                 auto t1 = std::chrono::system_clock::now();
 
+                // Run detection
                 auto static_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
                 auto dyn_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
                 tag_detector_->detectTags(cv_mat_cpu, cam_info_msg_, msg_header,

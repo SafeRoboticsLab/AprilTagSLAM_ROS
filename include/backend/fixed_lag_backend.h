@@ -47,6 +47,7 @@
 #include <gtsam_unstable/nonlinear/BatchFixedLagSmoother.h>
 #include <gtsam/nonlinear/NonlinearEquality.h>
 #include <gtsam/nonlinear/Marginals.h>
+#include <gtsam/linear/linearExceptions.h>
 
 /*
 This class implement a FixedLagBackend using the gtsam "IncrementalFixedLagSmoother".
