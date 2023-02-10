@@ -87,6 +87,10 @@ namespace tagslam_ros
             }
             else
             {
+                factor_graph_.resize(0);
+                initial_estimate_.clear();
+                newTimestamps_.clear();
+                reset_mutex_.unlock();
                 ROS_WARN_ONCE("System not initialized, waiting for landmarks");
                 return nullptr;
             }
@@ -110,6 +114,10 @@ namespace tagslam_ros
             }
             catch(gtsam::IndeterminantLinearSystemException)
             {
+                factor_graph_.resize(0);
+                initial_estimate_.clear();
+                newTimestamps_.clear();
+                reset_mutex_.unlock();
                 ROS_WARN("SLAM Update Failed. Re-try next time step.");
                 return nullptr;
             }
@@ -184,6 +192,10 @@ namespace tagslam_ros
                         break;
                     }
                 }
+                factor_graph_.resize(0);
+                initial_estimate_.clear();
+                newTimestamps_.clear();
+                reset_mutex_.unlock();
                 return nullptr;
             }
 
@@ -208,6 +220,10 @@ namespace tagslam_ros
             }
             catch(gtsam::IndeterminantLinearSystemException)
             {
+                factor_graph_.resize(0);
+                initial_estimate_.clear();
+                newTimestamps_.clear();
+                reset_mutex_.unlock();
                 ROS_WARN("SLAM Update Failed. Re-try next time step.");
                 return nullptr;
             }
