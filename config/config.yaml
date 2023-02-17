@@ -3,9 +3,9 @@
 #############################################
 camera:
     camera_model:               zed2                            # A name for the camera (can be different from camera model and node name and can be overwritten by the launch file)
-    frame_rate:                 30                              # Camera frame rate (can be overwritten by the launch file)
+    frame_rate:                 15                              # Camera frame rate (can be overwritten by the launch file)
     resolution:                 2                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
-    exposure:                   10                               # Percentage of exposure [0, 100]
+    exposure:                   5                               # Percentage of exposure [0, 100]
 
 depth:
     quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
@@ -25,7 +25,7 @@ publish:
     publish_image:              false                            # Publish the camera image
     publish_image_with_tags:    true                            # Publish the camera image with the tags detected
     publish_tags:               true                            # Publish the tags detected
-    publish_landmarks:          true                            # Publish the landmarks detected
+    publish_landmarks:          false                            # Publish the landmarks detected
     publish_latency:            true                            # Publish the latency between the camera and the computer
     use_approx_sync:            false                           # Allow ROS subscriber to use approximate sync 
 frontend:

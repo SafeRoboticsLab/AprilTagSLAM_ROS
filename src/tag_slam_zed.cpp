@@ -384,6 +384,7 @@ namespace tagslam_ros {
 
         while(pnh_.ok()) // ros is still runing
         {
+            msg_header.stamp = ros::Time::now();
             sl::ERROR_CODE zed_grab_status = zed_camera_.grab(zed_runtime_param_);
             if(zed_grab_status == sl::ERROR_CODE::SUCCESS)
             {
@@ -405,7 +406,7 @@ namespace tagslam_ros {
                 cv::cvtColor(cv_mat, cv_mat, cv::COLOR_BGRA2RGBA);
 #endif
 
-                msg_header.stamp = slTime2Ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
+                // msg_header.stamp = slTime2Ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
                 msg_header.seq = frame_count_;
 
                 auto t1 = std::chrono::system_clock::now();
@@ -460,7 +461,7 @@ namespace tagslam_ros {
 
         while(pnh_.ok()) // ros is still runing
         {
-            
+            msg_header.stamp = ros::Time::now();
             sl::ERROR_CODE zed_grab_status = zed_camera_.grab(zed_runtime_param_);
             if(zed_grab_status == sl::ERROR_CODE::SUCCESS)
             {
@@ -483,7 +484,7 @@ namespace tagslam_ros {
                 // this is a gray scale image
                 cv::Mat cv_mat_cpu = slMat2cvMat(sl_mat);
 #endif
-                msg_header.stamp = slTime2Ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
+                // msg_header.stamp = slTime2Ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
                 msg_header.seq = frame_count_;
 
                 auto t1 = std::chrono::system_clock::now();
