@@ -151,7 +151,18 @@ ignore_tags: [
     },
     {
         id_start: 104, # include this tag
+        id_end: 199, # include this tag
+        tag_size: 0.2, # size of the tag in meters
+    },
+    {
+        id_start: 200, # include this tag
+        id_end: 220, # include this tag
+        tag_size: 0.096, # size of the tag in meters
+    },
+    {
+        id_start: 221, # include this tag
         id_end: 10000, # include this tag
         tag_size: 0.2, # size of the tag in meters
     },
+
 ]
