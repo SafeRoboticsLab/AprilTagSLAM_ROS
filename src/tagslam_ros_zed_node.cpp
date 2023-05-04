@@ -37,7 +37,7 @@
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "tagslam_ros");
+  ros::init(argc, argv, "tagslam_ros", ros::init_options::AnonymousName);
 
   nodelet::Loader nodelet;
   nodelet::M_string remap(ros::names::getRemappings());
