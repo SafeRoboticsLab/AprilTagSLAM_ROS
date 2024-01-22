@@ -252,7 +252,7 @@ namespace tagslam_ros {
             NODELET_INFO_STREAM(" * Depth quality\t\t-> " << sl::toString(zed_depth_mode_).c_str());
 
             int sensing_mode = getRosOption<int>(pnh_, "depth/sensing_mode", 0);
-            zed_sensing_mode_ = static_cast<sl::SENSING_MODE>(sensing_mode);
+            zed_sensing_mode_ = static_cast<sl::DEPTH_MODE>(sensing_mode);
             NODELET_INFO_STREAM(" * Depth Sensing mode\t\t-> " << sl::toString(zed_sensing_mode_).c_str());
 
             zed_min_depth_ = getRosOption<double>(pnh_, "depth/min_depth", 0.5);

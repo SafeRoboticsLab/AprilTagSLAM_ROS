@@ -205,7 +205,7 @@ using Trigger = std_srvs::Trigger;
         sl::RESOLUTION zed_resol_;
         int zed_frame_rate_;
         sl::DEPTH_MODE zed_depth_mode_;
-        sl::SENSING_MODE zed_sensing_mode_;
+        sl::DEPTH_MODE zed_sensing_mode_;
         // double zed_sensor_rate_ = 400.0;
         double zed_min_depth_;
         double zed_max_depth_;
