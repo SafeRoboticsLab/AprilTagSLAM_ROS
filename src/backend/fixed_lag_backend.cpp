@@ -71,6 +71,11 @@ namespace tagslam_ros
 
     nav_msgs::OdometryPtr FixedLagBackend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
     {
+        // reset local graph and values
+        factor_graph_.resize(0);
+        initial_estimate_.clear();
+        newTimestamps_.clear();
+
         if(reset_mutex_.try_lock()){
             int num_landmarks_detected = landmark_ptr->detections.size();
             Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
@@ -87,6 +92,7 @@ namespace tagslam_ros
             }
             else
             {
+                reset_mutex_.unlock();
                 ROS_WARN_ONCE("System not initialized, waiting for landmarks");
                 return nullptr;
             }
@@ -105,7 +111,15 @@ namespace tagslam_ros
             }
 
             // do a batch optimization
-            smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+            try{
+                smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+            }
+            catch(gtsam::IndeterminantLinearSystemException)
+            {
+                reset_mutex_.unlock();
+                ROS_WARN("SLAM Update Failed. Re-try next time step.");
+                return nullptr;
+            }
 
             // get the current pose and save it for next iteration
             Values estimated_vals = smoother_.calculateEstimate();
@@ -124,9 +138,6 @@ namespace tagslam_ros
             pose_count_++;
 
             // reset local graph and values
-            factor_graph_.resize(0);
-            initial_estimate_.clear();
-            newTimestamps_.clear();
             reset_mutex_.unlock();
             return odom_msg;
         }
@@ -139,6 +150,15 @@ namespace tagslam_ros
     nav_msgs::OdometryPtr FixedLagBackend::updateVIO(TagDetectionArrayPtr landmark_ptr, 
                                     EigenPose odom, EigenPoseCov odom_cov, bool use_odom)
     {
+        // reset local graph and values
+        factor_graph_.resize(0);
+        initial_estimate_.clear();
+        newTimestamps_.clear();
+
+        // Reset the preintegration object.
+        if(preint_meas_)
+            preint_meas_->resetIntegrationAndSetBias(prev_bias_);
+        
         if(reset_mutex_.try_lock()){
                 
             int num_landmarks_detected = landmark_ptr->detections.size();
@@ -177,6 +197,7 @@ namespace tagslam_ros
                         break;
                     }
                 }
+                reset_mutex_.unlock();
                 return nullptr;
             }
 
@@ -196,7 +217,15 @@ namespace tagslam_ros
             }
 
             // do a batch optimization
-            smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+            try{
+                smoother_.update(factor_graph_, initial_estimate_, newTimestamps_);
+            }
+            catch(gtsam::IndeterminantLinearSystemException)
+            {
+                reset_mutex_.unlock();
+                ROS_WARN("SLAM Update Failed. Re-try next time step.");
+                return nullptr;
+            }
 
             // get the current pose and save it for next iteration
             Values estimated_vals = smoother_.calculateEstimate();
@@ -225,13 +254,7 @@ namespace tagslam_ros
 
             pose_count_++;
 
-            // Reset the preintegration object.
-            preint_meas_->resetIntegrationAndSetBias(prev_bias_);
-
             // reset local graph and values
-            factor_graph_.resize(0);
-            initial_estimate_.clear();
-            newTimestamps_.clear();
             reset_mutex_.unlock();
             return odom_msg;
         }else{

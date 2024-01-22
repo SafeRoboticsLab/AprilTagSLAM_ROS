@@ -209,6 +209,7 @@ using Trigger = std_srvs::Trigger;
         // double zed_sensor_rate_ = 400.0;
         double zed_min_depth_;
         double zed_max_depth_;
+        int zed_exposure_;
 
         sl::InitParameters zed_init_param_;
         sl::MODEL zed_user_model_;

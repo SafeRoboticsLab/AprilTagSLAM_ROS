@@ -4,8 +4,9 @@
 camera:
     camera_model:               zed2                            # A name for the camera (can be different from camera model and node name and can be overwritten by the launch file)
     frame_rate:                 15                              # Camera frame rate (can be overwritten by the launch file)
-    resolution:                 0                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
-    
+    resolution:                 2                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
+    exposure:                   5                               # Percentage of exposure [0, 100]
+
 depth:
     quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
     sensing_mode:               0                               # '0': STANDARD, '1': FILL (not use FILL for robotic applications)
@@ -21,22 +22,23 @@ sensors:
 
 publish:
     # ros publishing
-    publish_image:              true                            # Publish the camera image
+    publish_image:              false                            # Publish the camera image
     publish_image_with_tags:    true                            # Publish the camera image with the tags detected
     publish_tags:               true                            # Publish the tags detected
-    publish_landmarks:          true                            # Publish the landmarks detected
+    publish_landmarks:          false                            # Publish the landmarks detected
     publish_latency:            true                            # Publish the latency between the camera and the computer
     use_approx_sync:            false                           # Allow ROS subscriber to use approximate sync 
 frontend:
-    type: "GPU"                # "CPU" or "GPU"         
+    type: "CPU"
     # AprilTag parameters
     tag_size: 0.262                # Size of the tag in meters, default: 0.1 m
+    
 
     # CPU detector only parameters
     tag_family:        'tag36h11' # options: tagStandard52h13, tagStandard41h12, tag36h11, tag25h9, tag16h5, tagCustom48h12, tagCircle21h7, tagCircle49h12
     tag_threads:       4          # default: 2
-    tag_decimate:      4.0        # default: 1.0
-    tag_blur:          1.0        # default: 0.0
+    tag_decimate:      2.0        # default: 1.0
+    tag_blur:          0.0        # default: 0.0
     tag_refine_edges:  1          # default: 1
     tag_debug:         0          # default: 0
     max_hamming_dist:  2          # default: 2 (Tunable parameter with 2 being a good choice - values >=3 consume large amounts of memory. Choose the largest value possible.)
@@ -149,7 +151,18 @@ ignore_tags: [
     },
     {
         id_start: 104, # include this tag
+        id_end: 199, # include this tag
+        tag_size: 0.2, # size of the tag in meters
+    },
+    {
+        id_start: 200, # include this tag
+        id_end: 220, # include this tag
+        tag_size: 0.096, # size of the tag in meters
+    },
+    {
+        id_start: 221, # include this tag
         id_end: 10000, # include this tag
         tag_size: 0.2, # size of the tag in meters
     },
+
 ]
