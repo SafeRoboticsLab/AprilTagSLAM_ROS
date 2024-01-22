@@ -335,7 +335,7 @@ namespace tagslam_ros {
         }
 
         // Initialize the camera runtime parameters
-        zed_runtime_param_.sensing_mode = zed_sensing_mode_;
+        // zed_runtime_param_.sensing_mode = zed_sensing_mode_;
         zed_runtime_param_.enable_depth = zed_pos_tracking_enabled_; // pose tracking require depth
 
         //get camera intrinsics and generate camera info
