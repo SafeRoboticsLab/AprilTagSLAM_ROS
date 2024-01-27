@@ -3,9 +3,9 @@
 #############################################
 camera:
     camera_model:               zed2                            # A name for the camera (can be different from camera model and node name and can be overwritten by the launch file)
-    frame_rate:                 15                              # Camera frame rate (can be overwritten by the launch file)
-    resolution:                 2                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
-    exposure:                   5                               # Percentage of exposure [0, 100]
+    frame_rate:                 60                              # Camera frame rate (can be overwritten by the launch file)
+    resolution:                 3                               # '0': HD2K, '1': HD1080, '3': HD720, '5': VGA
+    exposure:                   20                               # Percentage of exposure [0, 100]
 
 depth:
     quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
@@ -22,7 +22,7 @@ sensors:
 
 publish:
     # ros publishing
-    publish_image:              false                            # Publish the camera image
+    publish_image:              true                            # Publish the camera image
     publish_image_with_tags:    true                            # Publish the camera image with the tags detected
     publish_tags:               true                            # Publish the tags detected
     publish_landmarks:          false                            # Publish the landmarks detected

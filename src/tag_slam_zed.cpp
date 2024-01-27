@@ -188,7 +188,7 @@ namespace tagslam_ros {
 
         zed_exposure_ = getRosOption<int>(pnh_, "camera/exposure", 20);
 
-        int resol = getRosOption<int>(pnh_, "camera/resolution", 2); // defulat to HD720
+        int resol = getRosOption<int>(pnh_, "camera/resolution", 3); // defulat to HD720
         zed_resol_ = static_cast<sl::RESOLUTION>(resol);
         NODELET_INFO_STREAM(" * Camera Resolution\t\t-> " << sl::toString(zed_resol_).c_str());
 
