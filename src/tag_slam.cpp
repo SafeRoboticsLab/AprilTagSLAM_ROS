@@ -124,13 +124,13 @@ namespace tagslam_ros
                                                 image_subscriber_,
                                                 camera_info_subscriber_,
                                                 odom_subscriber_));
-        approx_sync_->registerCallback(boost::bind(&TagSlam::imageOdomCallback, this, _1, _2, _3));
+        approx_sync_->registerCallback(std::bind(&TagSlam::imageOdomCallback, this, _1, _2, _3));
       }else{
         exact_sync_.reset(new ExactSync(ExactSyncPolicy(10),
                                         image_subscriber_,
                                         camera_info_subscriber_,
                                         odom_subscriber_));
-        exact_sync_->registerCallback(boost::bind(&TagSlam::imageOdomCallback, this, _1, _2, _3));
+        exact_sync_->registerCallback(std::bind(&TagSlam::imageOdomCallback, this, _1, _2, _3));
       }
     }
 
@@ -145,13 +145,13 @@ namespace tagslam_ros
     }
     
     if(!detection_only_){
-      slam_pose_publisher_ = nh.advertise<nav_msgs::Odometry>("slam_pose", 1);
+      slam_pose_publisher_ = nh.advertise<nav_msgs::msg::Odometry>("slam_pose", 1);
     }
   }
 
   void TagSlam::DetectionOnlyCallback (
-      const sensor_msgs::ImageConstPtr& image,
-      const sensor_msgs::CameraInfoConstPtr& camera_info)
+      const std::shared_ptr<const sensor_msgs::msg::Image>& image,
+      const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& camera_info)
   {
     auto start = std::chrono::system_clock::now();
 
@@ -180,7 +180,7 @@ namespace tagslam_ros
     if (tag_detections_image_publisher_.getNumSubscribers() > 0 && 
         if_pub_tag_det_image_)
     {
-      cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image, "bgr8");
+      std::shared_ptr<cv_bridge::CvImage> cv_ptr = cv_bridge::toCvCopy(image, "bgr8");
       tag_detector_->drawDetections(cv_ptr, static_tag_array_ptr);
       tag_detections_image_publisher_.publish(cv_ptr->toImageMsg());
     }
@@ -188,9 +188,9 @@ namespace tagslam_ros
   }
 
   void TagSlam::imageOdomCallback (
-      const sensor_msgs::ImageConstPtr& image,
-      const sensor_msgs::CameraInfoConstPtr& camera_info,
-      const nav_msgs::OdometryConstPtr& odom)
+      const std::shared_ptr<const sensor_msgs::msg::Image>& image,
+      const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& camera_info,
+      const std::shared_ptr<const nav_msgs::msg::Odometry>& odom)
   {
     auto static_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
     auto dyn_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
@@ -227,7 +227,7 @@ namespace tagslam_ros
     if (tag_detections_image_publisher_.getNumSubscribers() > 0 && 
         if_pub_tag_det_image_)
     {
-      cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(image, "bgr8");
+      std::shared_ptr<cv_bridge::CvImage> cv_ptr = cv_bridge::toCvCopy(image, "bgr8");
       tag_detector_->drawDetections(cv_ptr, static_tag_array_ptr);
       tag_detector_->drawDetections(cv_ptr, dyn_tag_array_ptr);
       tag_detections_image_publisher_.publish(cv_ptr->toImageMsg());

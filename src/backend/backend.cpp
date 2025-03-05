@@ -131,7 +131,7 @@ namespace tagslam_ros
     Values::shared_ptr Backend::read_from_file(const std::string &filename)
     {  
         // Pointer to GTSAM Values
-        auto values = boost::make_shared<gtsam::Values>();
+        auto values = std::make_shared<gtsam::Values>();
 
         // Parse the file
         std::ifstream is(filename.c_str());
@@ -197,7 +197,7 @@ namespace tagslam_ros
         // dump all previous inserted imu measurement
         while(!imu_queue_.empty())
         {
-            sensor_msgs::ImuPtr imu_msg_ptr;
+            std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr;
             while(!imu_queue_.try_pop(imu_msg_ptr)){}
             if(imu_msg_ptr->header.stamp.toSec()>=cur_img_t)
             {
@@ -259,7 +259,7 @@ namespace tagslam_ros
         int imu_count = 0;
         while(!imu_queue_.empty())
         {
-            sensor_msgs::ImuPtr imu_msg_ptr;
+            std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr;
             while(!imu_queue_.try_pop(imu_msg_ptr)){}
             double msg_t = imu_msg_ptr->header.stamp.toSec();
             // We will have imu messages newer than the image due to the latency in tag detection
@@ -320,7 +320,7 @@ namespace tagslam_ros
         return cur_pose_init;
     }
 
-    void Backend::updateIMU(sensor_msgs::ImuPtr imu_msg_ptr)
+    void Backend::updateIMU(std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr)
     {
         // this queue is thread safe
         imu_queue_.push(imu_msg_ptr);
@@ -360,7 +360,7 @@ namespace tagslam_ros
         Matrix6 bias_acc_omega_init = Matrix6::Identity() * 1e-3;
 
         // the imu is in camera frame, which have y point down, z point forward
-        preint_param_ = boost::make_shared<PreintegrationCombinedParams>(Vector3(0.0, 0.0, 0.0));
+        preint_param_ = std::make_shared<PreintegrationCombinedParams>(Vector3(0.0, 0.0, 0.0));
         // PreintegrationBase params:
         preint_param_->accelerometerCovariance =
             measured_acc_cov;  // acc white noise in continuous
@@ -380,7 +380,7 @@ namespace tagslam_ros
         preint_param_->setBodyPSensor(body2sensor);
     }
 
-    void Backend::setGravity(sensor_msgs::ImuPtr imu_msg_ptr)
+    void Backend::setGravity(std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr)
     {
         Eigen::Vector3d gravity(0, 0, -9.81);
         Eigen::Matrix3d orientation = Eigen::Quaterniond(imu_msg_ptr->orientation.w,
@@ -450,7 +450,7 @@ namespace tagslam_ros
         ROS_INFO_STREAM("Load " << num_landmarks << " landmarks from " << load_map_path_);
     }
 
-    nav_msgs::OdometryPtr Backend::createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 
+    std::shared_ptr<nav_msgs::msg::Odometry> Backend::createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 
                                             Vector3 linear_v, Vector3 angular_w, 
                                             double time, int seq)
     {
@@ -470,8 +470,8 @@ namespace tagslam_ros
             angular_w << twist(2,1), twist(0,2), twist(1,0);
         }
 
-        nav_msgs::OdometryPtr odom_msg = boost::make_shared<nav_msgs::Odometry>();
-        odom_msg->header.stamp = ros::Time(time);
+        std::shared_ptr<nav_msgs::msg::Odometry> odom_msg = std::make_shared<nav_msgs::msg::Odometry>();
+        odom_msg->header.stamp = rclcpp::Time(time);
         odom_msg->header.seq = seq;
         odom_msg->header.frame_id = "map";
 
@@ -507,10 +507,10 @@ namespace tagslam_ros
         return odom_msg;
     }
 
-    visualization_msgs::MarkerArrayPtr Backend::createMarkerArray(std_msgs::Header header)
+    std::shared_ptr<visualization_msgs::msg::MarkerArray> Backend::createMarkerArray(std_msgs::msg::Header header)
     {
         // initialize the marker array
-        visualization_msgs::MarkerArrayPtr marker_array_ptr = boost::make_shared<visualization_msgs::MarkerArray>();
+        std::shared_ptr<visualization_msgs::msg::MarkerArray> marker_array_ptr = std::make_shared<visualization_msgs::msg::MarkerArray>();
         if(reset_mutex_.try_lock())
         {
             // iterate through landmarks, and update them to priors
@@ -518,8 +518,8 @@ namespace tagslam_ros
                 Key temp_key = key_value.key;
                 Pose3 temp_pose = landmark_values_.at<Pose3>(temp_key);
                 
-                visualization_msgs::Marker marker;
-                visualization_msgs::Marker id;
+                visualization_msgs::msg::Marker marker;
+                visualization_msgs::msg::Marker id;
                 marker.header = header;
                 marker.header.frame_id = "map";
 

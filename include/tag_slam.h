@@ -60,9 +60,9 @@
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/synchronizer.h>
 
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/msg/image_encodings.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
 
 namespace tagslam_ros
 {
@@ -77,13 +77,13 @@ namespace tagslam_ros
 
     // private function
   private:
-    void DetectionOnlyCallback(const sensor_msgs::ImageConstPtr &image,
-                                const sensor_msgs::CameraInfoConstPtr &camera_info);
+    void DetectionOnlyCallback(const std::shared_ptr<const sensor_msgs::msg::Image> &image,
+                                const std::shared_ptr<const sensor_msgs::msg::Image> &camera_info);
 
     void imageOdomCallback(
-        const sensor_msgs::ImageConstPtr &image,
-        const sensor_msgs::CameraInfoConstPtr &camera_info,
-        const nav_msgs::OdometryConstPtr &odom);
+        const std::shared_ptr<const sensor_msgs::msg::Image> &image,
+        const std::shared_ptr<const sensor_msgs::msg::CameraInfo> &camera_info,
+        const std::shared_ptr<const nav_msgs::msg::Odometry> &odom);
 
     // front end
   private:
@@ -97,7 +97,7 @@ namespace tagslam_ros
     std::string camera_info_topic_;
     std::string odom_topic_;
     std::string slam_pose_topic_;
-    cv_bridge::CvImagePtr cv_image_;
+    std::shared_ptr<cv_bridge::CvImage> cv_image_;
 
     bool detection_only_;
 
@@ -111,18 +111,18 @@ namespace tagslam_ros
     image_transport::CameraSubscriber camera_image_subscriber_;
 
     image_transport::SubscriberFilter image_subscriber_;
-    message_filters::Subscriber<sensor_msgs::CameraInfo> camera_info_subscriber_;
-    message_filters::Subscriber<nav_msgs::Odometry> odom_subscriber_;
+    message_filters::Subscriber<sensor_msgs::msg::CameraInfo> camera_info_subscriber_;
+    message_filters::Subscriber<nav_msgs::msg::Odometry> odom_subscriber_;
 
     // sync policy
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
-                                                            sensor_msgs::CameraInfo,
-                                                            nav_msgs::Odometry>
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image,
+                                                            sensor_msgs::msg::CameraInfo,
+                                                            nav_msgs::msg::Odometry>
         ApproxSyncPolicy;
 
-    typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image,
-                                                      sensor_msgs::CameraInfo,
-                                                      nav_msgs::Odometry>
+    typedef message_filters::sync_policies::ExactTime<sensor_msgs::msg::Image,
+                                                      sensor_msgs::msg::CameraInfo,
+                                                      nav_msgs::msg::Odometry>
         ExactSyncPolicy;
 
     typedef message_filters::Synchronizer<ApproxSyncPolicy> ApproxSync;

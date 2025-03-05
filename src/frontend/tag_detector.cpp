@@ -77,7 +77,7 @@ namespace tagslam_ros
         }
     }
 
-    void TagDetector::drawDetections(cv_bridge::CvImagePtr image,
+    void TagDetector::drawDetections(std::shared_ptr<cv_bridge::CvImage> image,
             TagDetectionArrayPtr tag_detection)
     {
         drawDetections(image->image, tag_detection);

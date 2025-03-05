@@ -142,22 +142,22 @@ namespace tagslam_ros {
             dyn_tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("Tag_Detections_Dynamic", 1);
 
         if(!detection_only_)
-            slam_pose_pub_ = pnh_.advertise<nav_msgs::Odometry>("Pose", 1);
+            slam_pose_pub_ = pnh_.advertise<nav_msgs::msg::Odometry>("Pose", 1);
 
         // // IMU Publishers
         if(use_imu_odom_)
-            imu_pub_ = pnh_.advertise<sensor_msgs::Imu>("IMU/Data", 1);
+            imu_pub_ = pnh_.advertise<sensor_msgs::msg::Imu>("IMU/Data", 1);
 
         // landmark publisher
         if(if_pub_landmark_)
-            landmark_pub_ = pnh_.advertise<visualization_msgs::MarkerArray>("Landmarks", 1);
+            landmark_pub_ = pnh_.advertise<visualization_msgs::msg::MarkerArray>("Landmarks", 1);
 
         if (if_pub_latency_)
         {
-            debug_convert_pub_ = pnh_.advertise<std_msgs::Float32>("Debug/Convert", 1);
-            debug_det_pub_ = pnh_.advertise<std_msgs::Float32>("Debug/Detect", 1);
-            debug_opt_pub_ = pnh_.advertise<std_msgs::Float32>("Debug/Optimize", 1);
-            debug_total_pub_ = pnh_.advertise<std_msgs::Float32>("Debug/Total", 1);
+            debug_convert_pub_ = pnh_.advertise<std_msgs::msg::Float32>("Debug/Convert", 1);
+            debug_det_pub_ = pnh_.advertise<std_msgs::msg::Float32>("Debug/Detect", 1);
+            debug_opt_pub_ = pnh_.advertise<std_msgs::msg::Float32>("Debug/Optimize", 1);
+            debug_total_pub_ = pnh_.advertise<std_msgs::msg::Float32>("Debug/Total", 1);
         }
     }
 
@@ -341,7 +341,7 @@ namespace tagslam_ros {
         zed_runtime_param_.enable_depth = zed_pos_tracking_enabled_; // pose tracking require depth
 
         //get camera intrinsics and generate camera info
-        cam_info_msg_.reset(new sensor_msgs::CameraInfo());
+        cam_info_msg_.reset(new sensor_msgs::msg::CameraInfo());
 
         sl::CameraConfiguration zed_cam_config = zed_camera_.getCameraInformation().camera_configuration;
         cam_info_msg_->width = zed_cam_config.resolution.width;
@@ -379,12 +379,12 @@ namespace tagslam_ros {
         
         sl::Mat sl_mat;
             
-        std_msgs::Header msg_header;
+        std_msgs::msg::Header msg_header;
         msg_header.frame_id = "left_rect";
 
         while(pnh_.ok()) // ros is still runing
         {
-            msg_header.stamp = ros::Time::now();
+            msg_header.stamp = rclcpp::Time::now();
             sl::ERROR_CODE zed_grab_status = zed_camera_.grab(zed_runtime_param_);
             if(zed_grab_status == sl::ERROR_CODE::SUCCESS)
             {
@@ -432,7 +432,7 @@ namespace tagslam_ros {
                     float d1 = std::chrono::duration<float, std::milli>(t2 - t1).count();
                     float d2 = std::chrono::duration<float, std::milli>(t3 - t2).count();
                     float d = std::chrono::duration<float, std::milli>(t3 - t0).count();
-                    std_msgs::Float32 temp;
+                    std_msgs::msg::Float32 temp;
                     temp.data = d0;
                     debug_convert_pub_.publish(temp);
                     temp.data = d1;
@@ -456,12 +456,12 @@ namespace tagslam_ros {
         // initialize the image container
         sl::Mat sl_mat;
 
-        std_msgs::Header msg_header;
+        std_msgs::msg::Header msg_header;
         msg_header.frame_id = "left_rect";
 
         while(pnh_.ok()) // ros is still runing
         {
-            msg_header.stamp = ros::Time::now();
+            msg_header.stamp = rclcpp::Time::now();
             sl::ERROR_CODE zed_grab_status = zed_camera_.grab(zed_runtime_param_);
             if(zed_grab_status == sl::ERROR_CODE::SUCCESS)
             {
@@ -511,7 +511,7 @@ namespace tagslam_ros {
                     float d1 = std::chrono::duration<float, std::milli>(t2 - t1).count();
                     float d2 = std::chrono::duration<float, std::milli>(t3 - t2).count();
                     float d = std::chrono::duration<float, std::milli>(t3 - t0).count();
-                    std_msgs::Float32 temp;
+                    std_msgs::msg::Float32 temp;
                     temp.data = d0;
                     debug_convert_pub_.publish(temp);
                     temp.data = d1;
@@ -541,7 +541,7 @@ namespace tagslam_ros {
             zed_camera_.getSensorsData(sensor_data, sl::TIME_REFERENCE::CURRENT);
             if(ts_handler.isNew(sensor_data.imu))
             {
-                sensor_msgs::ImuPtr imu_msg_ptr = boost::make_shared<sensor_msgs::Imu>();  
+                std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr = std::make_shared<sensor_msgs::msg::Imu>();
                 imu_msg_ptr->header.stamp = slTime2Ros(sensor_data.imu.timestamp);
 
                 imu_msg_ptr->orientation.x = sensor_data.imu.pose.getOrientation()[0];
@@ -601,7 +601,7 @@ namespace tagslam_ros {
 
     void TagSlamZED::estimateState(TagDetectionArrayPtr tag_array_ptr)
     {
-        nav_msgs::OdometryPtr slam_pose_msg;
+        std::shared_ptr<nav_msgs::msg::Odometry> slam_pose_msg;
 
         EigenPose relative_pose;
         EigenPoseCov pose_cur_cov;
@@ -635,7 +635,7 @@ namespace tagslam_ros {
         if(if_pub_landmark_)
         {
             // publish landmark
-            visualization_msgs::MarkerArrayPtr landmark_msg_ptr = slam_backend_->createMarkerArray(tag_array_ptr->header);
+            std::shared_ptr<visualization_msgs::msg::MarkerArray> landmark_msg_ptr = slam_backend_->createMarkerArray(tag_array_ptr->header);
             landmark_pub_.publish(landmark_msg_ptr);
         }
         
@@ -648,7 +648,7 @@ namespace tagslam_ros {
         int num_image_subscriber = img_pub_.getNumSubscribers();
         int num_detection_subscriber = det_img_pub_.getNumSubscribers();
         
-        std_msgs::Header header = static_tag_array_ptr->header;
+        std_msgs::msg::Header header = static_tag_array_ptr->header;
 
         if(num_image_subscriber||num_detection_subscriber){
             // Download the image to cpu
@@ -657,7 +657,7 @@ namespace tagslam_ros {
             
             // create raw image message
             if(num_image_subscriber > 0 && if_pub_image_){
-                sensor_msgs::ImagePtr rawImgMsg = boost::make_shared<sensor_msgs::Image>();
+                std::shared_ptr<sensor_msgs::msg::Image> rawImgMsg = std::make_shared<sensor_msgs::msg::Image>();
                 slMatToROSmsg(rawImgMsg, sl_mat_cpu, header);
                 cam_info_msg_->header = header;
                 img_pub_.publish(rawImgMsg, cam_info_msg_);
@@ -672,7 +672,7 @@ namespace tagslam_ros {
 
                 cv_bridge::CvImage detectionImgMsg;
                 detectionImgMsg.header = header;
-                detectionImgMsg.encoding = sensor_msgs::image_encodings::BGRA8;
+                detectionImgMsg.encoding = sensor_msgs::msg::image_encodings::BGRA8;
                 detectionImgMsg.image = detectionMat;
                 det_img_pub_.publish(detectionImgMsg.toImageMsg());
             }
@@ -773,7 +773,7 @@ namespace tagslam_ros {
         }
     }
 
-    void TagSlamZED::slMatToROSmsg(sensor_msgs::ImagePtr imgMsgPtr, sl::Mat img, std_msgs::Header header)
+    void TagSlamZED::slMatToROSmsg(std::shared_ptr<sensor_msgs::msg::Image> imgMsgPtr, sl::Mat img, std_msgs::msg::Header header)
     {
         if (!imgMsgPtr)
         {
@@ -797,57 +797,57 @@ namespace tagslam_ros {
         switch (dataType)
         {
             case sl::MAT_TYPE::F32_C1: /**< float 1 channel.*/
-            imgMsgPtr->encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC1;
             memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::float1>(), size);
             break;
 
             case sl::MAT_TYPE::F32_C2: /**< float 2 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::image_encodings::TYPE_32FC2;
+            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC2;
             memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::float2>(), size);
             break;
 
             case sl::MAT_TYPE::F32_C3: /**< float 3 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::image_encodings::TYPE_32FC3;
+            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC3;
             memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::float3>(), size);
             break;
 
             case sl::MAT_TYPE::F32_C4: /**< float 4 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::image_encodings::TYPE_32FC4;
+            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC4;
             memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::float4>(), size);
             break;
 
             case sl::MAT_TYPE::U8_C1: /**< unsigned char 1 channel.*/
-            imgMsgPtr->encoding = sensor_msgs::image_encodings::MONO8;
+            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::MONO8;
             memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::uchar1>(), size);
             break;
 
             case sl::MAT_TYPE::U8_C2: /**< unsigned char 2 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::image_encodings::TYPE_8UC2;
+            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_8UC2;
             memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::uchar2>(), size);
             break;
 
             case sl::MAT_TYPE::U8_C3: /**< unsigned char 3 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::image_encodings::BGR8;
+            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::BGR8;
             memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::uchar3>(), size);
             break;
 
             case sl::MAT_TYPE::U8_C4: /**< unsigned char 4 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::image_encodings::BGRA8;
+            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::BGRA8;
             memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::uchar4>(), size);
             break;
 
             case sl::MAT_TYPE::U16_C1: /**< unsigned short 1 channel.*/
-            imgMsgPtr->encoding = sensor_msgs::image_encodings::TYPE_16UC1;
+            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_16UC1;
             memcpy((uint16_t*)(&imgMsgPtr->data[0]), img.getPtr<sl::ushort1>(), size);
             break;
         }
     }
 
-    ros::Time TagSlamZED::slTime2Ros(sl::Timestamp t)
+    rclcpp::Time TagSlamZED::slTime2Ros(sl::Timestamp t)
     {
         uint32_t sec = static_cast<uint32_t>(t.getNanoseconds() / 1000000000);
         uint32_t nsec = static_cast<uint32_t>(t.getNanoseconds() % 1000000000);
-        return ros::Time(sec, nsec);
+        return rclcpp::Time(sec, nsec);
     }
 
     EigenPose TagSlamZED::slTrans2Eigen(sl::Transform& pose){
@@ -1034,11 +1034,11 @@ namespace tagslam_ros {
         return cv_type;
     }
 
-    void TagSlamZED::fillCameraInfo(sensor_msgs::CameraInfoPtr cam_info_msg_ptr, sl::CalibrationParameters zedParam)
+    void TagSlamZED::fillCameraInfo(std::shared_ptr<sensor_msgs::msg::CameraInfo> cam_info_msg_ptr, sl::CalibrationParameters zedParam)
     {
 
         // distortion
-        cam_info_msg_ptr->distortion_model = sensor_msgs::distortion_models::PLUMB_BOB;
+        cam_info_msg_ptr->distortion_model = sensor_msgs::msg::distortion_models::PLUMB_BOB;
         cam_info_msg_ptr->D.resize(5);
         cam_info_msg_ptr->D[0] = zedParam.left_cam.disto[0]; // k1
         cam_info_msg_ptr->D[1] = zedParam.left_cam.disto[1]; // k2

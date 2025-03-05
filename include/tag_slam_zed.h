@@ -55,12 +55,12 @@
 #include "backend/isam2_backend.h"
 
 #include <image_transport/image_transport.h>
-#include <sensor_msgs/Imu.h>
-#include <sensor_msgs/distortion_models.h>
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
-#include <std_srvs/Trigger.h>
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/distortion_models.hpp>
+#include <sensor_msgs/msg/image_encodings.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
+#include <std_srvs/srv/trigger.hpp>
 
 #include <condition_variable>
 #include <memory>
@@ -74,7 +74,7 @@
     #include <opencv2/cudaimgproc.hpp>
 #endif
 
-using Trigger = std_srvs::Trigger; 
+using Trigger = std_srvs::srv::trigger; 
 
 #ifndef NO_ZED
     // zed include
@@ -146,11 +146,11 @@ using Trigger = std_srvs::Trigger;
 
         void checkResolFps();
 
-        void slMatToROSmsg(sensor_msgs::ImagePtr imgMsgPtr, sl::Mat img, std_msgs::Header header);
+        void slMatToROSmsg(std::shared_ptr<sensor_msgs::msg::Image> imgMsgPtr, sl::Mat img, std_msgs::msg::Header header);
 
-        void fillCameraInfo(sensor_msgs::CameraInfoPtr CamInfoMsg, sl::CalibrationParameters zedParam);
+        void fillCameraInfo(std::shared_ptr<sensor_msgs::msg::CameraInfo> CamInfoMsg, sl::CalibrationParameters zedParam);
 
-        ros::Time slTime2Ros(sl::Timestamp t);
+        rclcpp::Time slTime2Ros(sl::Timestamp t);
 
         EigenPose slTrans2Eigen(sl::Transform& pose);
 
@@ -270,7 +270,7 @@ using Trigger = std_srvs::Trigger;
         EigenPose pose_prev_ = EigenPose::Identity();
         
         // Camera info
-        sensor_msgs::CameraInfoPtr cam_info_msg_;
+        std::shared_ptr<sensor_msgs::msg::CameraInfo> cam_info_msg_;
 
         // ROS services parameters
         std::atomic<bool> run_slam_ = false;

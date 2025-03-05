@@ -40,9 +40,9 @@
 
 #include "utility_function.h"
 #include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/msg/image_encodings.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
 
 #include "image_geometry/pinhole_camera_model.h"
 
@@ -67,22 +67,22 @@ namespace tagslam_ros{
       ~TagDetector() = default;
 
       // Detect tags in an image
-      virtual void detectTags(const sensor_msgs::ImageConstPtr& msg_img,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info,
+      virtual void detectTags(const std::shared_ptr<const sensor_msgs::msg::Image>& msg_img,
+        const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info,
         TagDetectionArrayPtr static_tag_array_ptr,
         TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 
 #ifndef NO_CUDA_OPENCV
       virtual void detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header,
+        const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, std_msgs::msg::Header,
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 #endif
 
       virtual void detectTags(cv::Mat& cv_mat_cpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header, 
+        const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, std_msgs::msg::Header, 
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 
-      void drawDetections(cv_bridge::CvImagePtr image, 
+      void drawDetections(std::shared_ptr<cv_bridge::CvImage> image, 
                   TagDetectionArrayPtr tag_detection);
 
       void drawDetections(cv::Mat & image,

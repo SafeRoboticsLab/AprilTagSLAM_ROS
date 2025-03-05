@@ -57,23 +57,23 @@ public:
 
   ~TagDetectorCUDA();
 
-  void detectTags(const sensor_msgs::ImageConstPtr&,
-    const sensor_msgs::CameraInfoConstPtr& msg_cam_info,
+  void detectTags(const std::shared_ptr<const sensor_msgs::msg::Image>&,
+    const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info,
     TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
 #ifndef NO_CUDA_OPENCV
   // takes in RGBA8 cv::cuda::GpuMat
   void detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-    const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+    const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, std_msgs::msg::Header header,
     TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 #endif
 
   void detectTags(cv::Mat& cv_mat_cpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+        const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, std_msgs::msg::Header header,
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
     
 private:
-  geometry_msgs::Pose DetectionToPose(const nvAprilTagsID_t & detection);
+  geometry_msgs::msg::Pose DetectionToPose(const nvAprilTagsID_t & detection);
 
   void runDetection(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 

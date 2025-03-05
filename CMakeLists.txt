@@ -60,14 +60,31 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 
+find_package(ament_cmake REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(image_geometry REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(nodelet REQUIRED)
+find_package(pluginlib REQUIRED)
+find_package(roscpp REQUIRED)
+find_package(sensor_msgs REQUIRED)  
+find_package(std_msgs REQUIRED)  
+
+find_package(rosidl_default_generators REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(apriltag REQUIRED)
 find_package(TBB REQUIRED)
-find_package(Boost 1.58 REQUIRED COMPONENTS system serialization filesystem thread date_time regex timer chrono)
+# find_package(Boost 1.58 REQUIRED COMPONENTS system serialization filesystem thread date_time regex timer chrono)
 find_package(GTSAM REQUIRED)
 find_package(GTSAM_UNSTABLE REQUIRED)
+
+# TODO: add linting in future
+# find_package(ament_lint_auto REQUIRED)
+# ament_lint_auto_find_test_dependencies() 
 
 # CUDA
 if(USE_CUDA)
@@ -90,13 +107,7 @@ if(NOT USE_CUDA_OPENCV)
 endif()
 
 
-add_message_files(
-  FILES
-  AprilTagDetection.msg
-  AprilTagDetectionArray.msg
-)
-
-generate_messages(
+rosidl_generate_interfaces(
   DEPENDENCIES
   geometry_msgs
   sensor_msgs
@@ -107,18 +118,18 @@ generate_messages(
 get_target_property(apriltag_INCLUDE_DIRS apriltag::apriltag INTERFACE_INCLUDE_DIRECTORIES)
 get_target_property(apriltag_LIBRARIES apriltag::apriltag INTERFACE_LINK_LIBRARIES)
 
-catkin_package(
-  CATKIN_DEPENDS
-    cv_bridge
-    geometry_msgs
-    image_transport
-    message_runtime
-    nodelet
-    pluginlib
-    roscpp
-    sensor_msgs
-    std_msgs
-  )
+# catkin_package
+ament_export_dependencies(
+  cv_bridge REQUIRED
+  geometry_msgs REQUIRED
+  image_transport REQUIRED
+  nodelet REQUIRED
+  pluginlib REQUIRED
+  roscpp REQUIRED
+  sensor_msgs REQUIRED
+  std_msgs REQUIRED
+)
+ament_package() # double check
 
 ###########
 ## Build ##
@@ -128,7 +139,7 @@ include_directories(include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIR}
+  # ${Boost_INCLUDE_DIR}
   ${GTSAM_INCLUDE_DIR}
   ${GTSAM_UNSTABLE_INCLUDE_DIR}
 )
@@ -182,8 +193,8 @@ else()
             apriltag::apriltag)
 endif()
 
+# TODO: check generate messages, rosidl_generate_interfaces
 add_dependencies(${PROJECT_NAME}_frontend ${PROJECT_NAME}_generate_messages_cpp)
-
 
 ################################
 ## Add library for the back-end
@@ -198,7 +209,8 @@ target_link_libraries(${PROJECT_NAME}_backend
                       gtsam
                       gtsam_unstable
                       tbb  
-                      ${Boost_LIBRARIES} )
+                      # ${Boost_LIBRARIES} 
+                      )
 
 # ################################
 # ## Add library for the SLAM
@@ -244,10 +256,10 @@ target_link_libraries(${PROJECT_NAME}_zed_node ${catkin_LIBRARIES})
 #############
 
 install(DIRECTORY config launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  DESTINATION ${share}
 )
 install(FILES nodelet_plugins.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  DESTINATION ${share}
 )
 
 install(TARGETS
@@ -255,8 +267,8 @@ install(TARGETS
   ${PROJECT_NAME}_slam_zed
   ${PROJECT_NAME}_node
   ${PROJECT_NAME}_zed_node
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${bin}
+  ARCHIVE DESTINATION ${lib}
+  LIBRARY DESTINATION ${lib}
 )
 

@@ -43,7 +43,7 @@ namespace tagslam_ros
       const int max_tag,
       const size_t image_buffer_size,
       const size_t pitch_bytes,
-      const sensor_msgs::CameraInfoConstPtr & camera_info,
+      const std::shared_ptr<const sensor_msgs::msg::CameraInfo> & camera_info,
       bool create_buffer = true)
     {
       assert(april_tags_handle == nullptr && "Already initialized.");
@@ -151,12 +151,12 @@ namespace tagslam_ros
     impl_ = std::make_unique<AprilTagsImpl>();
   }
 
-  void TagDetectorCUDA::detectTags(const sensor_msgs::ImageConstPtr& msg_img,
-      const sensor_msgs::CameraInfoConstPtr& msg_cam_info, 
+  void TagDetectorCUDA::detectTags(const std::shared_ptr<const sensor_msgs::msg::Image>& msg_img,
+      const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, 
       TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     /*
-    Perform Detection from a sensor_msgs::ImageConstPtr on CPU
+    Perform Detection from a std::shared_ptr<const sensor_msgs::msg::Image> on CPU
     */
     // Convert frame to 8-bit RGBA image
     cv::Mat img_rgba8;
@@ -173,7 +173,7 @@ namespace tagslam_ros
 
 #ifndef NO_CUDA_OPENCV
   void TagDetectorCUDA::detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-      const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header, 
+      const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, std_msgs::msg::Header header, 
       TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     image_geometry::PinholeCameraModel camera_model;
@@ -215,7 +215,7 @@ namespace tagslam_ros
 #endif
 
   void TagDetectorCUDA::detectTags(cv::Mat& cv_mat_cpu,
-          const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+          const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, std_msgs::msg::Header header,
           TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     image_geometry::PinholeCameraModel camera_model;
@@ -284,7 +284,7 @@ namespace tagslam_ros
       }
 
       //make pose
-      // geometry_msgs::Pose tag_pose = DetectionToPose(detection);
+      // geometry_msgs::msg::Pose tag_pose = DetectionToPose(detection);
       // instead of pose generated from detection, we solve them us PnP due to various tag size
 
       // Get estimated tag pose in the camera frame.
@@ -315,7 +315,7 @@ namespace tagslam_ros
       EigenPose T_tag_to_cam = getRelativeTransform(TagObjectPoints,TagImagePoints, cameraMatrix_, distCoeffs_);
       EigenPose T_tag_to_ros = T_cam_to_ros_ * T_tag_to_cam;
       
-      geometry_msgs::Pose tag_pose = createPoseMsg(T_tag_to_ros);
+      geometry_msgs::msg::Pose tag_pose = createPoseMsg(T_tag_to_ros);
 
       // create message
       AprilTagDetection tag_detection;
@@ -353,9 +353,9 @@ namespace tagslam_ros
     }
   }
 
-  geometry_msgs::Pose TagDetectorCUDA::DetectionToPose(const nvAprilTagsID_t & detection)
+  geometry_msgs::msg::Pose TagDetectorCUDA::DetectionToPose(const nvAprilTagsID_t & detection)
   {
-    geometry_msgs::Pose pose;
+    geometry_msgs::msg::Pose pose;
     pose.position.x = detection.translation[0];
     pose.position.y = detection.translation[1];
     pose.position.z = detection.translation[2];

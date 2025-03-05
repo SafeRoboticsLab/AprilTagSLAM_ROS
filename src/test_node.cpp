@@ -335,7 +335,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "test_node");
   ros::NodeHandle pnh("~");
   
-  ros::Rate loop_rate(10);
+  rclcpp::Rate loop_rate(10);
   
   double dt = 0.05;
 
@@ -393,7 +393,7 @@ int main(int argc, char **argv)
     Motion motion = agent.one_step(*env);
     step = motion.step;
     TagDetectionArrayPtr obs = motion.obs;
-    obs->header.stamp = ros::Time(step*dt);
+    obs->header.stamp = rclcpp::Time(step*dt);
     EigenPose odom = motion.odom;
     clock_t t0 = clock();
     estimated_poses[step] = slam_backend->updateSLAM(obs, odom, cov);

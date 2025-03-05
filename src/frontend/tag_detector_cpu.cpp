@@ -167,8 +167,8 @@ namespace tagslam_ros
   }
 
   // detect april tag from image
-  void TagDetectorCPU::detectTags(const sensor_msgs::ImageConstPtr& msg_img, 
-      const sensor_msgs::CameraInfoConstPtr &camera_info,
+  void TagDetectorCPU::detectTags(const std::shared_ptr<const sensor_msgs::msg::Image>& msg_img, 
+      const std::shared_ptr<const sensor_msgs::msg::CameraInfo> &camera_info,
       TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     // Convert image to AprilTag code's format
@@ -184,7 +184,7 @@ namespace tagslam_ros
   }
   
   void TagDetectorCPU::detectTags(cv::Mat& cv_mat_cpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+        const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, std_msgs::msg::Header header,
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     image_u8_t apriltag_image = {.width = cv_mat_cpu.cols,
@@ -267,7 +267,7 @@ namespace tagslam_ros
       EigenPose T_tag_to_cam = getRelativeTransform(TagObjectPoints,TagImagePoints,cameraMatrix, distCoeffs);
       EigenPose T_tag_to_ros = T_cam_to_ros_ * T_tag_to_cam;
 
-      geometry_msgs::Pose tag_pose = createPoseMsg(T_tag_to_ros);
+      geometry_msgs::msg::Pose tag_pose = createPoseMsg(T_tag_to_ros);
 
       // Add the detection to the back of the tag detection array
       AprilTagDetection tag_detection;

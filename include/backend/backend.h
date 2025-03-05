@@ -83,13 +83,13 @@ namespace tagslam_ros
         /*
         Update the smoother with landmark detections and odometry measurement.
         */
-        virtual nav_msgs::OdometryPtr updateSLAM(TagDetectionArrayPtr landmark_ptr, 
+        virtual std::shared_ptr<nav_msgs::msg::Odometry> updateSLAM(TagDetectionArrayPtr landmark_ptr, 
                                     EigenPose odom, EigenPoseCov odom_cov) = 0;
 
         /*
         Update the smoother with landmark detections, preintegrated IMU factor and odometry measurement.
         */
-        virtual nav_msgs::OdometryPtr updateVIO(TagDetectionArrayPtr landmark_ptr,
+        virtual std::shared_ptr<nav_msgs::msg::Odometry> updateVIO(TagDetectionArrayPtr landmark_ptr,
                                     EigenPose odom, EigenPoseCov odom_cov, bool use_odom) = 0;
 
         void setupIMU(double accel_noise_sigma, double accel_bias_rw_sigma,
@@ -98,7 +98,7 @@ namespace tagslam_ros
         /*
         Add IMU message to the queue
         */
-        void updateIMU(sensor_msgs::ImuPtr imu_msg_ptr);
+        void updateIMU(std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr);
 
         /*
         Retrive the smoothed poses from the smoother as Eigen::Matrix4d, and save it to the given container.
@@ -113,9 +113,9 @@ namespace tagslam_ros
         }
 
         /*
-        create visualization_msgs/MarkerArray message from landmark_values_
+        create visualization_msgs/msg/marker_array message from landmark_values_
         */
-        visualization_msgs::MarkerArrayPtr createMarkerArray(std_msgs::Header header);
+        std::shared_ptr<visualization_msgs::msg::MarkerArray> createMarkerArray(std_msgs::msg::Header header);
 
     protected:
         /*
@@ -151,7 +151,7 @@ namespace tagslam_ros
         /*
         create nav_msg/odometry message from Eigen::Matrix4d
         */
-        nav_msgs::OdometryPtr createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 
+        std::shared_ptr<nav_msgs::msg::Odometry> createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 
                                             Vector3 linear_v, Vector3 angular_w, 
                                             double time, int seq);
     
@@ -175,7 +175,7 @@ namespace tagslam_ros
                     continue;
                 }
                 Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);
-                // landmark.pose is geometry_msgs::Pose
+                // landmark.pose is geometry_msgs::msg::Pose
                 Pose3 landmark_factor = Pose3(getTransform(landmark.pose));
                 auto landmark_noise = noiseModel::Gaussian::Covariance(landmark_factor_cov_);
 
@@ -212,7 +212,7 @@ namespace tagslam_ros
         /*
         set the gravity vector for preint_param_ using the imu message
         */
-        void setGravity(sensor_msgs::ImuPtr imu_msg_ptr);
+        void setGravity(std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr);
 
         /*
         loda map from load_map_path_
@@ -258,8 +258,8 @@ namespace tagslam_ros
         double bias_prior_sigma_;
 
         // concurrent queue for imu data
-        tbb::concurrent_queue<sensor_msgs::ImuPtr> imu_queue_;
-        boost::shared_ptr<PreintegrationCombinedParams> preint_param_;
+        tbb::concurrent_queue<std::shared_ptr<sensor_msgs::msg::Imu>> imu_queue_;
+        std::shared_ptr<PreintegrationCombinedParams> preint_param_;
         std::shared_ptr<PreintegratedCombinedMeasurements> preint_meas_ = nullptr;
 
         // values to track of previous states

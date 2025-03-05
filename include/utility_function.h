@@ -60,16 +60,16 @@
 #include <ros/console.h>
 #include <nodelet/nodelet.h>
 
-#include <std_msgs/Header.h>
-#include <std_msgs/Float32.h>
-#include <nav_msgs/Odometry.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/Imu.h>
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
+#include <std_msgs/msg/header.hpp>
+#include <std_msgs/msg/float32.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include "tagslam_ros/AprilTagDetection.h"
 #include "tagslam_ros/AprilTagDetectionArray.h"
@@ -104,7 +104,7 @@ namespace tagslam_ros{
     return param_val;
   }
 
-  static inline EigenPose getTransform(const geometry_msgs::Pose& pose_msg)
+  static inline EigenPose getTransform(const geometry_msgs::msg::Pose& pose_msg)
   {
     Eigen::Affine3d transform;
     transform.translation() << pose_msg.position.x, pose_msg.position.y, pose_msg.position.z;
@@ -113,7 +113,7 @@ namespace tagslam_ros{
     return transform.matrix();
   }
 
-  static inline EigenPoseSigma getTransformSigma(const geometry_msgs::PoseWithCovariance & pose_cov_msg)
+  static inline EigenPoseSigma getTransformSigma(const geometry_msgs::msg::PoseWithCovariance & pose_cov_msg)
   {
     // gtsam have order rotx, roty, rotz, x, y, z
     // ros have order x, y, z, rotx, roty, rotz
@@ -125,7 +125,7 @@ namespace tagslam_ros{
     return sigma;
   }
 
-  static inline EigenPoseCov getTransformCov(const geometry_msgs::PoseWithCovariance & pose_cov_msg)
+  static inline EigenPoseCov getTransformCov(const geometry_msgs::msg::PoseWithCovariance & pose_cov_msg)
   {
     // gtsam have order rotx, roty, rotz, x, y, z
     // ros have order x, y, z, rotx, roty, rotz
@@ -158,16 +158,16 @@ namespace tagslam_ros{
     return cov_gtsam;
   }
 
-  static inline EigenPoseWithSigma getTransformWithSigma(const geometry_msgs::PoseWithCovariance & pose_cov_msg)
+  static inline EigenPoseWithSigma getTransformWithSigma(const geometry_msgs::msg::PoseWithCovariance & pose_cov_msg)
   {
     EigenPose transform = getTransform(pose_cov_msg.pose);
     EigenPoseSigma sigma = getTransformSigma(pose_cov_msg);
     return std::make_pair(transform, sigma);
   }
 
-  static inline geometry_msgs::Pose createPoseMsg(const EigenPose &transform)
+  static inline geometry_msgs::msg::Pose createPoseMsg(const EigenPose &transform)
   {
-    geometry_msgs::Pose pose;
+    geometry_msgs::msg::Pose pose;
     // translation
     pose.position.x = transform(0, 3);
     pose.position.y = transform(1, 3);

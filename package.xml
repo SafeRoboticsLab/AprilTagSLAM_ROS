@@ -3,9 +3,11 @@
   <name>tagslam_ros</name>
   <version>3.2.1</version>
   <description>
-    TODO: Package description
+    This package contains an implementation of realtime SLAM with Apriltag 
+    front-end in ROS. The front-end runs on either CPU or CUDA GPUs including 
+    Jetson devices.
   </description>
-
+  
   <maintainer email="danylo.malyuta@gmail.com">Danylo Malyuta</maintainer>
   <maintainer email="w.merkt+oss@gmail.com">Wolfgang Merkt</maintainer>
 
@@ -14,10 +16,12 @@
   <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
 
   <!-- <build_depend>apriltag</build_depend> -->
   <!-- <build_depend>gtsam</build_depend> -->
-  <depend>boost</depend>
+  <!-- <depend>boost</depend> -->
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>image_transport</depend>
@@ -33,14 +37,21 @@
 
 
   <build_depend>cmake_modules</build_depend>
-  <build_depend>message_generation</build_depend>
-  
   <!-- <run_depend>gtsam</run_depend> -->
   <!-- <run_depend>apriltag</run_depend> -->
 
-  <exec_depend>message_runtime</exec_depend>
+  <depend>message_package</depend>
+  <!-- NOTE: may need this, but doubt it-->
+  <!-- <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend> -->
 
+  <!-- TODO: add linting in future
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend> -->
+  
   <export>
+    <!-- NOTE: hopefully this belongs here -->
+    <build_type>ament_cmake</build_type> 
     <nodelet plugin="${prefix}/nodelet_plugins.xml" />
   </export>
 </package>

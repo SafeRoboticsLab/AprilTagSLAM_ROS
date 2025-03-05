@@ -53,26 +53,26 @@ namespace tagslam_ros{
       ~TagDetectorCPU();
 
       // Detect tags in an image
-      void detectTags(const sensor_msgs::ImageConstPtr&,
-          const sensor_msgs::CameraInfoConstPtr& msg_cam_info,
+      void detectTags(const std::shared_ptr<const sensor_msgs::msg::Image>&,
+          const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info,
           TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
 #ifndef NO_CUDA_OPENCV
       void detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-        const sensor_msgs::CameraInfoConstPtr& msg_cam_info, std_msgs::Header header,
+        const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, std_msgs::msg::Header header,
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
         {
           throw std::logic_error("CPU based Apriltag only support cv::Mat");
         }
 #endif
       
-      void detectTags(cv::Mat& cv_mat_cpu, const sensor_msgs::CameraInfoConstPtr& msg_cam_info,
-          std_msgs::Header header,
+      void detectTags(cv::Mat& cv_mat_cpu, const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info,
+          std_msgs::msg::Header header,
           TagDetectionArrayPtr static_tag_array_ptr,
           TagDetectionArrayPtr dyn_tag_array_ptr);
 
       // Draw the detected tags' outlines and payload values on the image
-      void drawDetections(cv_bridge::CvImagePtr image);
+      void drawDetections(std::shared_ptr<cv_bridge::CvImage> image);
 
     private:
       // AprilTag 2 code's attributes
