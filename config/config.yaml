@@ -1,168 +1,169 @@
 #############################################
 ### Parameters only use zed sdk directly ####
 #############################################
-camera:
-    camera_model:               zed2                            # A name for the camera (can be different from camera model and node name and can be overwritten by the launch file)
-    frame_rate:                 60                              # Camera frame rate (can be overwritten by the launch file)
-    resolution:                 3                               # '0': HD2K, '1': HD1080, '3': HD720, '5': VGA
-    exposure:                   20                               # Percentage of exposure [0, 100]
+slam_node:
+    camera:
+        camera_model:               zed2                            # A name for the camera (can be different from camera model and node name and can be overwritten by the launch file)
+        frame_rate:                 60                              # Camera frame rate (can be overwritten by the launch file)
+        resolution:                 3                               # '0': HD2K, '1': HD1080, '3': HD720, '5': VGA
+        exposure:                   20                               # Percentage of exposure [0, 100]
 
-depth:
-    quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
-    sensing_mode:               0                               # '0': STANDARD, '1': FILL (not use FILL for robotic applications)
-    min_depth:                  0.5                             # Minimum depth in meters
-    max_depth:                  15.0                            # Maximum depth in meters
+    depth:
+        quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA, '4': NEURAL
+        sensing_mode:               0                               # '0': STANDARD, '1': FILL (not use FILL for robotic applications)
+        min_depth:                  0.5                             # Minimum depth in meters
+        max_depth:                  15.0                            # Maximum depth in meters
 
-sensors:
-    sensor_rate:               200                             # Maximum rate at which the sensors data are published
+    sensors:
+        sensor_rate:               200                             # Maximum rate at which the sensors data are published
 
-#################################
-### Parameters for the slam ####
-#################################
+    #################################
+    ### Parameters for the slam ####
+    #################################
 
-publish:
-    # ros publishing
-    publish_image:              false                            # Publish the camera image
-    publish_image_with_tags:    false                            # Publish the camera image with the tags detected
-    publish_tags:               false                            # Publish the tags detected
-    publish_landmarks:          false                            # Publish the landmarks detected
-    publish_latency:            false                            # Publish the latency between the camera and the computer
-    use_approx_sync:            false                           # Allow ROS subscriber to use approximate sync 
-frontend:
-    type: "CPU"
-    # AprilTag parameters
-    tag_size: 0.262                # Size of the tag in meters, default: 0.1 m
-    
+    publish:
+        # ros publishing
+        publish_image:              false                            # Publish the camera image
+        publish_image_with_tags:    false                            # Publish the camera image with the tags detected
+        publish_tags:               false                            # Publish the tags detected
+        publish_landmarks:          false                            # Publish the landmarks detected
+        publish_latency:            false                            # Publish the latency between the camera and the computer
+        use_approx_sync:            false                           # Allow ROS subscriber to use approximate sync 
+    frontend:
+        type: "CPU"
+        # AprilTag parameters
+        tag_size: 0.262                # Size of the tag in meters, default: 0.1 m
+        
 
-    # CPU detector only parameters
-    tag_family:        'tag36h11' # options: tagStandard52h13, tagStandard41h12, tag36h11, tag25h9, tag16h5, tagCustom48h12, tagCircle21h7, tagCircle49h12
-    tag_threads:       4          # default: 2
-    tag_decimate:      2.0        # default: 1.0
-    tag_blur:          0.0        # default: 0.0
-    tag_refine_edges:  1          # default: 1
-    tag_debug:         0          # default: 0
-    max_hamming_dist:  2          # default: 2 (Tunable parameter with 2 being a good choice - values >=3 consume large amounts of memory. Choose the largest value possible.)
-    
-    # GPU detector only parameters
-    max_tags:          20
+        # CPU detector only parameters
+        tag_family:        'tag36h11' # options: tagStandard52h13, tagStandard41h12, tag36h11, tag25h9, tag16h5, tagCustom48h12, tagCircle21h7, tagCircle49h12
+        tag_threads:       4          # default: 2
+        tag_decimate:      2.0        # default: 1.0
+        tag_blur:          0.0        # default: 0.0
+        tag_refine_edges:  1          # default: 1
+        tag_debug:         0          # default: 0
+        max_hamming_dist:  2          # default: 2 (Tunable parameter with 2 being a good choice - values >=3 consume large amounts of memory. Choose the largest value possible.)
+        
+        # GPU detector only parameters
+        max_tags:          20
 
-backend:
-    #smoother parameter
-    smoother: "fixed_lag" # choose from "fixed_lag", "isam2", and "none"
-    use_odom: true        # use ZED's odometry as motion priors, it can work with or without imu
-    use_imu: true        # use ZED's imu as motion priors, it can work with or without odometry
+    backend:
+        #smoother parameter
+        smoother: "fixed_lag" # choose from "fixed_lag", "isam2", and "none"
+        use_odom: true        # use ZED's odometry as motion priors, it can work with or without imu
+        use_imu: true        # use ZED's imu as motion priors, it can work with or without odometry
 
-    # Load and Save Maps
-    prior_map: true
-    save_graph: false
-    load_path: ""    # prior map
-    save_path: ""                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
-    fix_prior: true
-    pose_offset:    [1.0, 0.0, 0.0, -0.357, # camera center offset
-                    0.0, 1.0, 0.0, -0.06,
-                    0.0, 0.0, 1.0, 0, #wheelbase
-                    0.0, 0.0, 0.0, 1.0] # camera to rear axis transform
+        # Load and Save Maps
+        prior_map: true
+        save_graph: false
+        load_path: ""    # prior map
+        save_path: ""                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
+        fix_prior: true
+        pose_offset:    [1.0, 0.0, 0.0, -0.357, # camera center offset
+                        0.0, 1.0, 0.0, -0.06,
+                        0.0, 0.0, 1.0, 0, #wheelbase
+                        0.0, 0.0, 0.0, 1.0] # camera to rear axis transform
 
-    ################# Uncertainty parameters ####################
+        ################# Uncertainty parameters ####################
 
-    # variance of tag pose estimation
-    landmark_sigma_trans: 0.1   
-    landmark_sigma_rot: 0.2
+        # variance of tag pose estimation
+        landmark_sigma_trans: 0.1   
+        landmark_sigma_rot: 0.2
 
-    # variance of prior landmark loaded from file
-    #(smaller value to enforce the landmark are not updated)
-    landmark_prior_sigma_trans: 0.01 
-    landmark_prior_sigma_rot: 0.05
+        # variance of prior landmark loaded from file
+        #(smaller value to enforce the landmark are not updated)
+        landmark_prior_sigma_trans: 0.01 
+        landmark_prior_sigma_rot: 0.05
 
-    # variance of initial pose if no map is loaded
-    pose_prior_sigma_trans: 0.1
-    pose_prior_sigma_rot: 0.3
+        # variance of initial pose if no map is loaded
+        pose_prior_sigma_trans: 0.1
+        pose_prior_sigma_rot: 0.3
 
-    # ** VIO only parameters **
-    # variance of velocity assosciated with the first pose
-    # we initialize the velocity at 0
-    vel_prior_sigma: 0.2
+        # ** VIO only parameters **
+        # variance of velocity assosciated with the first pose
+        # we initialize the velocity at 0
+        vel_prior_sigma: 0.2
 
-    # variance of imu bias assosciated with the first pose
-    # we initialize the bias with 0
-    bias_prior_sigma: 0.2
+        # variance of imu bias assosciated with the first pose
+        # we initialize the bias with 0
+        bias_prior_sigma: 0.2
 
-    ################# Optimization Parameters #################### 
+        ################# Optimization Parameters #################### 
 
-    # isam2 parameters
-    relinearize_threshold: 0.1
-    relinearize_skip: 1
-    optimizer: "GaussNewton"
-    cacheLinearizedFactors: true
+        # isam2 parameters
+        relinearize_threshold: 0.1
+        relinearize_skip: 1
+        optimizer: "GaussNewton"
+        cacheLinearizedFactors: true
 
-    # LM parameter for fixed_lag smoother
-    lag: 0.2 # parameter for fix lag only
-    lambda_initial: 1e-5
-    lambda_upper_bound: 100.0
-    lambda_lower_bound: 1e-10
-    lambda_factor: 10
-    max_iterations: 10
-    error_tol: 1e-5
-    relative_error_tol: 1e-1
-    absolute_error_tol: 1e-3
+        # LM parameter for fixed_lag smoother
+        lag: 0.2 # parameter for fix lag only
+        lambda_initial: 1e-5
+        lambda_upper_bound: 100.0
+        lambda_lower_bound: 1e-10
+        lambda_factor: 10
+        max_iterations: 10
+        error_tol: 1e-5
+        relative_error_tol: 1e-1
+        absolute_error_tol: 1e-3
 
-    # if this is true, we will accept the local optimal solution 
-    # when the error no longer decrease rather than increase the lambda
-    local_optimal: true 
+        # if this is true, we will accept the local optimal solution 
+        # when the error no longer decrease rather than increase the lambda
+        local_optimal: true 
 
-#################################
-### Parameters for the tags ####
-#################################
+    #################################
+    ### Parameters for the tags ####
+    #################################
 
-# The tags are defined in the following format:
-# {
-#   id_start: beginning id (included)of a list of tags
-#   id_end: end id (include) of a list of tags
-#   tag_size: 0.2, # size of the tag in meters
-# }
+    # The tags are defined in the following format:
+    # {
+    #   id_start: beginning id (included)of a list of tags
+    #   id_end: end id (include) of a list of tags
+    #   tag_size: 0.2, # size of the tag in meters
+    # }
 
-# The tags are used to define the landmarks 
-landmark_tags: [
-    {
-        id_start: 1, # include this tag
-        id_end: 1, # include this tag
-        tag_size: 0.254, # size of the tag in meters
-    },
+    # The tags are used to define the landmarks 
+    landmark_tags: [
+        {
+            id_start: 1, # include this tag
+            id_end: 1, # include this tag
+            tag_size: 0.254, # size of the tag in meters
+        },
 
-    {
-        id_start: 2, # include this tag
-        id_end: 26, # include this tag
-        tag_size: 0.259, # size of the tag in meters
-    },
-    {
-        id_start: 100, # include this tag
-        id_end: 103, # include this tag
-        tag_size: 0.12, # size of the tag in meters
-    }
+        {
+            id_start: 2, # include this tag
+            id_end: 26, # include this tag
+            tag_size: 0.259, # size of the tag in meters
+        },
+        {
+            id_start: 100, # include this tag
+            id_end: 103, # include this tag
+            tag_size: 0.12, # size of the tag in meters
+        }
 
-]
+    ]
 
-# tags are ignored during slam
-ignore_tags: [
-    {
-        id_start: 27, # include this tag
-        id_end: 99, # include this tag
-        tag_size: 0.2, # size of the tag in meters
-    },
-    {
-        id_start: 104, # include this tag
-        id_end: 199, # include this tag
-        tag_size: 0.2, # size of the tag in meters
-    },
-    {
-        id_start: 200, # include this tag
-        id_end: 220, # include this tag
-        tag_size: 0.096, # size of the tag in meters
-    },
-    {
-        id_start: 221, # include this tag
-        id_end: 10000, # include this tag
-        tag_size: 0.2, # size of the tag in meters
-    },
+    # tags are ignored during slam
+    ignore_tags: [
+        {
+            id_start: 27, # include this tag
+            id_end: 99, # include this tag
+            tag_size: 0.2, # size of the tag in meters
+        },
+        {
+            id_start: 104, # include this tag
+            id_end: 199, # include this tag
+            tag_size: 0.2, # size of the tag in meters
+        },
+        {
+            id_start: 200, # include this tag
+            id_end: 220, # include this tag
+            tag_size: 0.096, # size of the tag in meters
+        },
+        {
+            id_start: 221, # include this tag
+            id_end: 10000, # include this tag
+            tag_size: 0.2, # size of the tag in meters
+        },
 
-]
+    ]
