@@ -31,9 +31,10 @@
 
 #include "tag_slam.h"
 
-#include <pluginlib/class_list_macros.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
 
-PLUGINLIB_EXPORT_CLASS(tagslam_ros::TagSlam, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(tagslam_ros::TagSlam)
 
 namespace tagslam_ros
 {
@@ -150,8 +151,8 @@ namespace tagslam_ros
   }
 
   void TagSlam::DetectionOnlyCallback (
-      const std::shared_ptr<const sensor_msgs::msg::Image>& image,
-      const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& camera_info)
+      const sensor_msgs::msg::Image::ConstSharedPtr& image,
+      const sensor_msgs::msg::CameraInfo::ConstSharedPtr& camera_info)
   {
     auto start = std::chrono::system_clock::now();
 
@@ -188,9 +189,9 @@ namespace tagslam_ros
   }
 
   void TagSlam::imageOdomCallback (
-      const std::shared_ptr<const sensor_msgs::msg::Image>& image,
-      const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& camera_info,
-      const std::shared_ptr<const nav_msgs::msg::Odometry>& odom)
+      const sensor_msgs::msg::Image::ConstSharedPtr& image,
+      const sensor_msgs::msg::CameraInfo::ConstSharedPtr& camera_info,
+      const nav_msgs::msg::Odometry::ConstSharedPtr& odom)
   {
     auto static_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
     auto dyn_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();

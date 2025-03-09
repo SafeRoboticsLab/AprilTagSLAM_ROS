@@ -58,7 +58,8 @@
 // ros includes
 #include <ros/ros.h>
 #include <ros/console.h>
-#include <nodelet/nodelet.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
 
 #include <std_msgs/msg/header.hpp>
 #include <std_msgs/msg/float32.hpp>
@@ -76,7 +77,7 @@
 
 namespace tagslam_ros{
 
-  using TagDetectionArrayPtr = std::shared_ptr<AprilTagDetectionArray>;
+  using TagDetectionArrayPtr = AprilTagDetectionArray::SharedPtr;
   using EigenPose = Eigen::Matrix4d;
   using EigenPoseSigma = Eigen::Matrix<double, 6, 1>; // rotx, roty, rotz, x, y, z
   using EigenPoseCov = Eigen::Matrix<double, 6, 6>; // rotx, roty, rotz, x, y, z

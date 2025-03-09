@@ -67,7 +67,8 @@
 #include <mutex>
 #include <thread>
 
-#include <pluginlib/class_list_macros.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
 
 #ifndef NO_CUDA_OPENCV
     #include <opencv2/core/cuda.hpp>
@@ -85,12 +86,12 @@ using Trigger = std_srvs::srv::trigger;
     #include "frontend/tag_detector_cuda.h"// Topics
 
     namespace tagslam_ros {
-    class TagSlamZED : public nodelet::Nodelet {
+    class TagSlamZED : public rclcpp::Node {
 
     public:
         /*! \brief Default constructor
     */
-        TagSlamZED();
+        TagSlamZED(const rclcpp::NodeOptions &options);
 
         /*! \brief \ref destructor
     */
@@ -115,7 +116,7 @@ using Trigger = std_srvs::srv::trigger;
         
         /*! \brief Set up ros dynamic reconfigure
         */
-        void setup_dynmaic_reconfig();
+        void setup_dynamic_reconfig();
 
         /*! \brief Turn on the zed camera
         */
@@ -146,9 +147,9 @@ using Trigger = std_srvs::srv::trigger;
 
         void checkResolFps();
 
-        void slMatToROSmsg(std::shared_ptr<sensor_msgs::msg::Image> imgMsgPtr, sl::Mat img, std_msgs::msg::Header header);
+        void slMatToROSmsg(sensor_msgs::msg::Image::SharedPtr imgMsgPtr, sl::Mat img, std_msgs::msg::Header header);
 
-        void fillCameraInfo(std::shared_ptr<sensor_msgs::msg::CameraInfo> CamInfoMsg, sl::CalibrationParameters zedParam);
+        void fillCameraInfo(sensor_msgs::msg::CameraInfo::SharedPtr CamInfoMsg, sl::CalibrationParameters zedParam);
 
         rclcpp::Time slTime2Ros(sl::Timestamp t);
 
@@ -162,7 +163,7 @@ using Trigger = std_srvs::srv::trigger;
 
         cv::Mat slMat2cvMat(sl::Mat& input);
 
-        bool resetCallback(Trigger::Request& req, Trigger::Response& res)
+        bool resetCallback(Trigger::Request::SharedPtr req, Trigger::Response::SharedPtr res)
         {
             run_slam_ = false;
             // wait for one second to allow the slam thread to finish current computation
@@ -177,7 +178,7 @@ using Trigger = std_srvs::srv::trigger;
             run_slam_ = true;
             res.success = true;
             res.message = "Start slam.";
-            NODELET_INFO("SLAM Started.");
+            RCLCPP_INFO(this->get_logger(), "SLAM Started.");
             return true;
         }
 
@@ -186,7 +187,7 @@ using Trigger = std_srvs::srv::trigger;
             run_slam_ = false;
             res.success = true;
             res.message = "Stop slam.";
-            NODELET_INFO("SLAM Stopped.");
+            RCLCPP_INFO(this->get_logger(), "SLAM Stopped.");
             return true;
         }
 
@@ -224,8 +225,6 @@ using Trigger = std_srvs::srv::trigger;
         /*
         *** ROS Parameters ****
         */
-        ros::NodeHandle nh_;
-        ros::NodeHandle pnh_;
         std::thread cam_thread_; // camera data thread
         std::thread sens_thread_; // Sensors data thread
 
@@ -238,21 +237,21 @@ using Trigger = std_srvs::srv::trigger;
         image_transport::CameraPublisher img_pub_; //
         image_transport::Publisher det_img_pub_; //
 
-        ros::Publisher static_tag_det_pub_;
-        ros::Publisher dyn_tag_det_pub_;
-        ros::Publisher slam_pose_pub_;
-        ros::Publisher imu_pub_;
-        ros::Publisher landmark_pub_;
+        rclcpp::Publisher static_tag_det_pub_;
+        rclcpp::Publisher dyn_tag_det_pub_;
+        rclcpp::Publisher slam_pose_pub_;
+        rclcpp::Publisher imu_pub_;
+        rclcpp::Publisher landmark_pub_;
 
-        ros::Publisher debug_convert_pub_;
-        ros::Publisher debug_det_pub_;
-        ros::Publisher debug_opt_pub_;
-        ros::Publisher debug_total_pub_;
+        rclcpp::Publisher debug_convert_pub_;
+        rclcpp::Publisher debug_det_pub_;
+        rclcpp::Publisher debug_opt_pub_;
+        rclcpp::Publisher debug_total_pub_;
 
         // Services
-        ros::ServiceServer srv_start_slam_;
-        ros::ServiceServer srv_stop_slam_;
-        ros::ServiceServer srv_reset_slam_;
+        rclcpp::ServiceServer srv_start_slam_;
+        rclcpp::ServiceServer srv_stop_slam_;
+        rclcpp::ServiceServer srv_reset_slam_;
 
         /*
         *** SLAM Parameters ****
@@ -270,7 +269,7 @@ using Trigger = std_srvs::srv::trigger;
         EigenPose pose_prev_ = EigenPose::Identity();
         
         // Camera info
-        std::shared_ptr<sensor_msgs::msg::CameraInfo> cam_info_msg_;
+        sensor_msgs::msg::CameraInfo::SharedPtr cam_info_msg_;
 
         // ROS services parameters
         std::atomic<bool> run_slam_ = false;
@@ -279,7 +278,7 @@ using Trigger = std_srvs::srv::trigger;
     } 
 #else
     namespace tagslam_ros {
-    class TagSlamZED : public nodelet::Nodelet {
+    class TagSlamZED : public rclcpp::Node {
 
     public:
         

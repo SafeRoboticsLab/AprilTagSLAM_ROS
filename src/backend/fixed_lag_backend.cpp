@@ -69,7 +69,7 @@ namespace tagslam_ros
         reset_mutex_.unlock();
     }
 
-    std::shared_ptr<nav_msgs::msg::Odometry> FixedLagBackend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
+    nav_msgs::msg::Odometry::SharedPtr FixedLagBackend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
     {
         // reset local graph and values
         factor_graph_.resize(0);
@@ -147,7 +147,7 @@ namespace tagslam_ros
         }
     }
 
-    std::shared_ptr<nav_msgs::msg::Odometry> FixedLagBackend::updateVIO(TagDetectionArrayPtr landmark_ptr, 
+    nav_msgs::msg::Odometry::SharedPtr FixedLagBackend::updateVIO(TagDetectionArrayPtr landmark_ptr, 
                                     EigenPose odom, EigenPoseCov odom_cov, bool use_odom)
     {
         // reset local graph and values
@@ -188,7 +188,7 @@ namespace tagslam_ros
                 // dump all previous inserted imu measurement
                 while (!imu_queue_.empty())
                 {
-                    std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr;
+                    sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr;
                     while (!imu_queue_.try_pop(imu_msg_ptr))
                     {
                     }

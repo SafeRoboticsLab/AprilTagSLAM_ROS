@@ -45,15 +45,23 @@ set(BUILD_SHARED_LIBS ON)
 # force use -march=native
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
+find_package(ament_cmake REQUIRED)
+find_package(cmake_modules REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(image_geometry REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(rcl_cpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package( REQUIRED)
+
+find_package(ament_cmake REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(ament_cmake REQUIRED)
+
 find_package(catkin REQUIRED COMPONENTS
-  cmake_modules
-  cv_bridge
-  geometry_msgs
-  nav_msgs
-  image_geometry
-  image_transport
-  message_generation
-  nodelet
   pluginlib
   roscpp
   sensor_msgs
@@ -68,7 +76,8 @@ find_package(image_geometry REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(nodelet REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(roscpp REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)  
 find_package(std_msgs REQUIRED)  
 

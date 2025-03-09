@@ -56,12 +56,12 @@ namespace tagslam_ros
             
             ~iSAM2Backend();
 
-            std::shared_ptr<nav_msgs::msg::Odometry> updateSLAM(TagDetectionArrayPtr landmark_ptr, 
+            nav_msgs::msg::Odometry::SharedPtr updateSLAM(TagDetectionArrayPtr landmark_ptr, 
                                     EigenPose odom, EigenPoseCov odom_cov); 
 
             // EigenPose updateVIO(TagDetectionArrayPtr landmark_ptr);
 
-            std::shared_ptr<nav_msgs::msg::Odometry> updateVIO(TagDetectionArrayPtr landmark_ptr, 
+            nav_msgs::msg::Odometry::SharedPtr updateVIO(TagDetectionArrayPtr landmark_ptr, 
                                     EigenPose odom, EigenPoseCov odom_cov, bool use_odom);
 
             void getPoses(EigenPoseMap & container, const unsigned char filter_char);
@@ -70,7 +70,7 @@ namespace tagslam_ros
                         double gyro_noise_sigma, double gyro_bias_rw_sigma, 
                         EigenPose T_sensor2cam);
 
-            void updateIMU(std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr);
+            void updateIMU(sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr);
 
             void reset();
 

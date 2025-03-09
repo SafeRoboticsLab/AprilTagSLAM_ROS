@@ -66,7 +66,7 @@ namespace tagslam_ros
         ROS_INFO("Reset iSAM2");
     }
 
-    std::shared_ptr<nav_msgs::msg::Odometry> iSAM2Backend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
+    nav_msgs::msg::Odometry::SharedPtr iSAM2Backend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
     {
         if(reset_mutex_.try_lock()){
             int num_landmarks_detected = landmark_ptr->detections.size();
@@ -114,7 +114,7 @@ namespace tagslam_ros
         }
     }
 
-    std::shared_ptr<nav_msgs::msg::Odometry> iSAM2Backend::updateVIO(TagDetectionArrayPtr landmark_ptr, 
+    nav_msgs::msg::Odometry::SharedPtr iSAM2Backend::updateVIO(TagDetectionArrayPtr landmark_ptr, 
                                 EigenPose odom, EigenPoseCov odom_cov, bool use_odom)
     {
         if(reset_mutex_.try_lock()){
@@ -138,7 +138,7 @@ namespace tagslam_ros
                 // dump all previous inserted imu measurement
                 while(!imu_queue_.empty())
                 {
-                    std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr;
+                    sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr;
                     while(!imu_queue_.try_pop(imu_msg_ptr)){}
                     if(imu_msg_ptr->header.stamp.toSec()>=cur_img_t)
                     {

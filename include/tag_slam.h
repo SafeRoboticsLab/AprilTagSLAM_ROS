@@ -77,13 +77,13 @@ namespace tagslam_ros
 
     // private function
   private:
-    void DetectionOnlyCallback(const std::shared_ptr<const sensor_msgs::msg::Image> &image,
-                                const std::shared_ptr<const sensor_msgs::msg::Image> &camera_info);
+    void DetectionOnlyCallback(const sensor_msgs::msg::Image::ConstSharedPtr &image,
+                                const sensor_msgs::msg::Image::ConstSharedPtr &camera_info);
 
     void imageOdomCallback(
-        const std::shared_ptr<const sensor_msgs::msg::Image> &image,
-        const std::shared_ptr<const sensor_msgs::msg::CameraInfo> &camera_info,
-        const std::shared_ptr<const nav_msgs::msg::Odometry> &odom);
+        const sensor_msgs::msg::Image::ConstSharedPtr &image,
+        const sensor_msgs::msg::CameraInfo::ConstSharedPtr &camera_info,
+        const nav_msgs::msg::Odometry::ConstSharedPtr &odom);
 
     // front end
   private:
@@ -97,7 +97,7 @@ namespace tagslam_ros
     std::string camera_info_topic_;
     std::string odom_topic_;
     std::string slam_pose_topic_;
-    std::shared_ptr<cv_bridge::CvImage> cv_image_;
+    cv_bridge::CvImage::SharedPtr cv_image_;
 
     bool detection_only_;
 
@@ -107,7 +107,7 @@ namespace tagslam_ros
     std::unordered_map<int, int> tag_frequency_;
 
     // subscribers
-    std::shared_ptr<image_transport::ImageTransport> it_;
+    image_transport::ImageTransport::SharedPtr it_;
     image_transport::CameraSubscriber camera_image_subscriber_;
 
     image_transport::SubscriberFilter image_subscriber_;
@@ -129,8 +129,8 @@ namespace tagslam_ros
     typedef message_filters::Synchronizer<ExactSyncPolicy> ExactSync;
 
     // synchronizer
-    std::shared_ptr<ApproxSync> approx_sync_;
-    std::shared_ptr<ExactSync> exact_sync_;
+    ApproxSync::SharedPtr approx_sync_;
+    ExactSyn::SharedPtr exact_sync_;
 
     // publishers
     image_transport::Publisher tag_detections_image_publisher_;

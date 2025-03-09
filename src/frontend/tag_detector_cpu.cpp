@@ -167,8 +167,8 @@ namespace tagslam_ros
   }
 
   // detect april tag from image
-  void TagDetectorCPU::detectTags(const std::shared_ptr<const sensor_msgs::msg::Image>& msg_img, 
-      const std::shared_ptr<const sensor_msgs::msg::CameraInfo> &camera_info,
+  void TagDetectorCPU::detectTags(const sensor_msgs::msg::Image::ConstSharedPtr& msg_img, 
+      const sensor_msgs::msg::CameraInfo::ConstSharedPtr &camera_info,
       TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     // Convert image to AprilTag code's format
@@ -184,7 +184,7 @@ namespace tagslam_ros
   }
   
   void TagDetectorCPU::detectTags(cv::Mat& cv_mat_cpu,
-        const std::shared_ptr<const sensor_msgs::msg::CameraInfo>& msg_cam_info, std_msgs::msg::Header header,
+        const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info, std_msgs::msg::Header header,
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
   {
     image_u8_t apriltag_image = {.width = cv_mat_cpu.cols,

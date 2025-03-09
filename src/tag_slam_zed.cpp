@@ -31,7 +31,7 @@
 
 #include "tag_slam_zed.h"
 
-PLUGINLIB_EXPORT_CLASS(tagslam_ros::TagSlamZED, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(tagslam_ros::TagSlamZED)
 
 #ifndef NO_ZED
 namespace tagslam_ros {
@@ -541,7 +541,7 @@ namespace tagslam_ros {
             zed_camera_.getSensorsData(sensor_data, sl::TIME_REFERENCE::CURRENT);
             if(ts_handler.isNew(sensor_data.imu))
             {
-                std::shared_ptr<sensor_msgs::msg::Imu> imu_msg_ptr = std::make_shared<sensor_msgs::msg::Imu>();
+                sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr = std::make_shared<sensor_msgs::msg::Imu>();
                 imu_msg_ptr->header.stamp = slTime2Ros(sensor_data.imu.timestamp);
 
                 imu_msg_ptr->orientation.x = sensor_data.imu.pose.getOrientation()[0];
@@ -601,7 +601,7 @@ namespace tagslam_ros {
 
     void TagSlamZED::estimateState(TagDetectionArrayPtr tag_array_ptr)
     {
-        std::shared_ptr<nav_msgs::msg::Odometry> slam_pose_msg;
+        nav_msgs::msg::Odometry::SharedPtr slam_pose_msg;
 
         EigenPose relative_pose;
         EigenPoseCov pose_cur_cov;
@@ -635,7 +635,7 @@ namespace tagslam_ros {
         if(if_pub_landmark_)
         {
             // publish landmark
-            std::shared_ptr<visualization_msgs::msg::MarkerArray> landmark_msg_ptr = slam_backend_->createMarkerArray(tag_array_ptr->header);
+            visualization_msgs::msg::MarkerArray::SharedPtr landmark_msg_ptr = slam_backend_->createMarkerArray(tag_array_ptr->header);
             landmark_pub_.publish(landmark_msg_ptr);
         }
         
@@ -657,7 +657,7 @@ namespace tagslam_ros {
             
             // create raw image message
             if(num_image_subscriber > 0 && if_pub_image_){
-                std::shared_ptr<sensor_msgs::msg::Image> rawImgMsg = std::make_shared<sensor_msgs::msg::Image>();
+                sensor_msgs::msg::Image::SharedPtr rawImgMsg = std::make_shared<sensor_msgs::msg::Image>();
                 slMatToROSmsg(rawImgMsg, sl_mat_cpu, header);
                 cam_info_msg_->header = header;
                 img_pub_.publish(rawImgMsg, cam_info_msg_);
@@ -773,7 +773,7 @@ namespace tagslam_ros {
         }
     }
 
-    void TagSlamZED::slMatToROSmsg(std::shared_ptr<sensor_msgs::msg::Image> imgMsgPtr, sl::Mat img, std_msgs::msg::Header header)
+    void TagSlamZED::slMatToROSmsg(sensor_msgs::msg::Image::SharedPtr imgMsgPtr, sl::Mat img, std_msgs::msg::Header header)
     {
         if (!imgMsgPtr)
         {
@@ -1034,7 +1034,7 @@ namespace tagslam_ros {
         return cv_type;
     }
 
-    void TagSlamZED::fillCameraInfo(std::shared_ptr<sensor_msgs::msg::CameraInfo> cam_info_msg_ptr, sl::CalibrationParameters zedParam)
+    void TagSlamZED::fillCameraInfo(sensor_msgs::msg::CameraInfo::SharedPtr cam_info_msg_ptr, sl::CalibrationParameters zedParam)
     {
 
         // distortion
