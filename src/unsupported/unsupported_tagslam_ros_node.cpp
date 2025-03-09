@@ -38,17 +38,13 @@
 
 int main(int argc, char **argv)
 {
-  rclcpp::init(argc, argv, "tagslam_ros");
-
-
-  auto node = std::make_shared<tagslam_ros::TagSlam>(
-        rclcpp::NodeOptions().arguments({"--ros-args", "-r", "__node:=tagslam_ros"})
-    );
+  rclcpp::init(argc, argv);
+  
+  auto node = std::make_shared<tagslam_ros::TagSlam>();
 
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(node);
 
-  
   executor.spin();
   return 0;
 }

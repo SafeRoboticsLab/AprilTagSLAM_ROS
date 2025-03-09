@@ -41,7 +41,6 @@
 #define TAG_SLAM_ZED_H
 
 
-
 // OpenCV includes
 #include <opencv2/opencv.hpp>
 #include <opencv2/cvconfig.h>
@@ -66,6 +65,7 @@
 #include <memory>
 #include <mutex>
 #include <thread>
+#include <string>
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
@@ -91,16 +91,13 @@ using Trigger = std_srvs::srv::trigger;
     public:
         /*! \brief Default constructor
     */
-        TagSlamZED(const rclcpp::NodeOptions &options);
+        explicit TagSlamZED(std::string name = "tag_slam_zed_node", const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
         /*! \brief \ref destructor
     */
         ~TagSlamZED();
 
     protected:
-        /*! \brief Initialization function called by the Nodelet base class
-    */
-        void onInit();
 
         /*! \brief Reads parameters from the param server
     */

@@ -68,9 +68,31 @@ namespace tagslam_ros {
         sl::Timestamp ts_imu = 0, ts_baro = 0, ts_mag = 0; // Initial values
     };
 
-    TagSlamZED::TagSlamZED()
-        : Nodelet()
-    {
+    TagSlamZED::TagSlamZED(std::string name, const rclcpp::NodeOptions &options)
+        : rclcpp::Node(name, options)
+    {   
+        RCLCPP_INFO(
+            this->get_logger(), 
+            "********** Starting node '%s' **********", 
+            this->get_name());
+
+        readParameters();
+        turn_on_zed();
+        setup_publisher();
+        setup_service();
+        
+        // Start pool thread
+        if(use_gpu_detector_){
+            cam_thread_ = std::thread(&TagSlamZED::gpu_image_thread_func, this);
+        }else{
+            cam_thread_ = std::thread(&TagSlamZED::cpu_image_thread_func, this);
+        }
+
+        // Start Sensors thread
+        if(use_imu_odom_)
+            sens_thread_ = std::thread(&TagSlamZED::sensors_thread_func, this);
+
+        RCLCPP_INFO(this->get_logger(), "TagSlamZED node initialized.");
     }
 
     TagSlamZED::~TagSlamZED()
@@ -89,33 +111,6 @@ namespace tagslam_ros {
         std::cerr << "Tag Slam ZED Nodelet destroyed" << std::endl;
     }
 
-    void TagSlamZED::onInit()
-    {
-        // Node handlers
-        nh_ = getMTNodeHandle();
-        pnh_ = getMTPrivateNodeHandle();
-
-        NODELET_INFO("********** Starting nodelet '%s' **********", getName().c_str());
-
-        readParameters();
-
-        turn_on_zed();
-
-        setup_publisher();
-
-        setup_service();
-        
-        // Start pool thread
-        if(use_gpu_detector_){
-            cam_thread_ = std::thread(&TagSlamZED::gpu_image_thread_func, this);
-        }else{
-            cam_thread_ = std::thread(&TagSlamZED::cpu_image_thread_func, this);
-        }
-
-        // Start Sensors thread
-        if(use_imu_odom_)
-            sens_thread_ = std::thread(&TagSlamZED::sensors_thread_func, this);
-    }
 
     void TagSlamZED::setup_service()
     {

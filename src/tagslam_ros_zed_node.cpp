@@ -26,6 +26,7 @@
 
 * Please contact the author(s) of this library if you have any questions.
 * Authors:    Zixu Zhang       ( zixuz@princeton.edu )
+*             Jarod Wille      ( jwille@princeton.edu )
 
  **/
 
@@ -37,16 +38,13 @@
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "tagslam_ros", ros::init_options::AnonymousName);
+  rclcpp::init(argc, argv);
 
-  nodelet::Loader nodelet;
-  nodelet::M_string remap(ros::names::getRemappings());
-  nodelet::V_string nargv;
+  auto node = std::make_shared<tagslam_ros::TagSlamZED>("tagslam_ros");
 
-  nodelet.load(ros::this_node::getName(),
-              "tagslam_ros::TagSlamZED",
-              remap, nargv);
-
-  ros::spin();
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(node);
+  
+  executor.spin();
   return 0;
 }
