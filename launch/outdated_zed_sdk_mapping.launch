@@ -1,3 +1,4 @@
+<!-- OUTDATED. DID NOT WORK PRIOR TO ROS2 MIGRATION. process died -->
 <launch>
     <arg name="node_namespace" default="SLAM" />
     <arg name="rviz" default="true" />

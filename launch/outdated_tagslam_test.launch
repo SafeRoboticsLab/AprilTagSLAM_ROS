@@ -1,0 +1,17 @@
+<!-- OUTDATED. DID NOT WORK PRIOR TO ROS2 MIGRATION. "test.yaml file does not exist" -->
+<launch>
+  <arg name="launch_prefix" default="" /> <!-- set to value="gdbserver localhost:10000" for remote debugging -->
+  <arg name="node_namespace" default="tagslam_ros_node" />
+
+  <!-- load other parameters from yaml-->
+  <rosparam 
+    command="load" 
+    file= 
+    ns="$(arg node_namespace)" />
+
+  <node pkg="tagslam_ros" exec="tagslam_ros_test_node" name="" namepace="$(arg node_namespace)" 
+    clear_params="true" output="screen" launch-prefix="$(arg launch_prefix)">
+
+    <param from="$(find tagslam_ros)/config/test.yaml"/>
+  </node>
+</launch>

@@ -426,6 +426,6 @@ int main(int argc, char **argv)
     env->visualize_landmark(estimated_landmarks);
   }
 
-  ros::shutdown();
+  rclcpp::shutdown();
   return 0;
 }

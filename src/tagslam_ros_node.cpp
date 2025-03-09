@@ -29,24 +29,26 @@
 
  **/
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/component_manager.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
 
-#include <nodelet/loader.h>
 
 #include <iostream>
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "tagslam_ros", ros::init_options::AnonymousName);
+  rclcpp::init(argc, argv, "tagslam_ros");
 
-  nodelet::Loader nodelet;
-  nodelet::M_string remap(ros::names::getRemappings());
-  nodelet::V_string nargv;
 
-  nodelet.load(ros::this_node::getName(),
-              "tagslam_ros::TagSlam",
-              remap, nargv);
+  auto node = std::make_shared<tagslam_ros::TagSlam>(
+        rclcpp::NodeOptions().arguments({"--ros-args", "-r", "__node:=tagslam_ros"})
+    );
 
-  ros::spin();
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(node);
+
+  
+  executor.spin();
   return 0;
 }

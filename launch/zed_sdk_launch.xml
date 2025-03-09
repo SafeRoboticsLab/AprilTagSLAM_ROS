@@ -1,0 +1,43 @@
+
+<launch>
+    <arg name="node_namespace" default="slam" />
+    <arg name="rviz" default="false" />
+    
+
+    <node pkg="tagslam_ros" exec="tagslam_ros_zed_node" name="slam_node" namespace="$(var node_namespace)" 
+        clear_params="true" output="screen" >
+        <!-- load other parameters from yaml-->
+        <param from="$(find-pkg-share tagslam_ros)/config/config.yaml" />
+        
+        <param name="backend/load_path" value="$(find-pkg-share tagslam_ros)/config/track_landmark.g2o" />
+    </node>
+
+    <group if="$(var rviz)">
+        <node pkg="rviz2" exec="rviz2" name="rviz" 
+            args="-d $(find-pkg-share tagslam_ros)/config/rviz.rviz" />
+        <node pkg="rqt_gui" exec="rqt_gui" name="rqt_gui"  
+            args="--perspective-file $(find-pkg-share tagslam_ros)/config/rqt.perspective"
+            launch-prefix="bash -c 'sleep 3; $0 $@' "/>
+    </group>
+    
+
+    <group>
+        <push-ros-namespace namespace="$(var node_namespace)/image" />
+        <param name="disable_pub_plugins" type="string_array">
+            image_transport/compressedDepth
+            image_transport/compressed
+            image_transport/theora
+        </param>
+    </group>
+
+    <group>
+        <push-ros-namespace namespace="$(var node_namespace)/tag_detection_image" />
+        <param name="disable_pub_plugins" type="string_array">
+            image_transport/compressedDepth
+            image_transport/compressed
+            image_transport/theora
+        </param>
+    </group>
+
+</launch>
+

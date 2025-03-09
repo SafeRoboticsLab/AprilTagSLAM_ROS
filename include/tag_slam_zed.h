@@ -288,8 +288,8 @@ using Trigger = std_srvs::srv::trigger;
 
         void onInit()
         {
-            NODELET_ERROR("TagSlamZED not built. Use '-DUSE_ZED=ON' with catkin");
-            ros::shutdown();
+            RCLCPP_ERROR(this->get_logger(), "TagSlamZED not built. Use '-DUSE_ZED=ON' with catkin");
+            rclcpp::shutdown();
         }
     };
     }

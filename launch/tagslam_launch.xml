@@ -1,0 +1,22 @@
+<launch>
+  <arg name="launch_prefix" default="" /> <!-- set to value="gdbserver localhost:10000" for remote debugging -->
+  <arg name="node_namespace" default="tagslam" />
+  <!-- Subscriber Topics -->
+  <arg name="camera_name" default="/zed2/zed_node/left" />
+  <arg name="image_topic" default="image_rect_color" />
+  <arg name="odom_topic" default="/zed2/zed_node/odom" />
+  <arg name="slam_pose_topic" default="/slam_pose" />
+  <arg name="detector_type" default="GPU" />
+
+  <node pkg="tagslam_ros" exec="tagslam_ros_node" name="tagslam_node" namespace="$(var node_namespace)" clear_params="true" output="screen" launch-prefix="$(var launch_prefix)" >
+    <!-- load other parameters from yaml-->
+    <param from="$(find-pkg-share tagslam_ros)/config/config.yaml" />
+
+    <!-- Remap topics from those used in code to those on the ROS network -->
+    <param name="frontend/type" type="str" value="$(var detector_type)" />
+    <param name="image_topic" type="str" value="$(var camera_name)/$(var image_topic)" />
+    <param name="camera_info_topic" type="str" value="$(var camera_name)/camera_info" />
+    <param name="odom_topic" type="str" value="$(var odom_topic)" />
+    <param name="slam_pose_topic" type="str" value="$(var slam_pose_topic)" />
+  </node>
+</launch>

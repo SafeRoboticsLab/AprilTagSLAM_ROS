@@ -134,9 +134,9 @@ namespace tagslam_ros
 
     // publishers
     image_transport::Publisher tag_detections_image_publisher_;
-    ros::Publisher static_tag_det_pub_;
-    ros::Publisher dyn_tag_det_pub_;
-    ros::Publisher slam_pose_publisher_;
+    rclcpp::Publisher static_tag_det_pub_;
+    rclcpp::Publisher dyn_tag_det_pub_;
+    rclcpp::Publisher slam_pose_publisher_;
 
     // back end
   private:

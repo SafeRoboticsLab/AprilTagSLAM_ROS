@@ -532,7 +532,7 @@ namespace tagslam_ros
                 marker.id = static_cast<int>(temp_key);
                 marker.type = 1; //Cubic
                 marker.action = 0; //add/modify
-                marker.lifetime = ros::Duration();
+                marker.lifetime = rclcpp::Duration();
                 marker.scale.x = 0.2;
                 marker.scale.y = 0.2;
                 marker.scale.z = 0.01;
@@ -555,7 +555,7 @@ namespace tagslam_ros
                 id.id = static_cast<int>(temp_key);
                 id.type = 9; //Text
                 id.action = 0; //add/modify
-                id.lifetime = ros::Duration();
+                id.lifetime = rclcpp::Duration();
                 id.scale.z = 0.04;
                 // Set the pose of the marker.  This is a full 6DOF pose relative to the frame/time specified in the header
                 id.pose.position.x = temp_pose.x();
