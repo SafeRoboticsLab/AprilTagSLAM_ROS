@@ -72,8 +72,8 @@
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include "tagslam_ros/AprilTagDetection.h"
-#include "tagslam_ros/AprilTagDetectionArray.h"
+#include "tagslam_ros/msg/AprilTagDetection.hpp"
+#include "tagslam_ros/msg/AprilTagDetectionArray.hpp"
 
 namespace tagslam_ros{
 

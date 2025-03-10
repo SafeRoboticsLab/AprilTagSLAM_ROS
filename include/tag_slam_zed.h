@@ -100,7 +100,7 @@ using Trigger = std_srvs::srv::trigger;
 
         /*! \brief Reads parameters from the param server
     */
-        void readParameters();
+        void read_parameters();
 
         /*! \brief Set up ros publisher
         */
@@ -141,25 +141,25 @@ using Trigger = std_srvs::srv::trigger;
     private: 
         void estimateState(TagDetectionArrayPtr tag_array_ptr);
 
-        void checkResolFps();
+        void check_resol_fps();
 
-        void slMatToROSmsg(sensor_msgs::msg::Image::SharedPtr imgMsgPtr, sl::Mat img, std_msgs::msg::Header header);
+        void sl_mat_to_ros_msg(sensor_msgs::msg::Image::SharedPtr img_msg_ptr, sl::Mat img, std_msgs::msg::Header header);
 
         void fillCameraInfo(sensor_msgs::msg::CameraInfo::SharedPtr CamInfoMsg, sl::CalibrationParameters zedParam);
 
-        rclcpp::Time slTime2Ros(sl::Timestamp t);
+        rclcpp::Time sl_time_to_ros(sl::Timestamp t);
 
-        EigenPose slTrans2Eigen(sl::Transform& pose);
+        EigenPose sl_trans_to_eigen(sl::Transform& pose);
 
-        EigenPose slPose2Eigen(sl::Pose& pose);
+        EigenPose sl_pose_to_eigen(sl::Pose& pose);
 
-        EigenPoseSigma slPose2Sigma(sl::Pose& pose);
+        EigenPoseSigma sl_pose_to_sigma(sl::Pose& pose);
 
-        EigenPoseCov slPose2Cov(sl::Pose& pose);
+        EigenPoseCov sl_pose_to_cov(sl::Pose& pose);
 
-        cv::Mat slMat2cvMat(sl::Mat& input);
+        cv::Mat sl_mat_to_cv_mat(sl::Mat& input);
 
-        bool resetCallback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
+        bool reset_callback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
         {
             (void)request; // Avoid unused variable warning
             run_slam_ = false;
@@ -170,7 +170,7 @@ using Trigger = std_srvs::srv::trigger;
             return true;
         }
 
-        bool startCallback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
+        bool start_callback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
         {
             run_slam_ = true;
             res->success = true;
@@ -179,7 +179,7 @@ using Trigger = std_srvs::srv::trigger;
             return true;
         }
 
-        bool stopCallback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
+        bool stop_callback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
         {
             run_slam_ = false;
             res->success = true;
@@ -189,7 +189,7 @@ using Trigger = std_srvs::srv::trigger;
         }
 
 #ifndef NO_CUDA_OPENCV
-        cv::cuda::GpuMat slMat2cvMatGPU(sl::Mat& input);
+        cv::cuda::GpuMat sl_mat_to_cv_mat_gpu(sl::Mat& input);
 #endif
 
         int getOCVtype(sl::MAT_TYPE type);
@@ -266,7 +266,7 @@ using Trigger = std_srvs::srv::trigger;
         EigenPose pose_prev_ = EigenPose::Identity();
         
         // Camera info
-        sensor_msgs::msg::CameraInfo::SharedPtr cam_info_msg_;
+        sensor_msgs::msg::CameraInfo::SharedPtr cam_info_msg_ptr_;
 
         // ROS services parameters
         std::atomic<bool> run_slam_ = false;

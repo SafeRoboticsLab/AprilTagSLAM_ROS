@@ -76,7 +76,7 @@ namespace tagslam_ros {
             "********** Starting node '%s' **********", 
             this->get_name());
 
-        readParameters();
+        read_parameters();
         turn_on_zed();
         setup_publisher();
         setup_service();
@@ -108,7 +108,7 @@ namespace tagslam_ros {
         // close the camera
         zed_camera_.close();
 
-        std::cerr << "Tag Slam ZED Nodelet destroyed" << std::endl;
+        RCLCPP_INFO(this->get_logger(), "Tag Slam ZED Node destroyed");
     }
 
 
@@ -116,13 +116,13 @@ namespace tagslam_ros {
     {
         // Set the service to reset the map
         srv_reset_slam_ = this->create_service<std_srvs::srv::Trigger>(
-            "reset_slam", std::bind(&TagSlamZED::resetCallback, this, std::placeholders::_1, std::placeholders::_2));
+            "reset_slam", std::bind(&TagSlamZED::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
         
         srv_start_slam_ = this->create_service<std_srvs::srv::Trigger>(
-            "start_slam", std::bind(&TagSlamZED::startCallback, this, std::placeholders::_1, std::placeholders::_2));
+            "start_slam", std::bind(&TagSlamZED::start_callback, this, std::placeholders::_1, std::placeholders::_2));
 
         srv_stop_slam_ = this->create_service<std_srvs::srv::Trigger>(
-            "stop_slam", std::bind(&TagSlamZED::stopCallback, this, std::placeholders::_1, std::placeholders::_2));
+            "stop_slam", std::bind(&TagSlamZED::stop_callback, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     void TagSlamZED::setup_publisher()
@@ -162,7 +162,7 @@ namespace tagslam_ros {
         }
     }
 
-    void TagSlamZED::readParameters(){
+    void TagSlamZED::read_parameters(){
 
         RCLCPP_INFO(this->get_logger(), "*** GENERAL PARAMETERS ***");
 
@@ -211,11 +211,11 @@ namespace tagslam_ros {
         int resol;
         this->get_parameter("camera/resolution", resol);
         zed_resol_ = static_cast<sl::RESOLUTION>(resol);
-        RCLCPP_INFO_STREAM(this->get_logger(), " * Camera Resolution\t\t-> " << sl::toString(zed_resol_).c_str());
+        RCLCPP_INFO(this->get_logger(), " * Camera Resolution        -> {}", sl::toString(zed_resol_).c_str());
 
         this->get_parameter("camera/frame_rate", zed_frame_rate_);
-        checkResolFps();
-        RCLCPP_INFO_STREAM(this->get_logger(), " * Camera Grab Framerate\t-> " << zed_frame_rate_);
+        check_resol_fps();
+        RCLCPP_INFO(this->get_logger(), " * Camera Grab Framerate    -> {}", zed_frame_rate_);
 
         /*
         ************** Frontend Setup **************
@@ -270,18 +270,18 @@ namespace tagslam_ros {
             int depth_mode;
             this->get_parameter("depth/quality", depth_mode);
             zed_depth_mode_ = static_cast<sl::DEPTH_MODE>(depth_mode);
-            RCLCPP_INFO_STREAM(this->get_logger(), " * Depth quality\t\t-> " << sl::toString(zed_depth_mode_).c_str());
+            RCLCPP_INFO(this->get_logger(), " * Depth quality        -> {}", sl::toString(zed_depth_mode_).c_str());
 
             int sensing_mode;
             this->get_parameter("depth/sensing_mode", sensing_mode);
             zed_sensing_mode_ = static_cast<sl::DE = getRosOption<int>(pnh_, "depth/sensing_mode", 0);PTH_MODE>(sensing_mode);
-            RCLCPP_INFO_STREAM(this->get_logger(), " * Depth Sensing mode\t\t-> " << sl::toString(zed_sensing_mode_).c_str());
+            RCLCPP_INFO(this->get_logger(), " * Depth Sensing mode       -> {}", sl::toString(zed_sensing_mode_).c_str());
 
             this->get_parameter("depth/min_depth", zed_min_depth_);
-            RCLCPP_INFO_STREAM(this->get_logger(), " * Minimum depth\t\t-> " << zed_min_depth_ << " m");
+            RCLCPP_INFO(this->get_logger(), " * Minimum depth        -> {} m", zed_min_depth_);
 
             this->get_parameter("depth/max_depth", zed_max_depth_);
-            RCLCPP_INFO_STREAM(this->get_logger(), " * Maximum depth\t\t-> " << zed_max_depth_ << " m");
+            RCLCPP_INFO(this->get_logger(), " * Maximum depth        -> {} m", zed_max_depth_);
         } else{
             zed_depth_mode_ = sl::DEPTH_MODE::NONE;
         }
@@ -303,7 +303,7 @@ namespace tagslam_ros {
         
         // Set default coordinate system
         zed_init_param_.coordinate_system = sl::COORDINATE_SYSTEM::RIGHT_HANDED_Z_UP_X_FWD;
-        RCLCPP_INFO_STREAM(this->get_logger(), " * Camera coordinate system\t-> " << sl::toString(zed_init_param_.coordinate_system));
+        RCLCPP_INFO(this->get_logger(), " * Camera coordinate system     -> {}", sl::toString(zed_init_param_.coordinate_system));
 
         // set up camera parameters
         zed_init_param_.coordinate_units = sl::UNIT::METER;
@@ -316,11 +316,11 @@ namespace tagslam_ros {
 
         sl::ERROR_CODE conn_status = sl::ERROR_CODE::CAMERA_NOT_DETECTED;
 
-        RCLCPP_INFO_STREAM(this->get_logger(), " *** Opening " << sl::toString(zed_user_model_) << "...");
+        RCLCPP_INFO(this->get_logger(), " *** Opening {} ...", sl::toString(zed_user_model_));
 
         while (conn_status != sl::ERROR_CODE::SUCCESS) {
             conn_status = zed_camera_.open(zed_init_param_);
-            RCLCPP_INFO_STREAM(this->get_logger(), "ZED connection -> " << sl::toString(conn_status));
+            RCLCPP_INFO(this->get_logger(), "ZED connection -> {}", sl::toString(conn_status));
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
             if (!rclcpp::ok()) {
@@ -330,7 +330,7 @@ namespace tagslam_ros {
                 return;
             }
         }
-        RCLCPP_INFO_STREAM(this->get_logger(), " ...  " << sl::toString(zed_real_model_) << " ready");
+        RCLCPP_INFO(this->get_logger(), " ... {} ready", sl::toString(zed_real_model_));
 
         // Disable AEC_AGC and Auto Whitebalance to trigger it if use set to automatic
         // zed_camera_.setCameraSettings(sl::VIDEO_SETTINGS::AEC_AGC, 0);
@@ -362,12 +362,12 @@ namespace tagslam_ros {
         zed_runtime_param_.enable_depth = zed_pos_tracking_enabled_; // pose tracking require depth
 
         // Get camera intrinsics and generate camera info
-        cam_info_msg_ = std::make_shared<sensor_msgs::msg::CameraInfo>(); // safer than cam_info_msg_.reset(new sensor_msgs::msg::CameraInfo());
+        cam_info_msg_ptr_ = std::make_shared<sensor_msgs::msg::CameraInfo>(); // safer than cam_info_msg_.reset(new sensor_msgs::msg::CameraInfo());
 
         sl::CameraConfiguration zed_cam_config = zed_camera_.getCameraInformation().camera_configuration;
-        cam_info_msg_->width = zed_cam_config.resolution.width;
-        cam_info_msg_->height = zed_cam_config.resolution.height;
-        fillCameraInfo(cam_info_msg_, zed_cam_config.calibration_parameters);
+        cam_info_msg_ptr_->width = zed_cam_config.resolution.width;
+        cam_info_msg_ptr_->height = zed_cam_config.resolution.height;
+        fillCameraInfo(cam_info_msg_ptr_, zed_cam_config.calibration_parameters);
 
         if(use_imu_odom_){
             // Set up IMU
@@ -387,7 +387,7 @@ namespace tagslam_ros {
             double accl_y = sensor_data.imu.linear_acceleration[1];
             double accl_z = sensor_data.imu.linear_acceleration[2];
             
-            EigenPose T_sensor2cam = slTrans2Eigen(sensor_config.camera_imu_transform);
+            EigenPose T_sensor2cam = sl_trans_to_eigen(sensor_config.camera_imu_transform);
 
             slam_backend_->setupIMU(accel_noise_sigma, accel_bias_rw_sigma,
                         gyro_noise_sigma, gyro_bias_rw_sigma, T_sensor2cam); 
@@ -396,45 +396,45 @@ namespace tagslam_ros {
     }
 
     void TagSlamZED::gpu_image_thread_func(){
-        // initialize the image container
         
+        // Initialize the image container
         sl::Mat sl_mat;
-            
         std_msgs::msg::Header msg_header;
         msg_header.frame_id = "left_rect";
 
-        while(pnh_.ok()) // ros is still runing
+        while(rclcpp::ok()) // ros is still runing
         {
-            msg_header.stamp = rclcpp::Time::now();
+            msg_header.stamp = this->get_clock()->now();
+            
             sl::ERROR_CODE zed_grab_status = zed_camera_.grab(zed_runtime_param_);
-            if(zed_grab_status == sl::ERROR_CODE::SUCCESS)
-            {
+            if(zed_grab_status == sl::ERROR_CODE::SUCCESS) {
                 auto t0 = std::chrono::system_clock::now();
 
 #ifndef NO_CUDA_OPENCV
-                // Retrieve left image
+                // retrieve left image from ZED
                 zed_camera_.retrieveImage(sl_mat, zed_image_type_, sl::MEM::GPU);
                 // store the image as a cv_mat
-                cv::cuda::GpuMat cv_mat = slMat2cvMatGPU(sl_mat);
+                cv::cuda::GpuMat cv_mat = sl_mat_to_cv_mat_gpu(sl_mat);
                 // change from BGRA to RGBA
                 cv::cuda::cvtColor(cv_mat, cv_mat, cv::COLOR_BGRA2RGBA);
 #else 
-                NODELET_WARN_ONCE("Use CUDA enabled OpenCV will reduce memory copy overhead");
-                zed_camera_.retrieveImage(sl_mat, zed_image_type_, sl::MEM::CPU);
-            
-                cv::Mat cv_mat = slMat2cvMat(sl_mat);
+                RCLCPP_WARN_ONCE(this->get_logger(), "Use CUDA enabled OpenCV will reduce memory copy overhead");
 
+                // retrieve left image without CUDA
+                zed_camera_.retrieveImage(sl_mat, zed_image_type_, sl::MEM::CPU);
+                cv::Mat cv_mat = sl_mat_to_cv_mat(sl_mat);
                 cv::cvtColor(cv_mat, cv_mat, cv::COLOR_BGRA2RGBA);
 #endif
 
-                // msg_header.stamp = slTime2Ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
+                // msg_header.stamp = sl_time_to_ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
                 msg_header.seq = frame_count_;
 
                 auto t1 = std::chrono::system_clock::now();
+
                 // Run detection
                 auto static_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
                 auto dyn_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
-                tag_detector_->detectTags(cv_mat, cam_info_msg_, msg_header,
+                tag_detector_->detectTags(cv_mat, cam_info_msg_ptr_, msg_header,
                                     static_tag_array_ptr, dyn_tag_array_ptr);
 
                 auto t2 = std::chrono::system_clock::now();
@@ -453,15 +453,17 @@ namespace tagslam_ros {
                     float d1 = std::chrono::duration<float, std::milli>(t2 - t1).count();
                     float d2 = std::chrono::duration<float, std::milli>(t3 - t2).count();
                     float d = std::chrono::duration<float, std::milli>(t3 - t0).count();
-                    std_msgs::msg::Float32 temp;
+
+                    // publishing latency debug messages
+                    auto temp = std_msgs::msg::Float32();
                     temp.data = d0;
-                    debug_convert_pub_.publish(temp);
+                    debug_convert_pub_->publish(temp);
                     temp.data = d1;
-                    debug_det_pub_.publish(temp);
+                    debug_det_pub_->publish(temp);
                     temp.data = d2;
-                    debug_opt_pub_.publish(temp);
+                    debug_opt_pub_->publish(temp);
                     temp.data = d;
-                    debug_total_pub_.publish(temp);
+                    debug_total_pub_->publish(temp);
                 }
 
                 publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
@@ -480,9 +482,10 @@ namespace tagslam_ros {
         std_msgs::msg::Header msg_header;
         msg_header.frame_id = "left_rect";
 
-        while(pnh_.ok()) // ros is still runing
+        while(rclcpp::ok()) // ros is still runing
         {
-            msg_header.stamp = rclcpp::Time::now();
+            msg_header.stamp = this->get_clock()->now();
+
             sl::ERROR_CODE zed_grab_status = zed_camera_.grab(zed_runtime_param_);
             if(zed_grab_status == sl::ERROR_CODE::SUCCESS)
             {
@@ -492,7 +495,7 @@ namespace tagslam_ros {
                 // Retrieve left image
                 zed_camera_.retrieveImage(sl_mat, zed_image_type_, sl::MEM::GPU);
                 // store the image as a cv_mat
-                cv::cuda::GpuMat cv_mat_gpu = slMat2cvMatGPU(sl_mat);
+                cv::cuda::GpuMat cv_mat_gpu = sl_mat_to_cv_mat_gpu(sl_mat);
                 cv::Mat cv_mat_cpu;
                 cv_mat_gpu.download(cv_mat_cpu);
                 // // change from BGRA to RGBA
@@ -503,9 +506,9 @@ namespace tagslam_ros {
             
                 // store the image as a cv_mat
                 // this is a gray scale image
-                cv::Mat cv_mat_cpu = slMat2cvMat(sl_mat);
+                cv::Mat cv_mat_cpu = sl_mat_to_cv_mat(sl_mat);
 #endif
-                // msg_header.stamp = slTime2Ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
+                // msg_header.stamp = sl_time_to_ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
                 msg_header.seq = frame_count_;
 
                 auto t1 = std::chrono::system_clock::now();
@@ -513,7 +516,7 @@ namespace tagslam_ros {
                 // Run detection
                 auto static_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
                 auto dyn_tag_array_ptr = std::make_shared<AprilTagDetectionArray>();
-                tag_detector_->detectTags(cv_mat_cpu, cam_info_msg_, msg_header,
+                tag_detector_->detectTags(cv_mat_cpu, cam_info_msg_ptr_, msg_header,
                                     static_tag_array_ptr, dyn_tag_array_ptr);
                 
                 auto t2 = std::chrono::system_clock::now();
@@ -532,19 +535,20 @@ namespace tagslam_ros {
                     float d1 = std::chrono::duration<float, std::milli>(t2 - t1).count();
                     float d2 = std::chrono::duration<float, std::milli>(t3 - t2).count();
                     float d = std::chrono::duration<float, std::milli>(t3 - t0).count();
-                    std_msgs::msg::Float32 temp;
+                    
+                    // Publishing latency debug messages
+                    auto temp = std_msgs::msg::Float32();
                     temp.data = d0;
-                    debug_convert_pub_.publish(temp);
+                    debug_convert_pub_->publish(temp);
                     temp.data = d1;
-                    debug_det_pub_.publish(temp);
+                    debug_det_pub_->publish(temp);
                     temp.data = d2;
-                    debug_opt_pub_.publish(temp);
+                    debug_opt_pub_->publish(temp);
                     temp.data = d;
-                    debug_total_pub_.publish(temp);
+                    debug_total_pub_->publish(temp);
                 }
 
                 publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
-
                 publishDetectionArray(static_tag_array_ptr, dyn_tag_array_ptr);
 
                 frame_count_++;
@@ -556,14 +560,16 @@ namespace tagslam_ros {
     {
         sl::SensorsData sensor_data;
         TimestampHandler ts_handler;
-        while(pnh_.ok()) // ros is still runing
+
+        while(rclcpp::ok()) // ros is still runing
         {
             // try to retrive the sensor data
             zed_camera_.getSensorsData(sensor_data, sl::TIME_REFERENCE::CURRENT);
             if(ts_handler.isNew(sensor_data.imu))
             {
-                sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr = std::make_shared<sensor_msgs::msg::Imu>();
-                imu_msg_ptr->header.stamp = slTime2Ros(sensor_data.imu.timestamp);
+                auto imu_msg_ptr = std::make_shared<sensor_msgs::msg::Imu>();
+
+                imu_msg_ptr->header.stamp = sl_time_to_ros(sensor_data.imu.timestamp);
 
                 imu_msg_ptr->orientation.x = sensor_data.imu.pose.getOrientation()[0];
                 imu_msg_ptr->orientation.y = sensor_data.imu.pose.getOrientation()[1];
@@ -580,28 +586,21 @@ namespace tagslam_ros {
 
                 for (int i = 0; i < 3; ++i)
                 {
-                    int r = 0;
+                    int r = i;
 
-                    if (i == 0)
-                    {
-                        r = 0;
-                    }
-                    else if (i == 1)
-                    {
-                        r = 1;
-                    }
-                    else
-                    {
-                        r = 2;
-                    }
+                    imu_msg_ptr->orientation_covariance[i * 3 + 0] = 
+                        sensor_data.imu.pose_covariance.r[r * 3 + 0] * DEG2RAD * DEG2RAD;
+                    imu_msg_ptr->orientation_covariance[i * 3 + 1] = 
+                        sensor_data.imu.pose_covariance.r[r * 3 + 1] * DEG2RAD * DEG2RAD;
+                    imu_msg_ptr->orientation_covariance[i * 3 + 2] = 
+                        sensor_data.imu.pose_covariance.r[r * 3 + 2] * DEG2RAD * DEG2RAD;
 
-                    imu_msg_ptr->orientation_covariance[i * 3 + 0] = sensor_data.imu.pose_covariance.r[r * 3 + 0] * DEG2RAD * DEG2RAD;
-                    imu_msg_ptr->orientation_covariance[i * 3 + 1] = sensor_data.imu.pose_covariance.r[r * 3 + 1] * DEG2RAD * DEG2RAD;
-                    imu_msg_ptr->orientation_covariance[i * 3 + 2] = sensor_data.imu.pose_covariance.r[r * 3 + 2] * DEG2RAD * DEG2RAD;
-
-                    imu_msg_ptr->linear_acceleration_covariance[i * 3 + 0] = sensor_data.imu.linear_acceleration_covariance.r[r * 3 + 0];
-                    imu_msg_ptr->linear_acceleration_covariance[i * 3 + 1] = sensor_data.imu.linear_acceleration_covariance.r[r * 3 + 1];
-                    imu_msg_ptr->linear_acceleration_covariance[i * 3 + 2] = sensor_data.imu.linear_acceleration_covariance.r[r * 3 + 2];
+                    imu_msg_ptr->linear_acceleration_covariance[i * 3 + 0] = 
+                        sensor_data.imu.linear_acceleration_covariance.r[r * 3 + 0];
+                    imu_msg_ptr->linear_acceleration_covariance[i * 3 + 1] = 
+                        sensor_data.imu.linear_acceleration_covariance.r[r * 3 + 1];
+                    imu_msg_ptr->linear_acceleration_covariance[i * 3 + 2] = 
+                        sensor_data.imu.linear_acceleration_covariance.r[r * 3 + 2];
 
                     imu_msg_ptr->angular_velocity_covariance[i * 3 + 0] =
                         sensor_data.imu.angular_velocity_covariance.r[r * 3 + 0] * DEG2RAD * DEG2RAD;
@@ -614,50 +613,48 @@ namespace tagslam_ros {
                     slam_backend_->updateIMU(imu_msg_ptr);
                 }
 
-                imu_pub_.publish(imu_msg_ptr);
+                imu_pub_->publish(*imu_msg_ptr);
             }
-
         }
     }
 
     void TagSlamZED::estimateState(TagDetectionArrayPtr tag_array_ptr)
     {
-        nav_msgs::msg::Odometry::SharedPtr slam_pose_msg;
+        nav_msgs::msg::Odometry::SharedPtr slam_pose_msg_ptr;
 
         EigenPose relative_pose;
         EigenPoseCov pose_cur_cov;
                 
         // Retrieve pose
-        if(zed_pos_tracking_enabled_)
+        if (zed_pos_tracking_enabled_)
         {
             // this is accumlated camera odometry pose with loop closure
             sl::Pose sl_pose_current;
             zed_camera_.getPosition(sl_pose_current, sl::REFERENCE_FRAME::WORLD);   
-            EigenPose pose_cur = slPose2Eigen(sl_pose_current);
+            EigenPose pose_cur = sl_pose_to_eigen(sl_pose_current);
 
-            pose_cur_cov = slPose2Cov(sl_pose_current);
-            relative_pose = pose_prev_.inverse()*pose_cur;
+            pose_cur_cov = sl_pose_to_cov(sl_pose_current);
+            relative_pose = pose_prev_.inverse() * pose_cur;
             
             pose_prev_ = pose_cur; // only needed if we use ZED's visual odomtery 
         }
 
         
-        if(use_imu_odom_){
-            slam_pose_msg = slam_backend_->updateVIO(tag_array_ptr, relative_pose, pose_cur_cov, zed_pos_tracking_enabled_);
-        }else{
-            slam_pose_msg = slam_backend_->updateSLAM(tag_array_ptr, relative_pose, pose_cur_cov);
+        if (use_imu_odom_) {
+            slam_pose_msg_ptr = slam_backend_->updateVIO(tag_array_ptr, relative_pose, pose_cur_cov, zed_pos_tracking_enabled_);
+        } else {
+            slam_pose_msg_ptr = slam_backend_->updateSLAM(tag_array_ptr, relative_pose, pose_cur_cov);
         }
 
         // publish the message
-        if(slam_pose_msg){
-            slam_pose_pub_.publish(slam_pose_msg);
+        if (slam_pose_msg_ptr) {
+            slam_pose_pub_->publish(*slam_pose_msg_ptr);
         }
 
-        if(if_pub_landmark_)
-        {
+        if (if_pub_landmark_) {
             // publish landmark
             visualization_msgs::msg::MarkerArray::SharedPtr landmark_msg_ptr = slam_backend_->createMarkerArray(tag_array_ptr->header);
-            landmark_pub_.publish(landmark_msg_ptr);
+            landmark_pub_->publish(*landmark_msg_ptr);
         }
         
     }
@@ -666,28 +663,28 @@ namespace tagslam_ros {
                                 TagDetectionArrayPtr dyn_tag_array_ptr)
     {
         // Publish ros messages    
-        int num_image_subscriber = img_pub_.getNumSubscribers();
-        int num_detection_subscriber = det_img_pub_.getNumSubscribers();
+        int num_image_subscriber = img_pub_->get_subscription_count();
+        int num_detection_subscriber = det_img_pub_->get_subscription_count();
         
         std_msgs::msg::Header header = static_tag_array_ptr->header;
 
-        if(num_image_subscriber||num_detection_subscriber){
+        if (num_image_subscriber > 0 || num_detection_subscriber > 0) {
             // Download the image to cpu
             sl::Mat sl_mat_cpu;
             zed_camera_.retrieveImage(sl_mat_cpu, sl::VIEW::LEFT, sl::MEM::CPU); 
             
             // create raw image message
             if(num_image_subscriber > 0 && if_pub_image_){
-                sensor_msgs::msg::Image::SharedPtr rawImgMsg = std::make_shared<sensor_msgs::msg::Image>();
-                slMatToROSmsg(rawImgMsg, sl_mat_cpu, header);
-                cam_info_msg_->header = header;
-                img_pub_.publish(rawImgMsg, cam_info_msg_);
+                auto raw_img_msg_ptr = std::make_shared<sensor_msgs::msg::Image>();
+                sl_mat_to_ros_msg(raw_img_msg_ptr, sl_mat_cpu, header);
+                cam_info_msg_ptr_->header = header;
+                img_pub_->publish(*raw_img_msg_ptr, *cam_info_msg_ptr_);
             }
 
             // create detection image
             if(num_detection_subscriber > 0 && if_pub_tag_det_image_){
 
-                cv::Mat detectionMat = slMat2cvMat(sl_mat_cpu).clone();
+                cv::Mat detectionMat = sl_mat_to_cv_mat(sl_mat_cpu).clone();
                 tag_detector_->drawDetections(detectionMat, static_tag_array_ptr);
                 tag_detector_->drawDetections(detectionMat, dyn_tag_array_ptr);
 
@@ -695,7 +692,8 @@ namespace tagslam_ros {
                 detectionImgMsg.header = header;
                 detectionImgMsg.encoding = sensor_msgs::msg::image_encodings::BGRA8;
                 detectionImgMsg.image = detectionMat;
-                det_img_pub_.publish(detectionImgMsg.toImageMsg());
+
+                det_img_pub_->publish(*detectionImgMsg.toImageMsg()); // .toImageMsg() returns ImagePtr
             }
         }
 
@@ -704,21 +702,23 @@ namespace tagslam_ros {
     void TagSlamZED::publishDetectionArray(TagDetectionArrayPtr static_tag_array_ptr,
                                 TagDetectionArrayPtr dyn_tag_array_ptr)
     {
-        if(static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
-            static_tag_det_pub_.publish(*static_tag_array_ptr);
+        if(static_tag_det_pub_->get_subscription_count() > 0 && if_pub_tag_det_){
+            static_tag_det_pub_->publish(*static_tag_array_ptr);
         }
 
-        if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
-            dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
+        if(dyn_tag_det_pub_->get_subscription_count() > 0 && if_pub_tag_det_){
+            dyn_tag_det_pub_->publish(*dyn_tag_array_ptr);
         }
     }
 
-    void TagSlamZED::checkResolFps()
+    void TagSlamZED::check_resol_fps()
     {
         switch (zed_resol_) {
         case sl::RESOLUTION::HD2K:
             if (zed_frame_rate_ != 15) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD2K. Set to 15 FPS.");
+                RCLCPP_WARN(this->get_logger(),
+                        "Wrong FrameRate ({}) for the resolution HD2K. Set to 15 FPS.",
+                        zed_frame_rate_);
                 zed_frame_rate_ = 15;
             }
 
@@ -730,13 +730,17 @@ namespace tagslam_ros {
             }
 
             if (zed_frame_rate_ > 15 && zed_frame_rate_ < 30) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD1080. Set to 15 FPS.");
+                RCLCPP_WARN(this->get_logger(), 
+                        "Wrong FrameRate ({}) for the resolution HD1080. Set to 15 FPS.",
+                        zed_frame_rate_);
                 zed_frame_rate_ = 15;
             } else if (zed_frame_rate_ > 30) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD1080. Set to 30 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}}) for the resolution HD1080. Set to 30 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 30;
             } else {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD1080. Set to 15 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD1080. Set to 15 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 15;
             }
 
@@ -748,16 +752,20 @@ namespace tagslam_ros {
             }
 
             if (zed_frame_rate_ > 15 && zed_frame_rate_ < 30) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 15 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD720. Set to 15 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 15;
             } else if (zed_frame_rate_ > 30 && zed_frame_rate_ < 60) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 30 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD720. Set to 30 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 30;
             } else if (zed_frame_rate_ > 60) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 60 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD720. Set to 60 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 60;
             } else {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 15 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD720. Set to 15 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 15;
             }
 
@@ -769,109 +777,114 @@ namespace tagslam_ros {
             }
 
             if (zed_frame_rate_ > 15 && zed_frame_rate_ < 30) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 15 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 15 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 15;
             } else if (zed_frame_rate_ > 30 && zed_frame_rate_ < 60) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 30 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 30 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 30;
             } else if (zed_frame_rate_ > 60 && zed_frame_rate_ < 100) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 60 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 60 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 60;
             } else if (zed_frame_rate_ > 100) {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 100 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 100 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 100;
             } else {
-                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 15 FPS.");
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 15 FPS.",
+                zed_frame_rate_);
                 zed_frame_rate_ = 15;
             }
 
             break;
 
         default:
-            RCLCPP_WARN_STREAM(this->get_logger(), "Invalid resolution. Set to HD720 @ 30 FPS");
+            RCLCPP_WARN(this->get_logger(), "Invalid resolution. Set to HD720 @ 30 FPS");
             zed_resol_ = sl::RESOLUTION::HD720;
             zed_frame_rate_ = 30;
         }
     }
 
-    void TagSlamZED::slMatToROSmsg(sensor_msgs::msg::Image::SharedPtr imgMsgPtr, sl::Mat img, std_msgs::msg::Header header)
+    void TagSlamZED::sl_mat_to_ros_msg(sensor_msgs::msg::Image::SharedPtr img_msg_ptr, sl::Mat img, std_msgs::msg::Header header)
     {
-        if (!imgMsgPtr)
+        if (!img_msg_ptr)
         {
             return;
         }
 
-        imgMsgPtr->header = header;
-        imgMsgPtr->height = img.getHeight();
-        imgMsgPtr->width = img.getWidth();
+        img_msg_ptr->header = header;
+        img_msg_ptr->height = img.getHeight();
+        img_msg_ptr->width = img.getWidth();
 
         int num = 1;  // for endianness detection
-        imgMsgPtr->is_bigendian = !(*(char*)&num == 1);
+        img_msg_ptr->is_bigendian = !(*(char*)&num == 1);
 
-        imgMsgPtr->step = img.getStepBytes();
+        img_msg_ptr->step = img.getStepBytes();
 
-        size_t size = imgMsgPtr->step * imgMsgPtr->height;
-        imgMsgPtr->data.resize(size);
+        size_t size = img_msg_ptr->step * img_msg_ptr->height;
+        img_msg_ptr->data.resize(size);
 
         sl::MAT_TYPE dataType = img.getDataType();
 
         switch (dataType)
         {
             case sl::MAT_TYPE::F32_C1: /**< float 1 channel.*/
-            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC1;
-            memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::float1>(), size);
+            img_msg_ptr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC1;
+            memcpy((char*)(&img_msg_ptr->data[0]), img.getPtr<sl::float1>(), size);
             break;
 
             case sl::MAT_TYPE::F32_C2: /**< float 2 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC2;
-            memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::float2>(), size);
+            img_msg_ptr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC2;
+            memcpy((char*)(&img_msg_ptr->data[0]), img.getPtr<sl::float2>(), size);
             break;
 
             case sl::MAT_TYPE::F32_C3: /**< float 3 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC3;
-            memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::float3>(), size);
+            img_msg_ptr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC3;
+            memcpy((char*)(&img_msg_ptr->data[0]), img.getPtr<sl::float3>(), size);
             break;
 
             case sl::MAT_TYPE::F32_C4: /**< float 4 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC4;
-            memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::float4>(), size);
+            img_msg_ptr->encoding = sensor_msgs::msg::image_encodings::TYPE_32FC4;
+            memcpy((char*)(&img_msg_ptr->data[0]), img.getPtr<sl::float4>(), size);
             break;
 
             case sl::MAT_TYPE::U8_C1: /**< unsigned char 1 channel.*/
-            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::MONO8;
-            memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::uchar1>(), size);
+            img_msg_ptr->encoding = sensor_msgs::msg::image_encodings::MONO8;
+            memcpy((char*)(&img_msg_ptr->data[0]), img.getPtr<sl::uchar1>(), size);
             break;
 
             case sl::MAT_TYPE::U8_C2: /**< unsigned char 2 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_8UC2;
-            memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::uchar2>(), size);
+            img_msg_ptr->encoding = sensor_msgs::msg::image_encodings::TYPE_8UC2;
+            memcpy((char*)(&img_msg_ptr->data[0]), img.getPtr<sl::uchar2>(), size);
             break;
 
             case sl::MAT_TYPE::U8_C3: /**< unsigned char 3 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::BGR8;
-            memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::uchar3>(), size);
+            img_msg_ptr->encoding = sensor_msgs::msg::image_encodings::BGR8;
+            memcpy((char*)(&img_msg_ptr->data[0]), img.getPtr<sl::uchar3>(), size);
             break;
 
             case sl::MAT_TYPE::U8_C4: /**< unsigned char 4 channels.*/
-            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::BGRA8;
-            memcpy((char*)(&imgMsgPtr->data[0]), img.getPtr<sl::uchar4>(), size);
+            img_msg_ptr->encoding = sensor_msgs::msg::image_encodings::BGRA8;
+            memcpy((char*)(&img_msg_ptr->data[0]), img.getPtr<sl::uchar4>(), size);
             break;
 
             case sl::MAT_TYPE::U16_C1: /**< unsigned short 1 channel.*/
-            imgMsgPtr->encoding = sensor_msgs::msg::image_encodings::TYPE_16UC1;
-            memcpy((uint16_t*)(&imgMsgPtr->data[0]), img.getPtr<sl::ushort1>(), size);
+            img_msg_ptr->encoding = sensor_msgs::msg::image_encodings::TYPE_16UC1;
+            memcpy((uint16_t*)(&img_msg_ptr->data[0]), img.getPtr<sl::ushort1>(), size);
             break;
         }
     }
 
-    rclcpp::Time TagSlamZED::slTime2Ros(sl::Timestamp t)
+    rclcpp::Time TagSlamZED::sl_time_to_ros(sl::Timestamp t)
     {
         uint32_t sec = static_cast<uint32_t>(t.getNanoseconds() / 1000000000);
         uint32_t nsec = static_cast<uint32_t>(t.getNanoseconds() % 1000000000);
         return rclcpp::Time(sec, nsec);
     }
 
-    EigenPose TagSlamZED::slTrans2Eigen(sl::Transform& pose){
+    EigenPose TagSlamZED::sl_trans_to_eigen(sl::Transform& pose){
         sl::Translation t = pose.getTranslation();
         sl::Orientation quat = pose.getOrientation();
         Eigen::Affine3d eigenPose;
@@ -880,7 +893,7 @@ namespace tagslam_ros {
         return eigenPose.matrix();
     }
 
-    EigenPose TagSlamZED::slPose2Eigen(sl::Pose& pose){
+    EigenPose TagSlamZED::sl_pose_to_eigen(sl::Pose& pose){
         sl::Translation t = pose.getTranslation();
         sl::Orientation quat = pose.getOrientation();
         Eigen::Affine3d eigenPose;
@@ -889,7 +902,7 @@ namespace tagslam_ros {
         return eigenPose.matrix();
     }
 
-    EigenPoseSigma TagSlamZED::slPose2Sigma(sl::Pose& pose){
+    EigenPoseSigma TagSlamZED::sl_pose_to_sigma(sl::Pose& pose){
         EigenPoseSigma sigma;
         sigma << std::sqrt(pose.pose_covariance[21]), std::sqrt(pose.pose_covariance[28]),
                 std::sqrt(pose.pose_covariance[35]), std::sqrt(pose.pose_covariance[0]),
@@ -897,7 +910,7 @@ namespace tagslam_ros {
         return sigma;
     }
 
-    EigenPoseCov TagSlamZED::slPose2Cov(sl::Pose& pose)
+    EigenPoseCov TagSlamZED::sl_pose_to_cov(sl::Pose& pose)
     {
         // gtsam have order rotx, roty, rotz, x, y, z
         // ros have order x, y, z, rotx, roty, rotz
@@ -930,7 +943,7 @@ namespace tagslam_ros {
         return cov_gtsam;
     }
 
-    cv::Mat TagSlamZED::slMat2cvMat(sl::Mat& input) {
+    cv::Mat TagSlamZED::sl_mat_to_cv_mat(sl::Mat& input) {
         // Since cv::Mat data requires a uchar* pointer, we get the uchar1 pointer from sl::Mat (getPtr<T>())
         // cv::Mat and sl::Mat will share a single memory structure
         size_t height = input.getHeight();
@@ -986,7 +999,7 @@ namespace tagslam_ros {
     /**
     * Conversion function between sl::Mat and cv::cuda::GpuMat 
     **/
-    cv::cuda::GpuMat TagSlamZED::slMat2cvMatGPU(sl::Mat& input) {
+    cv::cuda::GpuMat TagSlamZED::sl_mat_to_cv_mat_gpu(sl::Mat& input) {
         // Since cv::Mat data requires a uchar* pointer, we get the uchar1 pointer from sl::Mat (getPtr<T>())
         // cv::Mat and sl::Mat will share a single memory structure
         size_t height = input.getHeight();

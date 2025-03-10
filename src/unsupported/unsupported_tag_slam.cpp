@@ -166,19 +166,19 @@ namespace tagslam_ros
     ROS_INFO_STREAM("detection "<<elapsed.count() << " ms");
     
     // publish tag detections
-    if (static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+    if (static_tag_det_pub_.get_subscription_count() > 0 && if_pub_tag_det_){
       // Publish detected tags in the image by AprilTag 2
       static_tag_det_pub_.publish(*static_tag_array_ptr);
     }
 
-    if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+    if(dyn_tag_det_pub_.get_subscription_count() > 0 && if_pub_tag_det_){
       // Publish detected tags in the image by AprilTag 2
       dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
     }
 
     // Publish the camera image overlaid by outlines of the detected tags and their ids
 
-    if (tag_detections_image_publisher_.getNumSubscribers() > 0 && 
+    if (tag_detections_image_publisher_.get_subscription_count() > 0 && 
         if_pub_tag_det_image_)
     {
       std::shared_ptr<cv_bridge::CvImage> cv_ptr = cv_bridge::toCvCopy(image, "bgr8");
@@ -214,18 +214,18 @@ namespace tagslam_ros
     }
     
     // publish tag detections
-    if (static_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+    if (static_tag_det_pub_.get_subscription_count() > 0 && if_pub_tag_det_){
       // Publish detected tags in the image by AprilTag 2
       static_tag_det_pub_.publish(*static_tag_array_ptr);
     }
 
-    if(dyn_tag_det_pub_.getNumSubscribers() > 0 && if_pub_tag_det_){
+    if(dyn_tag_det_pub_.get_subscription_count() > 0 && if_pub_tag_det_){
       // Publish detected tags in the image by AprilTag 2
       dyn_tag_det_pub_.publish(*dyn_tag_array_ptr);
     }
 
     // Publish the camera image overlaid by outlines of the detected tags and their ids
-    if (tag_detections_image_publisher_.getNumSubscribers() > 0 && 
+    if (tag_detections_image_publisher_.get_subscription_count() > 0 && 
         if_pub_tag_det_image_)
     {
       std::shared_ptr<cv_bridge::CvImage> cv_ptr = cv_bridge::toCvCopy(image, "bgr8");
