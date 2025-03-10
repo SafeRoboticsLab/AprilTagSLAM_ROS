@@ -115,13 +115,13 @@ namespace tagslam_ros {
     void TagSlamZED::setup_service()
     {
         // Set the service to reset the map
-        srv_reset_slam_ = this->create_service<std_srvs::srv::Trigger>(
+        srv_reset_slam_ = this->create_service<Trigger>(
             "reset_slam", std::bind(&TagSlamZED::reset_callback, this, std::placeholders::_1, std::placeholders::_2));
         
-        srv_start_slam_ = this->create_service<std_srvs::srv::Trigger>(
+        srv_start_slam_ = this->create_service<Trigger>(
             "start_slam", std::bind(&TagSlamZED::start_callback, this, std::placeholders::_1, std::placeholders::_2));
 
-        srv_stop_slam_ = this->create_service<std_srvs::srv::Trigger>(
+        srv_stop_slam_ = this->create_service<Trigger>(
             "stop_slam", std::bind(&TagSlamZED::stop_callback, this, std::placeholders::_1, std::placeholders::_2));
     }
 

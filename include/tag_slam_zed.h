@@ -159,7 +159,7 @@ using Trigger = std_srvs::srv::trigger;
 
         cv::Mat sl_mat_to_cv_mat(sl::Mat& input);
 
-        bool reset_callback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
+        void reset_callback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
         {
             (void)request; // Avoid unused variable warning
             run_slam_ = false;
@@ -167,25 +167,22 @@ using Trigger = std_srvs::srv::trigger;
             slam_backend_->reset();
             response->success = true;
             response->message = "Reset slam.";
-            return true;
         }
 
-        bool start_callback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
+        void start_callback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
         {
             run_slam_ = true;
-            res->success = true;
-            res->message = "Start slam.";
+            response->success = true;
+            response->message = "Start slam.";
             RCLCPP_INFO(this->get_logger(), "SLAM Started.");
-            return true;
         }
 
-        bool stop_callback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
+        void stop_callback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
         {
             run_slam_ = false;
-            res->success = true;
-            res->message = "Stop slam.";
+            response->success = true;
+            response->message = "Stop slam.";
             RCLCPP_INFO(this->get_logger(), "SLAM Stopped.");
-            return true;
         }
 
 #ifndef NO_CUDA_OPENCV
@@ -234,21 +231,21 @@ using Trigger = std_srvs::srv::trigger;
         image_transport::CameraPublisher img_pub_; //
         image_transport::Publisher det_img_pub_; //
 
-        rclcpp::Publisher static_tag_det_pub_;
-        rclcpp::Publisher dyn_tag_det_pub_;
-        rclcpp::Publisher slam_pose_pub_;
-        rclcpp::Publisher imu_pub_;
-        rclcpp::Publisher landmark_pub_;
+        rclcpp::Publisher<AprilTagDetectionArray>::SharedPtr static_tag_det_pub_;
+        rclcpp::Publisher<AprilTagDetectionArray>::SharedPtr dyn_tag_det_pub_;
+        rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr slam_pose_pub_;
+        rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
+        rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr landmark_pub_;
 
-        rclcpp::Publisher debug_convert_pub_;
-        rclcpp::Publisher debug_det_pub_;
-        rclcpp::Publisher debug_opt_pub_;
-        rclcpp::Publisher debug_total_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr debug_convert_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr debug_det_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr debug_opt_pub_;
+        rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr debug_total_pub_;
 
         // Services
-        rclcpp::ServiceServer srv_start_slam_;
-        rclcpp::ServiceServer srv_stop_slam_;
-        rclcpp::ServiceServer srv_reset_slam_;
+        rclcpp::Service<Trigger>::SharedPtr srv_start_slam_;
+        rclcpp::Service<Trigger>::SharedPtr srv_stop_slam_;
+        rclcpp::Service<Trigger>::SharedPtr srv_reset_slam_;
 
         /*
         *** SLAM Parameters ****
