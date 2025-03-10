@@ -76,25 +76,25 @@ namespace tagslam_ros
 #ifndef NO_CUDA
         tag_detector_ = std::make_unique<TagDetectorCUDA>(pnh);
 #else
-        NODELET_ERROR("CUDA AprilTag detector is not built. Add '-DUSE_CUDA=ON' flag to catkin");
+        RCLCPP_ERROR(this->get_logger(), "CUDA AprilTag detector is not built. Add '-DUSE_CUDA=ON' flag to catkin");
 #endif
     }else{ 
-        NODELET_ERROR("Invalid detector type: %s", detector_type_.c_str());
+        RCLCPP_ERROR(this->get_logger(), "Invalid detector type: %s", detector_type_.c_str());
     }
 
     // Initialize SLAM backend
     std::string backend_type_ = pnh.param<std::string>("backend/smoother", "isam2");
     if(backend_type_=="isam2"){
         slam_backend_ = std::make_unique<iSAM2Backend>(pnh);
-        NODELET_INFO("Using iSAM2 backend.");
+        RCLCPP_INFO(this->get_logger(), "Using iSAM2 backend.");
     }else if(backend_type_=="fixed_lag"){
         slam_backend_ = std::make_unique<FixedLagBackend>(pnh);
-        NODELET_INFO("Using fixed-lag backend.");
+        RCLCPP_INFO(this->get_logger(), "Using fixed-lag backend.");
     }else if(backend_type_ == "none")
     {
         slam_backend_ = nullptr;
         detection_only_ = true;
-        NODELET_INFO("AprilTag Detector Mode.");
+        RCLCPP_INFO(this->get_logger(), "AprilTag Detector Mode.");
     }
 
     prev_vio_pose_ = EigenPose::Identity();
@@ -112,7 +112,7 @@ namespace tagslam_ros
     }else{
       // do slam 
       // we want to use camera VIO as the odometry factor between frames
-      NODELET_INFO_STREAM("Subscribe to camera: "<< image_topic_);  
+      RCLCPP_INFO_STREAM(this->get_logger(), "Subscribe to camera: "<< image_topic_);  
       image_subscriber_.subscribe(*it_, image_topic_, 1,
                               image_transport::TransportHints(transport_hint));
       camera_info_subscriber_.subscribe(nh, camera_info_topic_, 1);

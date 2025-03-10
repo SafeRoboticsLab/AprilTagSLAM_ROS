@@ -115,158 +115,183 @@ namespace tagslam_ros {
     void TagSlamZED::setup_service()
     {
         // Set the service to reset the map
-        srv_reset_slam_ = pnh_.advertiseService("reset_slam", &TagSlamZED::resetCallback, this);
-        srv_start_slam_ = pnh_.advertiseService("start_slam", &TagSlamZED::startCallback, this);
-        srv_stop_slam_ = pnh_.advertiseService("stop_slam", &TagSlamZED::stopCallback, this);
+        srv_reset_slam_ = this->create_service<std_srvs::srv::Trigger>(
+            "reset_slam", std::bind(&TagSlamZED::resetCallback, this, std::placeholders::_1, std::placeholders::_2));
+        
+        srv_start_slam_ = this->create_service<std_srvs::srv::Trigger>(
+            "start_slam", std::bind(&TagSlamZED::startCallback, this, std::placeholders::_1, std::placeholders::_2));
+
+        srv_stop_slam_ = this->create_service<std_srvs::srv::Trigger>(
+            "stop_slam", std::bind(&TagSlamZED::stopCallback, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     void TagSlamZED::setup_publisher()
     {
         // Create all the publishers
+
         // Image publishers
-        image_transport::ImageTransport it_zed(pnh_);
+        if (if_pub_image_)
+            img_pub_ = image_transport::create_camera_publisher(this, "Image");
 
-        if(if_pub_image_)
-            img_pub_ = it_zed.advertiseCamera("Image", 1); // raw image
-        
-        if(if_pub_tag_det_image_)
-            det_img_pub_ = it_zed.advertise("Tag_Detection_Image", 1); // image with tag detection
-        
-        if(if_pub_tag_det_)
-            static_tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("Tag_Detections", 1);
-            dyn_tag_det_pub_ = pnh_.advertise<AprilTagDetectionArray>("Tag_Detections_Dynamic", 1);
+        if (if_pub_tag_det_image_)
+            det_img_pub_ = image_transport::create_publisher(this, "Tag_Detection_Image");
 
-        if(!detection_only_)
-            slam_pose_pub_ = pnh_.advertise<nav_msgs::msg::Odometry>("Pose", 1);
+        if (if_pub_tag_det_) {
+            static_tag_det_pub_ = this->create_publisher<AprilTagDetectionArray>("Tag_Detections", rclcpp::QoS(1));
+            dyn_tag_det_pub_ = this->create_publisher<AprilTagDetectionArray>("Tag_Detections_Dynamic", rclcpp::QoS(1));
+        }
 
-        // // IMU Publishers
-        if(use_imu_odom_)
-            imu_pub_ = pnh_.advertise<sensor_msgs::msg::Imu>("IMU/Data", 1);
+        if (!detection_only_)
+            slam_pose_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("Pose", rclcpp::QoS(1));
 
-        // landmark publisher
-        if(if_pub_landmark_)
-            landmark_pub_ = pnh_.advertise<visualization_msgs::msg::MarkerArray>("Landmarks", 1);
+        // IMU Publishers
+        if (use_imu_odom_)
+            imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("IMU/Data", rclcpp::QoS(1));
 
+        // Landmark publisher
+        if (if_pub_landmark_)
+            landmark_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("Landmarks", rclcpp::QoS(1));
+
+        // Debug latency publishers
         if (if_pub_latency_)
         {
-            debug_convert_pub_ = pnh_.advertise<std_msgs::msg::Float32>("Debug/Convert", 1);
-            debug_det_pub_ = pnh_.advertise<std_msgs::msg::Float32>("Debug/Detect", 1);
-            debug_opt_pub_ = pnh_.advertise<std_msgs::msg::Float32>("Debug/Optimize", 1);
-            debug_total_pub_ = pnh_.advertise<std_msgs::msg::Float32>("Debug/Total", 1);
+            debug_convert_pub_ = this->create_publisher<std_msgs::msg::Float32>("Debug/Convert", rclcpp::QoS(1));
+            debug_det_pub_ = this->create_publisher<std_msgs::msg::Float32>("Debug/Detect", rclcpp::QoS(1));
+            debug_opt_pub_ = this->create_publisher<std_msgs::msg::Float32>("Debug/Optimize", rclcpp::QoS(1));
+            debug_total_pub_ = this->create_publisher<std_msgs::msg::Float32>("Debug/Total", rclcpp::QoS(1));
         }
     }
 
     void TagSlamZED::readParameters(){
 
-        NODELET_INFO_STREAM("*** GENERAL PARAMETERS ***");
+        RCLCPP_INFO(this->get_logger(), "*** GENERAL PARAMETERS ***");
 
         /*
         ************** Zed Camera Parameters **************
         */
+       // Declare parameters with defaults
+        this->declare_parameter<std::string>("camera/camera_model", "zed2");
+        this->declare_parameter<int>("camera/exposure", 20);
+        this->declare_parameter<int>("camera/resolution", 3);
+        this->declare_parameter<int>("camera/frame_rate", 30); // default to 30fps
+        this->declare_parameter<std::string>("frontend/type", "CPU");
+        this->declare_parameter<bool>("backend/use_imu", true);
+        this->declare_parameter<bool>("backend/use_odom", true);
+        this->declare_parameter<std::string>("backend/smoother", "isam2");
+        this->declare_parameter<int>("depth/quality", 1);
+        this->declare_parameter<int>("depth/sensing_mode", 0);
+        this->declare_parameter<double>("depth/min_depth", 0.5);
+        this->declare_parameter<double>("depth/max_depth", 15.0);
+        this->declare_parameter<bool>("publish/publish_tags", true);
+        this->declare_parameter<bool>("publish/publish_image_with_tags", true);
+        this->declare_parameter<bool>("publish/publish_image", true);
+        this->declare_parameter<bool>("publish/publish_landmarks", true);
+        this->declare_parameter<bool>("publish/publish_latency", true);
+
         // Get parameters from param files
-        std::string camera_model = getRosOption<std::string>(pnh_, "camera/camera_model", "zed2");
+        std::string camera_model;
+        this->get_parameter("camera/camera_model", camera_model);
+
         if (camera_model == "zed") {
-            zed_user_model_ = sl::MODEL::ZED;
-            NODELET_INFO_STREAM(" * Camera Model by param\t-> " << camera_model);
+        zed_user_model_ = sl::MODEL::ZED;
         } else if (camera_model == "zedm") {
             zed_user_model_ = sl::MODEL::ZED_M;
-            NODELET_INFO_STREAM(" * Camera Model by param\t-> " << camera_model);
         } else if (camera_model == "zed2") {
             zed_user_model_ = sl::MODEL::ZED2;
-            NODELET_INFO_STREAM(" * Camera Model by param\t-> " << camera_model);
         } else if (camera_model == "zed2i") {
             zed_user_model_ = sl::MODEL::ZED2i;
-            NODELET_INFO_STREAM(" * Camera Model by param\t-> " << camera_model);
         } else {
-            NODELET_ERROR_STREAM("Camera model not valid: " << camera_model);
+            RCLCPP_ERROR(this->get_logger(), "Camera model not valid: %s", camera_model.c_str());
         }
+        RCLCPP_INFO(this->get_logger(), " * Camera Model by param -> %s", camera_model.c_str());
 
-        zed_exposure_ = getRosOption<int>(pnh_, "camera/exposure", 20);
 
-        int resol = getRosOption<int>(pnh_, "camera/resolution", 3); // defulat to HD720
+        this->get_parameter("camera/exposure", zed_exposure_);
+
+        int resol;
+        this->get_parameter("camera/resolution", resol);
         zed_resol_ = static_cast<sl::RESOLUTION>(resol);
-        NODELET_INFO_STREAM(" * Camera Resolution\t\t-> " << sl::toString(zed_resol_).c_str());
+        RCLCPP_INFO_STREAM(this->get_logger(), " * Camera Resolution\t\t-> " << sl::toString(zed_resol_).c_str());
 
-        zed_frame_rate_ = getRosOption<int>(pnh_, "camera/frame_rate", 30); // default to 30 fps
+        this->get_parameter("camera/frame_rate", zed_frame_rate_);
         checkResolFps();
-        NODELET_INFO_STREAM(" * Camera Grab Framerate\t-> " << zed_frame_rate_);
+        RCLCPP_INFO_STREAM(this->get_logger(), " * Camera Grab Framerate\t-> " << zed_frame_rate_);
 
         /*
-        ************** Setup Front End **************
+        ************** Frontend Setup **************
         */
-        std::string frontend_type = getRosOption<std::string>(pnh_, "frontend/type", "CPU");
-        if (frontend_type == "GPU") {
-            // GPU detecotr take a recitified RGBA8 image
-            // ZED return a BGRA8 image, we need to convert it later
-            use_gpu_detector_ = true;
-            zed_imge_type_ = sl::VIEW::LEFT; 
-            tag_detector_ = std::make_unique<TagDetectorCUDA>(pnh_);
-        }else{
-            // CPU detector take a rectified gray image
-            use_gpu_detector_ = false;
-            zed_imge_type_ = sl::VIEW::LEFT_GRAY;
-            tag_detector_ = std::make_unique<TagDetectorCPU>(pnh_);
-        }
-        NODELET_INFO_STREAM(" * " <<(use_gpu_detector_ ? "Use GPU tag detector" : "Use CPU tag detector"));
+        std::string frontend_type;
+        this->get_parameter("frontend/type", frontend_type);
+        use_gpu_detector_ = (frontend_type == "GPU");
 
+        // GPU detector take a recitified RGBA8 image
+            // ZED returns a BGRA8 image, we need to convert it later
+        zed_image_type_ = use_gpu_detector_ ? sl::VIEW::LEFT : sl::VIEW::LEFT_GRAY;
+        tag_detector_ = use_gpu_detector_ ? std::make_unique<TagDetectorCUDA>(this) : std::make_unique<TagDetectorCPU>(this);
+        RCLCPP_INFO(this->get_logger(), " * %s", use_gpu_detector_ ? "Use GPU tag detector" : "Use CPU tag detector");
 
         /*
-        *********** Setup Backend **************
+        *********** Backend Setup **************
         */
-        // std::string odom_type = getRosOption<std::string>(pnh_, "backend/odom", "vision");
+        // std::string odom_type
+        // this->get_parameter("backend/odom", "vision");
 
-        use_imu_odom_ = getRosOption<bool>(pnh_, "backend/use_imu", true);
-        zed_pos_tracking_enabled_ = getRosOption<bool>(pnh_, "backend/use_odom", true);
-
+        this->get_parameter("backend/use_imu", use_imu_odom_);
+        this->get_parameter("backend/use_odom", zed_pos_tracking_enabled_);
+        
         if(!use_imu_odom_ && !zed_pos_tracking_enabled_){
-            NODELET_WARN("No odometry source is enabled, please enable at least one of them. Running in detection only mode.");
+            RCLCPP_WARN(this->get_logger(), "No odometry source is enabled, please enable at least one of them. Running in detection only mode.");
             detection_only_ = true;
         }
 
-        backend_type_ = getRosOption<std::string>(pnh_, "backend/smoother", "isam2");
+        this->get_parameter("backend/smoother", backend_type_);
+        
         if (backend_type_ =="isam2") {
-            slam_backend_ = std::make_unique<iSAM2Backend>(pnh_);
-            NODELET_INFO("Using iSAM2 backend.");
-        }else if (backend_type_ == "fixed_lag"){
-            slam_backend_ = std::make_unique<FixedLagBackend>(pnh_);
-            NODELET_INFO("Using fixed-lag backend.");
-        }else if (backend_type_ == "none"){
+            slam_backend_ = std::make_unique<iSAM2Backend>(this);
+            RCLCPP_INFO(this->get_logger(), "Using iSAM2 backend.");
+        } else if (backend_type_ == "fixed_lag"){
+            slam_backend_ = std::make_unique<FixedLagBackend>(this);
+            RCLCPP_INFO(this->get_logger(), "Using fixed-lag backend.");
+        } else if (backend_type_ == "none"){
             slam_backend_ = nullptr;
             detection_only_ = true;
             use_imu_odom_ = false;
             zed_pos_tracking_enabled_ = false;
-            NODELET_INFO("Apriltag Detector Mode.");
-        }else{
-            NODELET_ERROR("Not supported backend type: %s", backend_type_.c_str());
+            RCLCPP_INFO(this->get_logger(), "Apriltag Detector Mode.");
+        } else{
+            RCLCPP_ERROR(this->get_logger(), "Not supported backend type: %s", backend_type_.c_str());
         }
 
         if(zed_pos_tracking_enabled_)
         {
             // -----> Depth
-            NODELET_INFO_STREAM("*** DEPTH PARAMETERS ***");
-            int depth_mode = getRosOption<int>(pnh_, "depth/quality", 1);
+            RCLCPP_INFO(this->get_logger(), "*** DEPTH PARAMETERS ***");
+
+            int depth_mode;
+            this->get_parameter("depth/quality", depth_mode);
             zed_depth_mode_ = static_cast<sl::DEPTH_MODE>(depth_mode);
-            NODELET_INFO_STREAM(" * Depth quality\t\t-> " << sl::toString(zed_depth_mode_).c_str());
+            RCLCPP_INFO_STREAM(this->get_logger(), " * Depth quality\t\t-> " << sl::toString(zed_depth_mode_).c_str());
 
-            int sensing_mode = getRosOption<int>(pnh_, "depth/sensing_mode", 0);
-            zed_sensing_mode_ = static_cast<sl::DEPTH_MODE>(sensing_mode);
-            NODELET_INFO_STREAM(" * Depth Sensing mode\t\t-> " << sl::toString(zed_sensing_mode_).c_str());
+            int sensing_mode;
+            this->get_parameter("depth/sensing_mode", sensing_mode);
+            zed_sensing_mode_ = static_cast<sl::DE = getRosOption<int>(pnh_, "depth/sensing_mode", 0);PTH_MODE>(sensing_mode);
+            RCLCPP_INFO_STREAM(this->get_logger(), " * Depth Sensing mode\t\t-> " << sl::toString(zed_sensing_mode_).c_str());
 
-            zed_min_depth_ = getRosOption<double>(pnh_, "depth/min_depth", 0.5);
-            NODELET_INFO_STREAM(" * Minimum depth\t\t-> " << zed_min_depth_ << " m");
+            this->get_parameter("depth/min_depth", zed_min_depth_);
+            RCLCPP_INFO_STREAM(this->get_logger(), " * Minimum depth\t\t-> " << zed_min_depth_ << " m");
 
-            zed_max_depth_ = getRosOption<double>(pnh_, "depth/max_depth", 15.0);
-            NODELET_INFO_STREAM(" * Maximum depth\t\t-> " << zed_max_depth_ << " m");
-        }else{
+            this->get_parameter("depth/max_depth", zed_max_depth_);
+            RCLCPP_INFO_STREAM(this->get_logger(), " * Maximum depth\t\t-> " << zed_max_depth_ << " m");
+        } else{
             zed_depth_mode_ = sl::DEPTH_MODE::NONE;
         }
             
-        // ros publication parameters
-        if_pub_tag_det_ = getRosOption<bool>(pnh_, "publish/publish_tags", true);
-        if_pub_tag_det_image_ = getRosOption<bool>(pnh_, "publish/publish_image_with_tags", true);
-        if_pub_image_ = getRosOption<bool>(pnh_, "publish/publish_image", true);
-        if_pub_landmark_ = getRosOption<bool>(pnh_, "publish/publish_landmarks", true);
-        if_pub_latency_ = getRosOption<bool>(pnh_, "publish/publish_latency", true);
+        // ROS publication parameters
+        this->get_parameter("publish/publish_tags", if_pub_tag_det_);
+        this->get_parameter("publish/publish_image_with_tags", if_pub_tag_det_image_);
+        this->get_parameter("publish/publish_image", if_pub_image_);
+        this->get_parameter("publish/publish_landmarks", if_pub_landmark_);
+        this->get_parameter("publish/publish_latency", if_pub_latency_);
     }
 
     void TagSlamZED::turn_on_zed()
@@ -278,7 +303,7 @@ namespace tagslam_ros {
         
         // Set default coordinate system
         zed_init_param_.coordinate_system = sl::COORDINATE_SYSTEM::RIGHT_HANDED_Z_UP_X_FWD;
-        NODELET_INFO_STREAM(" * Camera coordinate system\t-> " << sl::toString(zed_init_param_.coordinate_system));
+        RCLCPP_INFO_STREAM(this->get_logger(), " * Camera coordinate system\t-> " << sl::toString(zed_init_param_.coordinate_system));
 
         // set up camera parameters
         zed_init_param_.coordinate_units = sl::UNIT::METER;
@@ -291,52 +316,53 @@ namespace tagslam_ros {
 
         sl::ERROR_CODE conn_status = sl::ERROR_CODE::CAMERA_NOT_DETECTED;
 
-        NODELET_INFO_STREAM(" *** Opening " << sl::toString(zed_user_model_) << "...");
+        RCLCPP_INFO_STREAM(this->get_logger(), " *** Opening " << sl::toString(zed_user_model_) << "...");
+
         while (conn_status != sl::ERROR_CODE::SUCCESS) {
             conn_status = zed_camera_.open(zed_init_param_);
-            NODELET_INFO_STREAM("ZED connection -> " << sl::toString(conn_status));
+            RCLCPP_INFO_STREAM(this->get_logger(), "ZED connection -> " << sl::toString(conn_status));
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
-            if (!pnh_.ok()) {
-                NODELET_DEBUG("Closing ZED");
+            if (!rclcpp::ok()) {
+                RCLCPP_DEBUG(this->get_logger(), "Closing ZED");
                 zed_camera_.close();
-                NODELET_DEBUG("ZED pool thread finished");
+                RCLCPP_DEBUG(this->get_logger(), "ZED pool thread finished");
                 return;
             }
         }
-        NODELET_INFO_STREAM(" ...  " << sl::toString(zed_real_model_) << " ready");
+        RCLCPP_INFO_STREAM(this->get_logger(), " ...  " << sl::toString(zed_real_model_) << " ready");
 
         // Disable AEC_AGC and Auto Whitebalance to trigger it if use set to automatic
         // zed_camera_.setCameraSettings(sl::VIDEO_SETTINGS::AEC_AGC, 0);
         // zed_camera_.setCameraSettings(sl::VIDEO_SETTINGS::WHITEBALANCE_AUTO, 0);
         zed_camera_.setCameraSettings(sl::VIDEO_SETTINGS::EXPOSURE, zed_exposure_);
         zed_real_model_ = zed_camera_.getCameraInformation().camera_model;
-        if (zed_real_model_ == sl::MODEL::ZED)
-        {
-            NODELET_ERROR("ZED not supported, please use ZED2");
+
+        if (zed_real_model_ == sl::MODEL::ZED) {
+            RCLCPP_ERROR(this->get_logger(), "ZED not supported, please use ZED2");
         }
 
         if (zed_user_model_ != zed_real_model_) {
-            NODELET_WARN("Camera model does not match user parameter. Please modify "
-                            "the value of the parameter 'camera_model' to 'zed2'");
+            RCLCPP_WARN(this->get_logger(), "Camera model does not match user parameter. Please"
+                                            " modify the value of the parameter 'camera_model' to 'zed2'");
         }
 
-        // enable positional tracking
+        // Enable positional tracking if configured
         if(zed_pos_tracking_enabled_){
             sl::PositionalTrackingParameters tracking_parameters;
             tracking_parameters.enable_area_memory = false;
             tracking_parameters.enable_imu_fusion = true;
             tracking_parameters.set_gravity_as_origin = false;
             zed_camera_.enablePositionalTracking(tracking_parameters);
-            NODELET_INFO("Positional tracking enabled");
+            RCLCPP_INFO(this->get_logger(), "Positional tracking enabled");
         }
 
         // Initialize the camera runtime parameters
         // zed_runtime_param_.sensing_mode = zed_sensing_mode_;
         zed_runtime_param_.enable_depth = zed_pos_tracking_enabled_; // pose tracking require depth
 
-        //get camera intrinsics and generate camera info
-        cam_info_msg_.reset(new sensor_msgs::msg::CameraInfo());
+        // Get camera intrinsics and generate camera info
+        cam_info_msg_ = std::make_shared<sensor_msgs::msg::CameraInfo>(); // safer than cam_info_msg_.reset(new sensor_msgs::msg::CameraInfo());
 
         sl::CameraConfiguration zed_cam_config = zed_camera_.getCameraInformation().camera_configuration;
         cam_info_msg_->width = zed_cam_config.resolution.width;
@@ -344,7 +370,7 @@ namespace tagslam_ros {
         fillCameraInfo(cam_info_msg_, zed_cam_config.calibration_parameters);
 
         if(use_imu_odom_){
-            // set up imu
+            // Set up IMU
             sl::SensorsConfiguration sensor_config = zed_camera_.getCameraInformation().sensors_configuration;
             sl::SensorParameters accel_param = sensor_config.accelerometer_parameters;
             sl::SensorParameters gyro_param = sensor_config.gyroscope_parameters;
@@ -354,7 +380,7 @@ namespace tagslam_ros {
             double gyro_noise_sigma = gyro_param.noise_density;
             double gyro_bias_rw_sigma = gyro_param.random_walk;
 
-            // estimate the grivaty
+            // Get gravity estimate from IMU
             sl::SensorsData sensor_data;
             zed_camera_.getSensorsData(sensor_data, sl::TIME_REFERENCE::CURRENT);
             double accl_x =  sensor_data.imu.linear_acceleration[0];
@@ -387,14 +413,14 @@ namespace tagslam_ros {
 
 #ifndef NO_CUDA_OPENCV
                 // Retrieve left image
-                zed_camera_.retrieveImage(sl_mat, zed_imge_type_, sl::MEM::GPU);
+                zed_camera_.retrieveImage(sl_mat, zed_image_type_, sl::MEM::GPU);
                 // store the image as a cv_mat
                 cv::cuda::GpuMat cv_mat = slMat2cvMatGPU(sl_mat);
                 // change from BGRA to RGBA
                 cv::cuda::cvtColor(cv_mat, cv_mat, cv::COLOR_BGRA2RGBA);
 #else 
                 NODELET_WARN_ONCE("Use CUDA enabled OpenCV will reduce memory copy overhead");
-                zed_camera_.retrieveImage(sl_mat, zed_imge_type_, sl::MEM::CPU);
+                zed_camera_.retrieveImage(sl_mat, zed_image_type_, sl::MEM::CPU);
             
                 cv::Mat cv_mat = slMat2cvMat(sl_mat);
 
@@ -464,7 +490,7 @@ namespace tagslam_ros {
 
 #ifndef NO_CUDA_OPENCV
                 // Retrieve left image
-                zed_camera_.retrieveImage(sl_mat, zed_imge_type_, sl::MEM::GPU);
+                zed_camera_.retrieveImage(sl_mat, zed_image_type_, sl::MEM::GPU);
                 // store the image as a cv_mat
                 cv::cuda::GpuMat cv_mat_gpu = slMat2cvMatGPU(sl_mat);
                 cv::Mat cv_mat_cpu;
@@ -473,7 +499,7 @@ namespace tagslam_ros {
                 // cv::cuda::cvtColor(cv_mat, cv_mat, cv::COLOR_BGRA2RGBA);
 #else 
                 // Retrieve left image
-                zed_camera_.retrieveImage(sl_mat, zed_imge_type_, sl::MEM::CPU);
+                zed_camera_.retrieveImage(sl_mat, zed_image_type_, sl::MEM::CPU);
             
                 // store the image as a cv_mat
                 // this is a gray scale image
@@ -692,7 +718,7 @@ namespace tagslam_ros {
         switch (zed_resol_) {
         case sl::RESOLUTION::HD2K:
             if (zed_frame_rate_ != 15) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD2K. Set to 15 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD2K. Set to 15 FPS.");
                 zed_frame_rate_ = 15;
             }
 
@@ -704,13 +730,13 @@ namespace tagslam_ros {
             }
 
             if (zed_frame_rate_ > 15 && zed_frame_rate_ < 30) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD1080. Set to 15 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD1080. Set to 15 FPS.");
                 zed_frame_rate_ = 15;
             } else if (zed_frame_rate_ > 30) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD1080. Set to 30 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD1080. Set to 30 FPS.");
                 zed_frame_rate_ = 30;
             } else {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD1080. Set to 15 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD1080. Set to 15 FPS.");
                 zed_frame_rate_ = 15;
             }
 
@@ -722,16 +748,16 @@ namespace tagslam_ros {
             }
 
             if (zed_frame_rate_ > 15 && zed_frame_rate_ < 30) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 15 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 15 FPS.");
                 zed_frame_rate_ = 15;
             } else if (zed_frame_rate_ > 30 && zed_frame_rate_ < 60) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 30 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 30 FPS.");
                 zed_frame_rate_ = 30;
             } else if (zed_frame_rate_ > 60) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 60 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 60 FPS.");
                 zed_frame_rate_ = 60;
             } else {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 15 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution HD720. Set to 15 FPS.");
                 zed_frame_rate_ = 15;
             }
 
@@ -743,26 +769,26 @@ namespace tagslam_ros {
             }
 
             if (zed_frame_rate_ > 15 && zed_frame_rate_ < 30) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 15 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 15 FPS.");
                 zed_frame_rate_ = 15;
             } else if (zed_frame_rate_ > 30 && zed_frame_rate_ < 60) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 30 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 30 FPS.");
                 zed_frame_rate_ = 30;
             } else if (zed_frame_rate_ > 60 && zed_frame_rate_ < 100) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 60 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 60 FPS.");
                 zed_frame_rate_ = 60;
             } else if (zed_frame_rate_ > 100) {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 100 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 100 FPS.");
                 zed_frame_rate_ = 100;
             } else {
-                NODELET_WARN_STREAM("Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 15 FPS.");
+                RCLCPP_WARN_STREAM(this->get_logger(), "Wrong FrameRate (" << zed_frame_rate_ << ") for the resolution VGA. Set to 15 FPS.");
                 zed_frame_rate_ = 15;
             }
 
             break;
 
         default:
-            NODELET_WARN_STREAM("Invalid resolution. Set to HD720 @ 30 FPS");
+            RCLCPP_WARN_STREAM(this->get_logger(), "Invalid resolution. Set to HD720 @ 30 FPS");
             zed_resol_ = sl::RESOLUTION::HD720;
             zed_frame_rate_ = 30;
         }

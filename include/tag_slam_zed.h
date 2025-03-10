@@ -53,7 +53,9 @@
 #include "backend/fixed_lag_backend.h"
 #include "backend/isam2_backend.h"
 
-#include <image_transport/image_transport.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
+#include <image_transport/image_transport.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/distortion_models.hpp>
 #include <sensor_msgs/msg/image_encodings.hpp>
@@ -66,9 +68,6 @@
 #include <mutex>
 #include <thread>
 #include <string>
-
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_components/register_node_macro.hpp>
 
 #ifndef NO_CUDA_OPENCV
     #include <opencv2/core/cuda.hpp>
@@ -160,30 +159,31 @@ using Trigger = std_srvs::srv::trigger;
 
         cv::Mat slMat2cvMat(sl::Mat& input);
 
-        bool resetCallback(Trigger::Request::SharedPtr req, Trigger::Response::SharedPtr res)
+        bool resetCallback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
         {
+            (void)request; // Avoid unused variable warning
             run_slam_ = false;
             // wait for one second to allow the slam thread to finish current computation
             slam_backend_->reset();
-            res.success = true;
-            res.message = "reset slam.";
+            response->success = true;
+            response->message = "Reset slam.";
             return true;
         }
 
-        bool startCallback(Trigger::Request& req, Trigger::Response& res)
+        bool startCallback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
         {
             run_slam_ = true;
-            res.success = true;
-            res.message = "Start slam.";
+            res->success = true;
+            res->message = "Start slam.";
             RCLCPP_INFO(this->get_logger(), "SLAM Started.");
             return true;
         }
 
-        bool stopCallback(Trigger::Request& req, Trigger::Response& res)
+        bool stopCallback(Trigger::Request::ConstSharedPtr request, Trigger::Response::SharedPtr response)
         {
             run_slam_ = false;
-            res.success = true;
-            res.message = "Stop slam.";
+            res->success = true;
+            res->message = "Stop slam.";
             RCLCPP_INFO(this->get_logger(), "SLAM Stopped.");
             return true;
         }
@@ -256,7 +256,7 @@ using Trigger = std_srvs::srv::trigger;
         // front end
         bool use_gpu_detector_;
         std::unique_ptr<TagDetector> tag_detector_;
-        sl::VIEW zed_imge_type_;
+        sl::VIEW zed_image_type_;
 
         // back end
         std::string backend_type_;
