@@ -367,7 +367,7 @@ namespace tagslam_ros {
         sl::CameraConfiguration zed_cam_config = zed_camera_.getCameraInformation().camera_configuration;
         cam_info_msg_ptr_->width = zed_cam_config.resolution.width;
         cam_info_msg_ptr_->height = zed_cam_config.resolution.height;
-        fillCameraInfo(cam_info_msg_ptr_, zed_cam_config.calibration_parameters);
+        fill_camera_info(cam_info_msg_ptr_, zed_cam_config.calibration_parameters);
 
         if(use_imu_odom_){
             // Set up IMU
@@ -442,7 +442,7 @@ namespace tagslam_ros {
                 if(!detection_only_ && run_slam_)
                 {
                     // Do a SLAM update to estimate current pose and publish the message
-                    estimateState(static_tag_array_ptr);    
+                    estimate_state(static_tag_array_ptr);    
                 }
 
                 auto t3 = std::chrono::system_clock::now();
@@ -466,9 +466,9 @@ namespace tagslam_ros {
                     debug_total_pub_->publish(temp);
                 }
 
-                publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
+                publish_images(static_tag_array_ptr, dyn_tag_array_ptr);
 
-                publishDetectionArray(static_tag_array_ptr, dyn_tag_array_ptr);
+                publish_detection_array(static_tag_array_ptr, dyn_tag_array_ptr);
 
                 frame_count_++;
             }
@@ -524,7 +524,7 @@ namespace tagslam_ros {
                 if(!detection_only_ && run_slam_)
                 {
                     // Do a SLAM update to estimate current pose and publish the message
-                    estimateState(static_tag_array_ptr);    
+                    estimate_state(static_tag_array_ptr);    
                 }
 
                 auto t3 = std::chrono::system_clock::now();
@@ -548,8 +548,8 @@ namespace tagslam_ros {
                     debug_total_pub_->publish(temp);
                 }
 
-                publishImages(static_tag_array_ptr, dyn_tag_array_ptr);
-                publishDetectionArray(static_tag_array_ptr, dyn_tag_array_ptr);
+                publish_images(static_tag_array_ptr, dyn_tag_array_ptr);
+                publish_detection_array(static_tag_array_ptr, dyn_tag_array_ptr);
 
                 frame_count_++;
             }
@@ -618,7 +618,7 @@ namespace tagslam_ros {
         }
     }
 
-    void TagSlamZED::estimateState(TagDetectionArrayPtr tag_array_ptr)
+    void TagSlamZED::estimate_state(TagDetectionArrayPtr tag_array_ptr)
     {
         nav_msgs::msg::Odometry::SharedPtr slam_pose_msg_ptr;
 
@@ -659,7 +659,7 @@ namespace tagslam_ros {
         
     }
 
-    void TagSlamZED::publishImages(TagDetectionArrayPtr static_tag_array_ptr, 
+    void TagSlamZED::publish_images(TagDetectionArrayPtr static_tag_array_ptr, 
                                 TagDetectionArrayPtr dyn_tag_array_ptr)
     {
         // Publish ros messages    
@@ -699,7 +699,7 @@ namespace tagslam_ros {
 
     }
 
-    void TagSlamZED::publishDetectionArray(TagDetectionArrayPtr static_tag_array_ptr,
+    void TagSlamZED::publish_detection_array(TagDetectionArrayPtr static_tag_array_ptr,
                                 TagDetectionArrayPtr dyn_tag_array_ptr)
     {
         if(static_tag_det_pub_->get_subscription_count() > 0 && if_pub_tag_det_){
@@ -1068,7 +1068,7 @@ namespace tagslam_ros {
         return cv_type;
     }
 
-    void TagSlamZED::fillCameraInfo(sensor_msgs::msg::CameraInfo::SharedPtr cam_info_msg_ptr, sl::CalibrationParameters zedParam)
+    void TagSlamZED::fill_camera_info(sensor_msgs::msg::CameraInfo::SharedPtr cam_info_msg_ptr, sl::CalibrationParameters zedParam)
     {
 
         // distortion

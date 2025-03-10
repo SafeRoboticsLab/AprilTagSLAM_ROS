@@ -132,20 +132,20 @@ using Trigger = std_srvs::srv::trigger;
 
         /*! \brief publish the ros image
         */
-        void publishImages(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
+        void publish_images(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
         /*! \brief publish the ros detection array
         */
-        void publishDetectionArray(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
+        void publish_detection_array(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
     private: 
-        void estimateState(TagDetectionArrayPtr tag_array_ptr);
+        void estimate_state(TagDetectionArrayPtr tag_array_ptr);
 
         void check_resol_fps();
 
         void sl_mat_to_ros_msg(sensor_msgs::msg::Image::SharedPtr img_msg_ptr, sl::Mat img, std_msgs::msg::Header header);
 
-        void fillCameraInfo(sensor_msgs::msg::CameraInfo::SharedPtr CamInfoMsg, sl::CalibrationParameters zedParam);
+        void fill_camera_info(sensor_msgs::msg::CameraInfo::SharedPtr CamInfoMsg, sl::CalibrationParameters zedParam);
 
         rclcpp::Time sl_time_to_ros(sl::Timestamp t);
 
