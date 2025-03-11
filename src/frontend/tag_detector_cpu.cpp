@@ -47,8 +47,9 @@ Code is adapted from the AprilTag_ROS package by Danylo Malyuta, JPL
 namespace tagslam_ros
 {
 
-  TagDetectorCPU::TagDetectorCPU(std::shared_ptr<rclcpp::Node> node_) : 
-    TagDetector(node_),
+  TagDetectorCPU::TagDetectorCPU(std::shared_ptr<rclcpp::Node> node) : 
+    TagDetector(node),
+    node_(node),
     family_(get_ros_option<std::string>(node_, "frontend/tag_family", "tag36h11")),
     threads_(get_ros_option<int>(node_, "frontend/tag_threads", 4)),
     decimate_(get_ros_option<double>(node_, "frontend/tag_decimate", 1.0)),
@@ -87,7 +88,7 @@ namespace tagslam_ros
     } else if (family_ == "tagCircle49h12") {
       tf_ = tagCircle49h12_create();
     } else {
-      RCLCPP_WARN(node_->get_logger(), "Invalid tag family specified! Aborting");
+      RCLCPP_ERROR(node_->get_logger(), "Invalid tag family specified! Aborting");
       rclcpp::shutdown();
     }
 

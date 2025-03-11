@@ -63,7 +63,7 @@ namespace tagslam_ros{
   class TagDetector
   {
     public:
-      TagDetector(std::shared_ptr<rclcpp::Node> node_);
+      TagDetector(std::shared_ptr<rclcpp::Node> node);
 
       ~TagDetector() = default;
 
@@ -113,6 +113,10 @@ namespace tagslam_ros{
       std::map<int, SizeStaticPair> tag_size_list_;
 
       EigenPose T_cam_to_ros_;
+
+    private:
+      // declare node_ to keep track for logging in params
+      std::shared_ptr<rclcpp::Node> node_; 
   };
 } // namespace tagslam_ros
 #endif // TAG_DETECTOR_ABS_H

@@ -78,6 +78,8 @@ private:
 
   void runDetection(TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
+  // declare node_ to keep track for logging in params
+  std::shared_ptr<rclcpp::Node> node_;  
 
   const std::string tag_family_ = "36h11"; // cuda version only support this family
   const double tag_size_;

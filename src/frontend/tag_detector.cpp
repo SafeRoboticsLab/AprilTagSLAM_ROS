@@ -36,7 +36,8 @@
 
 namespace tagslam_ros
 {   
-    TagDetector::TagDetector(std::shared_ptr<rclcpp::Node> node_)
+    TagDetector::TagDetector(std::shared_ptr<rclcpp::Node> node) : 
+     node_(node)
     {
         // Transform from camera frame to ROS frame
         T_cam_to_ros_ << 0, 0, 1, 0,

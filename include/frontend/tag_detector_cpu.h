@@ -49,7 +49,7 @@ namespace tagslam_ros{
   class TagDetectorCPU: public TagDetector
   {
     public:
-      TagDetectorCPU(std::shared_ptr<rclcpp::Node> node_);
+      TagDetectorCPU(std::shared_ptr<rclcpp::Node> node);
 
       ~TagDetectorCPU();
 
@@ -76,6 +76,9 @@ namespace tagslam_ros{
       void drawDetections(cv_bridge::CvImage::SharedPtr image);
 
     private:
+      // declare node_ to keep track for logging in params
+      std::shared_ptr<rclcpp::Node> node_; 
+       
       // AprilTag 2 code's attributes
       std::string family_;
       int threads_;
