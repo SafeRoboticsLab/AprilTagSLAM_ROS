@@ -63,7 +63,7 @@ namespace tagslam_ros
         }
         isam_ = ISAM2(isam_params_);
         reset_mutex_.unlock();
-        ROS_INFO("Reset iSAM2");
+        RCLCPP_INFO(node->get_logger(), "Reset iSAM2");
     }
 
     nav_msgs::msg::Odometry::SharedPtr iSAM2Backend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
@@ -79,7 +79,10 @@ namespace tagslam_ros
             }else if(num_landmarks_detected>0){
                 cur_pose_init = initSLAM(cur_img_t);
             }else{
-                ROS_WARN_ONCE("System not initialized, waiting for landmarks");
+                static bool warned1 = false;
+                if (!warned1) {
+                    RCLCPP_WARN(this->get_logger(), "System not initialized, waiting for landmarks");
+                    warned1 = true;
                 return nullptr;
             }
 
@@ -109,7 +112,11 @@ namespace tagslam_ros
             reset_mutex_.unlock();
             return odom_msg;
         }else{
-            ROS_WARN_ONCE("Resetting, waiting for reset to finish");
+            static bool warned2 = false;
+            if (!warned2) {
+                RCLCPP_WARN(this->get_logger(), "Resetting, waiting for reset to finish");
+                warned2 = true;
+            }
             return nullptr;
         }
     }
@@ -134,7 +141,11 @@ namespace tagslam_ros
                 // if the system is not initialized, initialize the slam
                 cur_pose_init = initSLAM(cur_img_t);
             }else{
-                ROS_WARN_ONCE("System not initialized, waiting for landmarks");
+                static bool warned3 = false;
+                if (!warned3) {
+                    RCLCPP_WARN(this->get_logger(), "System not initialized, waiting for landmarks");
+                    warned3 = true;
+                }
                 // dump all previous inserted imu measurement
                 while(!imu_queue_.empty())
                 {
@@ -184,7 +195,11 @@ namespace tagslam_ros
             reset_mutex_.unlock();
             return odom_msg;
         }else{
-            ROS_WARN_ONCE("Resetting, waiting for reset to finish");
+            static bool warned4 = false;
+            if (!warned4) {
+                RCLCPP_WARN(this->get_logger(), "Resetting, waiting for reset to finish");
+                warned4 = true;
+            }
             return nullptr;
         }
     }

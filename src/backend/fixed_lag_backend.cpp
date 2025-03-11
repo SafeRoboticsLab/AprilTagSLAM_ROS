@@ -65,7 +65,7 @@ namespace tagslam_ros
             loadMap();
         }
         smoother_ = BatchFixedLagSmoother(lag_, lm_params_, true, local_optimal_);
-        ROS_INFO("Reset iSAM2");
+        RCLCPP_INFO(node->get_logger(), "Reset iSAM2");
         reset_mutex_.unlock();
     }
 
@@ -93,7 +93,11 @@ namespace tagslam_ros
             else
             {
                 reset_mutex_.unlock();
-                ROS_WARN_ONCE("System not initialized, waiting for landmarks");
+                static bool warned1 = false;
+                if (!warned1) {
+                    RCLCPP_WARN(node->get_logger(), "System not initialized, waiting for landmarks");
+                    warned1 = true;
+                }
                 return nullptr;
             }
 
@@ -117,7 +121,11 @@ namespace tagslam_ros
             catch(gtsam::IndeterminantLinearSystemException)
             {
                 reset_mutex_.unlock();
-                ROS_WARN("SLAM Update Failed. Re-try next time step.");
+                static bool warned2 = false;
+                if (!warned2) {
+                    RCLCPP_WARN(node->get_logger(), "SLAM Update Failed. Re-try next time step.");
+                    warned2 = true;
+                }
                 return nullptr;
             }
 
@@ -142,7 +150,11 @@ namespace tagslam_ros
             return odom_msg;
         }
         else{
-            ROS_WARN_ONCE("Resetting, waiting for reset to finish");
+            static bool warned3 = false;
+                if (!warned3) {
+                    RCLCPP_WARN(node->get_logger(), "Resetting, waiting for reset to finish");
+                    warned3 = true;
+                }
             return nullptr;
         }
     }
@@ -183,8 +195,13 @@ namespace tagslam_ros
                 cur_pose_init = initSLAM(cur_img_t);
             }
             else
-            {
-                ROS_WARN_ONCE("System not initialized, waiting for landmarks");
+            {   
+                static bool warned4 = false;
+                if (!warned4) {
+                    RCLCPP_WARN(node->get_logger(), "System not initialized, waiting for landmarks");
+                    warned4 = true;
+                }
+                
                 // dump all previous inserted imu measurement
                 while (!imu_queue_.empty())
                 {
@@ -223,7 +240,7 @@ namespace tagslam_ros
             catch(gtsam::IndeterminantLinearSystemException)
             {
                 reset_mutex_.unlock();
-                ROS_WARN("SLAM Update Failed. Re-try next time step.");
+                RCLCPP_WARN(node->get_logger(), "SLAM Update Failed. Re-try next time step.");
                 return nullptr;
             }
 
@@ -239,7 +256,7 @@ namespace tagslam_ros
 
             EigenPoseCov pose_cov = marginals.marginalCovariance(cur_pose_key);
 
-            // ROS_INFO_STREAM("Pose covariance: " << pose_cov);
+            // RCLCPP_INFO(node->get_logger(), "Pose covariance: {}", pose_cov);
 
             prev_state_ = NavState(prev_pose_, prev_vel_);
 
@@ -258,7 +275,11 @@ namespace tagslam_ros
             reset_mutex_.unlock();
             return odom_msg;
         }else{
-            ROS_WARN_ONCE("Resetting, waiting for reset to finish");
+            static bool warned5 = false;
+                if (!warned5) {
+                    RCLCPP_WARN(node->get_logger(), "Resetting, waiting for reset to finish");
+                    warned5 = true;
+                }
             return nullptr;
         }
     }

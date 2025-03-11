@@ -115,7 +115,7 @@ namespace tagslam_ros
       const cudaError_t cuda_error = cudaMemcpy(input_image_buffer, cv_mat_cpu.ptr(), 
                                 input_image_buffer_size, cudaMemcpyHostToDevice);
       if (cuda_error != cudaSuccess) {
-        ROS_ERROR("Could not memcpy to device CUDA memory (error code %s)", std::to_string(cuda_error).c_str());
+        RCLCPP_ERROR(node->get_logger(), "Could not memcpy to device CUDA memory (error code %s)", std::to_string(cuda_error).c_str());
       }
     }
 
@@ -164,7 +164,7 @@ namespace tagslam_ros
     try{
       img_rgba8 = cv_bridge::toCvShare(msg_img, "rgba8")->image;
     }catch (cv_bridge::Exception& e){
-      ROS_ERROR("cv_bridge exception: %s", e.what());
+      RCLCPP_ERROR(node->get_logger(), "cv_bridge exception: %s", e.what());
     }
 
     detectTags(img_rgba8, msg_cam_info, msg_img->header,
@@ -200,7 +200,7 @@ namespace tagslam_ros
           buffer_size, 
           cv_mat_gpu.step,
           msg_cam_info);
-      ROS_INFO("CUDA Apriltag Detector Initialized.");
+      RCLCPP_INFO(node->get_logger(), "CUDA Apriltag Detector Initialized.");
     }
     
     // assign the pointer to gpu mat
@@ -242,7 +242,7 @@ namespace tagslam_ros
           cv_mat_cpu.step,
           msg_cam_info);
 
-      ROS_INFO("CUDA Apriltag Detector Initialized.");
+      RCLCPP_INFO(node->get_logger(), "CUDA Apriltag Detector Initialized.");
     }
 
     impl_->copy_to_buffer(cv_mat_cpu);
@@ -263,7 +263,7 @@ namespace tagslam_ros
       impl_->april_tags_handle, &(impl_->input_image), impl_->tags.data(),
       &num_detections, max_tags_, impl_->main_stream);
     if (error != 0) {
-      ROS_ERROR("Failed to run AprilTags detector (error code %d)", error);
+      RCLCPP_ERROR(node->get_logger(), "Failed to run AprilTags detector (error code %d)", error);
       return;
     }
     

@@ -418,9 +418,12 @@ namespace tagslam_ros {
                 cv::cuda::GpuMat cv_mat = sl_mat_to_cv_mat_gpu(sl_mat);
                 // change from BGRA to RGBA
                 cv::cuda::cvtColor(cv_mat, cv_mat, cv::COLOR_BGRA2RGBA);
-#else 
-                RCLCPP_WARN_ONCE(this->get_logger(), "Use CUDA enabled OpenCV will reduce memory copy overhead");
-
+#else           
+                static bool warned = false;
+                if (!warned) {
+                    RCLCPP_WARN(this->get_logger(), "Use CUDA enabled OpenCV will reduce memory copy overhead");
+                    warned = true;
+                }
                 // retrieve left image without CUDA
                 zed_camera_.retrieveImage(sl_mat, zed_image_type_, sl::MEM::CPU);
                 cv::Mat cv_mat = sl_mat_to_cv_mat(sl_mat);

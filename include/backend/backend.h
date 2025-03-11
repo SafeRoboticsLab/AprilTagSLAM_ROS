@@ -171,7 +171,7 @@ namespace tagslam_ros
                 if (!landmark.static_tag)
                 {
                     // skip non-static tags
-                    ROS_WARN("Found no static tag! This should not happen! Check the tag detection result.");
+                    RCLCPP_WARN(node->get_logger(), "Found no static tag! This should not happen! Check the tag detection result.");
                     continue;
                 }
                 Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);

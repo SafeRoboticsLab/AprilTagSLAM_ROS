@@ -47,7 +47,7 @@ namespace tagslam_ros
         XmlRpc::XmlRpcValue landmark_groups;
         if(!node->get_parameter("landmark_tags", landmark_groups))
         {
-            ROS_WARN("Failed to get landmark_tags");
+            RCLCPP_WARN(node->get_logger(), "Failed to get landmark_tags");
         }else
         {
             try{
@@ -55,7 +55,7 @@ namespace tagslam_ros
             }
             catch(XmlRpc::XmlRpcException e)
             {
-                ROS_ERROR_STREAM("Error loading landmark_tags descriptions: " <<
+                RCLCPP_ERROR(node->get_logger(), "Error loading landmark_tags descriptions: %s",
                             e.getMessage().c_str());
             }
         }
@@ -63,7 +63,7 @@ namespace tagslam_ros
         XmlRpc::XmlRpcValue ignore_groups;
         if(!node->get_parameter("ignore_tags", ignore_groups))
         {
-            ROS_WARN("Failed to get ignore_tags");
+            RCLCPP_WARN(node->get_logger(), "Failed to get ignore_tags");
         }else
         {
             try{
@@ -71,7 +71,7 @@ namespace tagslam_ros
             }
             catch(XmlRpc::XmlRpcException e)
             {
-                ROS_ERROR_STREAM("Error loading ignore_tags descriptions: " <<
+                RCLCPP_ERROR(node->get_logger(), "Error loading ignore_tags descriptions: %s",
                             e.getMessage().c_str());
             }
         }
@@ -128,16 +128,16 @@ namespace tagslam_ros
             int id_start = tag_group["id_start"];
             int id_end = tag_group["id_end"];
             double tag_size = tag_group["tag_size"];
-            ROS_INFO_STREAM("Tag group from " << id_start << " to " << id_end << " has size " << tag_size);
+            RCLCPP_INFO(node->get_logger(), "Tag group from {} to {} has size {}", id_start, id_end, tag_size);
             
             if(id_end<id_start)
-                ROS_ERROR("id_start %d should be less than id_end %d", id_start, id_end);
+                RCLCPP_ERROR(node->get_logger(), "id_start %d should be less than id_end %d", id_start, id_end);
 
             for (int id = id_start; id <= id_end; id++)
             {
                 if (tag_group_map.find(id) != tag_group_map.end())
                 {
-                    ROS_WARN("Tag id %d is already in tag group, will be overwritten", id);
+                    RCLCPP_WARN(node->get_logger(), "Tag id %d is already in tag group, will be overwritten", id);
                 }
                 tag_group_map[id] = std::make_pair(tag_size, static_tag);
             }

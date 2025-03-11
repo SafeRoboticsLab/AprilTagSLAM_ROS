@@ -104,7 +104,7 @@ namespace tagslam_ros
             char buffer [80];
             strftime (buffer,80,"graph-%d-%m-%Y-%H-%M-%S.g2o",now);
             save_map_path_ = std::string(buffer);
-            ROS_WARN("No graph path provided. By default, system will save graph to %s",
+            RCLCPP_WARN(node->get_logger(), "No graph path provided. By default, system will save graph to %s",
                 save_map_path_.c_str());
         }
         
@@ -114,7 +114,7 @@ namespace tagslam_ros
         }else{
             prior_map_ = false; // in case the map file is empty
             // if there is no prior map, the system will not do localization
-            ROS_WARN("No prior map is provided, the system will operate in SLAM mode");
+            RCLCPP_WARN(node->get_logger(), "No prior map is provided, the system will operate in SLAM mode");
         }
     }
 
@@ -182,7 +182,7 @@ namespace tagslam_ros
         // if there is no prior map, we add the prior factor to the first pose
         if(!prior_map_){                
             factor_graph_.addPrior<Pose3>(cur_pose_key, cur_pose_init, pose_prior_noise);
-            ROS_INFO("Set the first frame as the origin");
+            RCLCPP_INFO(node->get_logger(), "Set the first frame as the origin");
         }
 
         initial_estimate_.insert(cur_pose_key, cur_pose_init);
@@ -218,7 +218,7 @@ namespace tagslam_ros
         }
 
         initialized_ = true;
-        ROS_INFO("SLAM initialized");
+        RCLCPP_INFO(node->get_logger(), "SLAM initialized");
         return cur_pose_init;
     }
 
@@ -342,12 +342,12 @@ namespace tagslam_ros
                             double gyro_noise_sigma, double gyro_bias_rw_sigma, 
                             EigenPose T_sensor2cam)
     {
-        ROS_INFO("Imu Preintegration use following parameters:");
-        ROS_INFO_STREAM(" - accel_noise_sigma: "<<accel_noise_sigma);
-        ROS_INFO_STREAM(" - accel_bias_rw_sigma: "<<accel_bias_rw_sigma);
-        ROS_INFO_STREAM(" - gyro_noise_sigma: "<<gyro_noise_sigma);
-        ROS_INFO_STREAM(" - gyro_bias_rw_sigma: "<<gyro_bias_rw_sigma);
-        ROS_INFO_STREAM(T_sensor2cam);
+        RCLCPP_INFO(node->get_logger(), "Imu Preintegration use following parameters:");
+        RCLCPP_INFO(node->get_logger(), " - accel_noise_sigma: {}", accel_noise_sigma);
+        RCLCPP_INFO(node->get_logger(), " - accel_bias_rw_sigma: {}", accel_bias_rw_sigma);
+        RCLCPP_INFO(node->get_logger(), " - gyro_noise_sigma: {}", gyro_noise_sigma);
+        RCLCPP_INFO(node->get_logger(), " - gyro_bias_rw_sigma: {}", gyro_bias_rw_sigma);
+        RCLCPP_INFO(node->get_logger(), T_sensor2cam);
 
         Matrix33 I_33 = Matrix33::Identity();
 
@@ -389,7 +389,7 @@ namespace tagslam_ros
                                                     imu_msg_ptr->orientation.z).toRotationMatrix();
         Eigen::Vector3d gravity_trans = orientation.inverse()*gravity;
         preint_param_->n_gravity = Vector3(gravity_trans[0], gravity_trans[1], gravity_trans[2]);
-        ROS_INFO_STREAM("Initialize the gravity for IMU with: "<< gravity_trans);
+        RCLCPP_INFO(node->get_logger(), "Initialize the gravity for IMU with: {}", gravity_trans);
     }
 
     void Backend::write_to_file(const Values &estimate, const std::string &filename)
@@ -441,13 +441,13 @@ namespace tagslam_ros
 
         if (num_landmarks < 1)
         {
-            ROS_WARN("No landmarks are loaded from the map file, SLAM will initialize from first frame");
+            RCLCPP_WARN(node->get_logger(), "No landmarks are loaded from the map file, SLAM will initialize from first frame");
             prior_map_ = false;
             return;
         }
 
         // initialized_ = true;
-        ROS_INFO_STREAM("Load " << num_landmarks << " landmarks from " << load_map_path_);
+        RCLCPP_INFO(node->get_logger(), "Load {} landmarks from {}", num_landmarks, load_map_path_);
     }
 
     nav_msgs::msg::Odometry::SharedPtr Backend::createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 

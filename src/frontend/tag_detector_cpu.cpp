@@ -59,14 +59,14 @@ namespace tagslam_ros
     tag_size_(getRosOption<double>(node, "frontend/tag_size", 1.0))
   {
     //
-    ROS_INFO_STREAM("Initializing cpu AprilTag detector with family " << family_);
-    ROS_INFO_STREAM("Tag Size: " << tag_size_);
-    ROS_INFO_STREAM("Threads: " << threads_);
-    ROS_INFO_STREAM("Decimate: " << decimate_);
-    ROS_INFO_STREAM("Blur: " << blur_);
-    ROS_INFO_STREAM("Refine edges: " << refine_edges_);
-    ROS_INFO_STREAM("Debug: " << debug_);
-    ROS_INFO_STREAM("Max hamming distance: " << max_hamming_distance_);
+    RCLCPP_INFO(node->get_logger(),"Initializing cpu AprilTag detector with family {}", family_);
+    RCLCPP_INFO(node->get_logger(), "Tag Size: {}", tag_size_);
+    RCLCPP_INFO(node->get_logger(), "Threads: {}", threads_);
+    RCLCPP_INFO(node->get_logger(), "Decimate: {}", decimate_);
+    RCLCPP_INFO(node->get_logger(), "Blur: {}", blur_);
+    RCLCPP_INFO(node->get_logger(), "Refine edges: {}", refine_edges_);
+    RCLCPP_INFO(node->get_logger(), "Debug: {}", debug_);
+    RCLCPP_INFO(node->get_logger(), "Max hamming distance: {}", max_hamming_distance_);
     
     // Define the tag family whose tags should be searched for in the camera
     // images
@@ -104,7 +104,7 @@ namespace tagslam_ros
     }
     else
     {
-      ROS_WARN("Invalid tag family specified! Aborting");
+      RCLCPP_WARN(node->get_logger(), "Invalid tag family specified! Aborting");
       exit(1);
     }
 
@@ -176,7 +176,7 @@ namespace tagslam_ros
     try{
       gray_image = cv_bridge::toCvShare(msg_img, "mono8")->image;
     }catch (cv_bridge::Exception& e){
-      ROS_ERROR("cv_bridge exception: %s", e.what());
+      RCLCPP_ERROR(node->get_logger(), "cv_bridge exception: %s", e.what());
       return;
     }
 
