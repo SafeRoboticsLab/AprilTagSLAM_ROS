@@ -31,7 +31,7 @@
  **/
 
 #include "frontend/tag_detector.h"
-#include <XmlRpcException.h>
+#include <stdexcept>
 
 
 namespace tagslam_ros
@@ -44,37 +44,35 @@ namespace tagslam_ros
                         0, -1, 0, 0,
                         0, 0, 0, 1;
 
+        // Declare parameters with default values
+        // each tag is a std::map (dictionary) with keys: id_start, id_end, tag_size
+        node_->declare_parameter<std::vector<std::map<std::string, double>>>("landmark_tags", {});
+        node_->declare_parameter<std::vector<std::map<std::string, double>>>("ignore_tags", {});
+
         // parse landmark tag group
-        XmlRpc::XmlRpcValue landmark_groups;
-        if(!node->get_parameter("landmark_tags", landmark_groups))
-        {
-            RCLCPP_WARN(node->get_logger(), "Failed to get landmark_tags");
-        }else
-        {
-            try{
-                praseTagGroup(tag_size_list_, landmark_groups, true); 
-            }
-            catch(XmlRpc::XmlRpcException e)
-            {
+        std::vector<std::map<std::string, double>> landmark_groups;
+        if (node->get_parameter("landmark_tags", landmark_groups)) {
+            try {
+                parseTagGroup(tag_size_list_, landmark_groups, true); 
+            } catch(const std::exception &e) {
                 RCLCPP_ERROR(node->get_logger(), "Error loading landmark_tags descriptions: %s",
-                            e.getMessage().c_str());
+                            e.what());
             }
+        } else {
+            RCLCPP_WARN(node->get_logger(), "Failed to get landmark_tags");
         }
+        
 
         XmlRpc::XmlRpcValue ignore_groups;
-        if(!node->get_parameter("ignore_tags", ignore_groups))
-        {
-            RCLCPP_WARN(node->get_logger(), "Failed to get ignore_tags");
-        }else
-        {
-            try{
-                praseTagGroup(tag_size_list_, ignore_groups, false); 
-            }
-            catch(XmlRpc::XmlRpcException e)
-            {
+        if (node->get_parameter("ignore_tags", ignore_groups)) {
+            try {
+                parseTagGroup(tag_size_list_, ignore_groups, false); 
+            } catch(const std::exception &e) {
                 RCLCPP_ERROR(node->get_logger(), "Error loading ignore_tags descriptions: %s",
-                            e.getMessage().c_str());
+                            e.what());
             }
+        } else {
+            RCLCPP_WARN(node->get_logger(), "Failed to get ignore_tags");
         }
     }
 
@@ -120,8 +118,8 @@ namespace tagslam_ros
         }
     }
 
-    void TagDetector::praseTagGroup(std::map<int, SizeStaticPair> & tag_group_map, 
-                        XmlRpc::XmlRpcValue& tag_groups, bool static_tag)
+    void TagDetector::parseTagGroup(std::map<int, SizeStaticPair> &tag_group_map, 
+                        const std::vector<std::map<std::string, double>>& tag_groups, bool static_tag)
     {
         for (int i = 0; i < tag_groups.size(); i++)
         {

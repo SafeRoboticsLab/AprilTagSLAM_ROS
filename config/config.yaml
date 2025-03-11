@@ -135,7 +135,7 @@ slam_node:
 
         # tags are ignored during slam
         ignore_tags:
-            -    id_start: 27, # include this tag
+            -   id_start: 27, # include this tag
                 id_end: 99, # include this tag
                 tag_size: 0.2, # size of the tag in meters
 

@@ -90,7 +90,7 @@ namespace tagslam_ros{
             TagDetectionArrayPtr tag_detection);
 
     protected:
-      void praseTagGroup(std::map<int, SizeStaticPair> & tag_group_map, XmlRpc::XmlRpcValue& tag_groups, bool static_tag);
+      void parseTagGroup(std::map<int, SizeStaticPair> & tag_group_map, XmlRpc::XmlRpcValue& tag_groups, bool static_tag);
 
       // Get the pose of the tag in the camera frame
       // Returns homogeneous transformation matrix [R,t;[0 0 0 1]] which
