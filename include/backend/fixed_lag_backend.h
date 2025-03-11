@@ -65,7 +65,7 @@ namespace tagslam_ros
     class FixedLagBackend : public Backend
     {
         public:
-            FixedLagBackend(ros::NodeHandle pnh);
+            FixedLagBackend(std::shared_ptr<rclcpp::Node> node);
             
             ~FixedLagBackend();
 

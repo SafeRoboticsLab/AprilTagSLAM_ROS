@@ -35,16 +35,16 @@ using namespace gtsam;
 
 namespace tagslam_ros
 {
-    iSAM2Backend::iSAM2Backend(ros::NodeHandle pnh) :
-        Backend(pnh)
+    iSAM2Backend::iSAM2Backend(std::shared_ptr<rclcpp::Node> node) :
+        Backend(node)
     {
         // initialize ISAM2
-        if(getRosOption<std::string>(pnh, "backend/optimizer", "GaussNewton") == "Dogleg"){
+        if(getRosOption<std::string>(node, "backend/optimizer", "GaussNewton") == "Dogleg"){
             isam_params_.optimizationParams = ISAM2DoglegParams();
         }
-        isam_params_.relinearizeSkip = std::max(getRosOption<int>(pnh, "backend/relinearize_skip", 10), 1);
-        isam_params_.cacheLinearizedFactors=getRosOption<bool>(pnh, "backend/cacheLinearizedFactors", true);
-        isam_params_.relinearizeThreshold = getRosOption<double>(pnh, "backend/relinearize_threshold", 0.1);
+        isam_params_.relinearizeSkip = std::max(getRosOption<int>(node, "backend/relinearize_skip", 10), 1);
+        isam_params_.cacheLinearizedFactors=getRosOption<bool>(node, "backend/cacheLinearizedFactors", true);
+        isam_params_.relinearizeThreshold = getRosOption<double>(node, "backend/relinearize_threshold", 0.1);
         
         isam_ = ISAM2(isam_params_);
     }

@@ -35,7 +35,7 @@
 
 namespace tagslam_ros
 {   
-    TagDetector::TagDetector(ros::NodeHandle pnh)
+    TagDetector::TagDetector(std::shared_ptr<rclcpp::Node> node)
     {
         // Transform from camera frame to ROS frame
         T_cam_to_ros_ << 0, 0, 1, 0,
@@ -45,7 +45,7 @@ namespace tagslam_ros
 
         // parse landmark tag group
         XmlRpc::XmlRpcValue landmark_groups;
-        if(!pnh.getParam("landmark_tags", landmark_groups))
+        if(!node->get_parameter("landmark_tags", landmark_groups))
         {
             ROS_WARN("Failed to get landmark_tags");
         }else
@@ -61,7 +61,7 @@ namespace tagslam_ros
         }
 
         XmlRpc::XmlRpcValue ignore_groups;
-        if(!pnh.getParam("ignore_tags", ignore_groups))
+        if(!node->get_parameter("ignore_tags", ignore_groups))
         {
             ROS_WARN("Failed to get ignore_tags");
         }else

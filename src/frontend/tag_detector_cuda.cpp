@@ -141,11 +141,11 @@ namespace tagslam_ros
     }
   };
 
-  TagDetectorCUDA::TagDetectorCUDA(ros::NodeHandle pnh):
-    TagDetector(pnh),
+  TagDetectorCUDA::TagDetectorCUDA(std::shared_ptr<rclcpp::Node> node):
+    TagDetector(node),
     // parameter
-    tag_size_(getRosOption<double>(pnh, "frontend/tag_size", 1.0)),
-    max_tags_(getRosOption<int>(pnh, "frontend/max_tags", 20))
+    tag_size_(getRosOption<double>(node, "frontend/tag_size", 1.0)),
+    max_tags_(getRosOption<int>(node, "frontend/max_tags", 20))
   {
     // Create the AprilTags detector instance.
     impl_ = std::make_unique<AprilTagsImpl>();

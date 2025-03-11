@@ -274,7 +274,8 @@ namespace tagslam_ros {
 
             int sensing_mode;
             this->get_parameter("depth/sensing_mode", sensing_mode);
-            zed_sensing_mode_ = static_cast<sl::DE = getRosOption<int>(pnh_, "depth/sensing_mode", 0);PTH_MODE>(sensing_mode);
+            // assuming "this" is TagSlamZED node
+            zed_sensing_mode_ = static_cast<sl::DE = getRosOption<int>(this, "depth/sensing_mode", 0);PTH_MODE>(sensing_mode);
             RCLCPP_INFO(this->get_logger(), " * Depth Sensing mode       -> {}", sl::toString(zed_sensing_mode_).c_str());
 
             this->get_parameter("depth/min_depth", zed_min_depth_);

@@ -77,7 +77,7 @@ namespace tagslam_ros
     {
 
     public:
-        Backend(ros::NodeHandle pnh);
+        Backend(std::shared_ptr<rclcpp::Node> node);
 
         ~Backend();
         /*

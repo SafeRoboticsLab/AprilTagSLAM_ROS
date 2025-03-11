@@ -52,7 +52,7 @@ namespace tagslam_ros
     class iSAM2Backend : public Backend
     {
         public:
-            iSAM2Backend(ros::NodeHandle pnh);
+            iSAM2Backend(std::shared_ptr<rclcpp::Node> node);
             
             ~iSAM2Backend();
 

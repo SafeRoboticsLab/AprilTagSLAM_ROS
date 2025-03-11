@@ -56,25 +56,25 @@ namespace tagslam_ros
         return is;
     }
 
-    Backend::Backend(ros::NodeHandle pnh):
-        prior_map_(getRosOption<bool>(pnh, "backend/prior_map", false)),
-        save_graph_(getRosOption<bool>(pnh, "backend/save_graph", false)),
-        load_map_path_(getRosOption<std::string>(pnh, "backend/load_path", "")),
-        save_map_path_(getRosOption<std::string>(pnh, "backend/save_path", "")),
-        landmark_factor_sigma_trans_(getRosOption<double>(pnh, "backend/landmark_sigma_trans", 0.1)),
-        landmark_factor_sigma_rot_(getRosOption<double>(pnh, "backend/landmark_sigma_rot", 0.3)),
-        landmark_prior_sigma_trans_(getRosOption<double>(pnh, "backend/landmark_prior_sigma_trans", 0.1)),
-        landmark_prior_sigma_rot_(getRosOption<double>(pnh, "backend/landmark_prior_sigma_rot", 0.3)),
-        pose_prior_sigma_trans_(getRosOption<double>(pnh, "backend/pose_prior_sigma_trans", 0.1)),
-        pose_prior_sigma_rot_(getRosOption<double>(pnh, "backend/pose_prior_sigma_rot", 0.3)),
-        vel_prior_sigma_(getRosOption<double>(pnh, "backend/vel_prior_sigma", 0.1)),
-        bias_prior_sigma_(getRosOption<double>(pnh, "backend/bias_prior_sigma", 0.1)),
-        fix_prior_(getRosOption<bool>(pnh, "backend/fix_prior", true)),
+    Backend::Backend(std::shared_ptr<rclcpp::Node> node):
+        prior_map_(getRosOption<bool>(node, "backend/prior_map", false)),
+        save_graph_(getRosOption<bool>(node, "backend/save_graph", false)),
+        load_map_path_(getRosOption<std::string>(node, "backend/load_path", "")),
+        save_map_path_(getRosOption<std::string>(node, "backend/save_path", "")),
+        landmark_factor_sigma_trans_(getRosOption<double>(node, "backend/landmark_sigma_trans", 0.1)),
+        landmark_factor_sigma_rot_(getRosOption<double>(node, "backend/landmark_sigma_rot", 0.3)),
+        landmark_prior_sigma_trans_(getRosOption<double>(node, "backend/landmark_prior_sigma_trans", 0.1)),
+        landmark_prior_sigma_rot_(getRosOption<double>(node, "backend/landmark_prior_sigma_rot", 0.3)),
+        pose_prior_sigma_trans_(getRosOption<double>(node, "backend/pose_prior_sigma_trans", 0.1)),
+        pose_prior_sigma_rot_(getRosOption<double>(node, "backend/pose_prior_sigma_rot", 0.3)),
+        vel_prior_sigma_(getRosOption<double>(node, "backend/vel_prior_sigma", 0.1)),
+        bias_prior_sigma_(getRosOption<double>(node, "backend/bias_prior_sigma", 0.1)),
+        fix_prior_(getRosOption<bool>(node, "backend/fix_prior", true)),
         initialized_(false), pose_count_(0)
     {
         // get pose_offset
         std::vector<double> pose_offset_vec;
-        if(pnh.getParam("backend/pose_offset", pose_offset_vec))
+        if(node->get_parameter("backend/pose_offset", pose_offset_vec))
         {
             need_pose_offset_ = true;
             pose_offset_ = EigenPose(pose_offset_vec.data()).transpose();

@@ -48,7 +48,7 @@ namespace tagslam_ros{
   class TagDetectorCPU: public TagDetector
   {
     public:
-      TagDetectorCPU(ros::NodeHandle pnh);
+      TagDetectorCPU(std::shared_ptr<rclcpp::Node> node);
 
       ~TagDetectorCPU();
 

@@ -53,7 +53,7 @@ namespace tagslam_ros
 class TagDetectorCUDA : public TagDetector
 {
 public:
-  TagDetectorCUDA(ros::NodeHandle pnh);
+  TagDetectorCUDA(std::shared_ptr<rclcpp::Node> node);
 
   ~TagDetectorCUDA();
 

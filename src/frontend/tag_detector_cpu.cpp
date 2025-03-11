@@ -47,16 +47,16 @@ Code is adapted from the AprilTag_ROS package by Danylo Malyuta, JPL
 namespace tagslam_ros
 {
 
-  TagDetectorCPU::TagDetectorCPU(ros::NodeHandle pnh) : 
-    TagDetector(pnh),
-    family_(getRosOption<std::string>(pnh, "frontend/tag_family", "tag36h11")),
-    threads_(getRosOption<int>(pnh, "frontend/tag_threads", 4)),
-    decimate_(getRosOption<double>(pnh, "frontend/tag_decimate", 1.0)),
-    blur_(getRosOption<double>(pnh, "frontend/tag_blur", 0.0)),
-    refine_edges_(getRosOption<int>(pnh, "frontend/tag_refine_edges", 1)),
-    debug_(getRosOption<int>(pnh, "frontend/tag_debug", 0)),
-    max_hamming_distance_(getRosOption<int>(pnh, "frontend/max_hamming_dist", 2)),
-    tag_size_(getRosOption<double>(pnh, "frontend/tag_size", 1.0))
+  TagDetectorCPU::TagDetectorCPU(std::shared_ptr<rclcpp::Node> node) : 
+    TagDetector(node),
+    family_(getRosOption<std::string>(node, "frontend/tag_family", "tag36h11")),
+    threads_(getRosOption<int>(node, "frontend/tag_threads", 4)),
+    decimate_(getRosOption<double>(node, "frontend/tag_decimate", 1.0)),
+    blur_(getRosOption<double>(node, "frontend/tag_blur", 0.0)),
+    refine_edges_(getRosOption<int>(node, "frontend/tag_refine_edges", 1)),
+    debug_(getRosOption<int>(node, "frontend/tag_debug", 0)),
+    max_hamming_distance_(getRosOption<int>(node, "frontend/max_hamming_dist", 2)),
+    tag_size_(getRosOption<double>(node, "frontend/tag_size", 1.0))
   {
     //
     ROS_INFO_STREAM("Initializing cpu AprilTag detector with family " << family_);
