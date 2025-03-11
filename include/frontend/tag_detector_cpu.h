@@ -62,7 +62,7 @@ namespace tagslam_ros{
         const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info, std_msgs::msg::Header header,
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
         {
-          throw std::logic_error("CPU based Apriltag only support cv::Mat");
+          throw std::logic_error("CPU based Apriltag only supports cv::Mat");
         }
 #endif
       

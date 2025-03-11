@@ -55,11 +55,10 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
 
-// ros includes
-#include <ros/ros.h>
-#include <ros/console.h>
+// rclrpp (ros) includes
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
+#include <rclcpp/logging.hpp>
 
 #include <std_msgs/msg/header.hpp>
 #include <std_msgs/msg/float32.hpp>
@@ -93,15 +92,17 @@ namespace tagslam_ros{
   static constexpr unsigned char kBiasSymbol = 'B'; //(ax,ay,az,gx,gy,gz)
 
   template<typename T>
-  T getRosOption(ros::NodeHandle& pnh,
-                      const std::string& param_name, const T & default_val)
+  T getRosOption(std::shared_ptr<rclcpp::Node> node,
+                      const std::string &param_name, const T &default_val)
   {
-    if(!pnh.hasParam(param_name))
+    if(!node->hasParam(param_name))
     {
-      ROS_WARN_STREAM("Prameter "<< param_name<<" does not exist on server, set to default value: "<<default_val);
+      RCLCPP_WARN(node->get_logger(), "Parameter %s does not exist, setting to default: %s",
+                    param_name.c_str(), std::to_string(default_val).c_str());
     }
     T param_val;
-    pnh.param<T>(param_name, param_val, default_val);
+    node->declare_parameter(param_name, default_val);
+    node->get_parameter(param_name, param_val);
     return param_val;
   }
 
