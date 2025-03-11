@@ -162,7 +162,7 @@ namespace tagslam_ros
     cv::Mat img_rgba8;
 
     try{
-      img_rgba8 = cv_bridge::toCvShare(msg_img, "rgba8")->image;
+      img_rgba8 = cv_bridge::toCvCopy(msg_img, "rgba8")->image;
     }catch (cv_bridge::Exception& e){
       RCLCPP_ERROR(node->get_logger(), "cv_bridge exception: %s", e.what());
     }

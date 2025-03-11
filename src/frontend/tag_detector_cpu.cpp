@@ -47,65 +47,48 @@ Code is adapted from the AprilTag_ROS package by Danylo Malyuta, JPL
 namespace tagslam_ros
 {
 
-  TagDetectorCPU::TagDetectorCPU(std::shared_ptr<rclcpp::Node> node) : 
-    TagDetector(node),
-    family_(get_ros_option<std::string>(node, "frontend/tag_family", "tag36h11")),
-    threads_(get_ros_option<int>(node, "frontend/tag_threads", 4)),
-    decimate_(get_ros_option<double>(node, "frontend/tag_decimate", 1.0)),
-    blur_(get_ros_option<double>(node, "frontend/tag_blur", 0.0)),
-    refine_edges_(get_ros_option<int>(node, "frontend/tag_refine_edges", 1)),
-    debug_(get_ros_option<int>(node, "frontend/tag_debug", 0)),
-    max_hamming_distance_(get_ros_option<int>(node, "frontend/max_hamming_dist", 2)),
-    tag_size_(get_ros_option<double>(node, "frontend/tag_size", 1.0))
+  TagDetectorCPU::TagDetectorCPU(std::shared_ptr<rclcpp::Node> node_) : 
+    TagDetector(node_),
+    family_(get_ros_option<std::string>(node_, "frontend/tag_family", "tag36h11")),
+    threads_(get_ros_option<int>(node_, "frontend/tag_threads", 4)),
+    decimate_(get_ros_option<double>(node_, "frontend/tag_decimate", 1.0)),
+    blur_(get_ros_option<double>(node_, "frontend/tag_blur", 0.0)),
+    refine_edges_(get_ros_option<int>(node_, "frontend/tag_refine_edges", 1)),
+    debug_(get_ros_option<int>(node_, "frontend/tag_debug", 0)),
+    max_hamming_distance_(get_ros_option<int>(node_, "frontend/max_hamming_dist", 2)),
+    tag_size_(get_ros_option<double>(node_, "frontend/tag_size", 1.0))
   {
     //
-    RCLCPP_INFO(node->get_logger(),"Initializing cpu AprilTag detector with family {}", family_);
-    RCLCPP_INFO(node->get_logger(), "Tag Size: {}", tag_size_);
-    RCLCPP_INFO(node->get_logger(), "Threads: {}", threads_);
-    RCLCPP_INFO(node->get_logger(), "Decimate: {}", decimate_);
-    RCLCPP_INFO(node->get_logger(), "Blur: {}", blur_);
-    RCLCPP_INFO(node->get_logger(), "Refine edges: {}", refine_edges_);
-    RCLCPP_INFO(node->get_logger(), "Debug: {}", debug_);
-    RCLCPP_INFO(node->get_logger(), "Max hamming distance: {}", max_hamming_distance_);
+    RCLCPP_INFO(node_->get_logger(),"Initializing cpu AprilTag detector with family {}", family_);
+    RCLCPP_INFO(node_->get_logger(), "Tag Size: {}", tag_size_);
+    RCLCPP_INFO(node_->get_logger(), "Threads: {}", threads_);
+    RCLCPP_INFO(node_->get_logger(), "Decimate: {}", decimate_);
+    RCLCPP_INFO(node_->get_logger(), "Blur: {}", blur_);
+    RCLCPP_INFO(node_->get_logger(), "Refine edges: {}", refine_edges_);
+    RCLCPP_INFO(node_->get_logger(), "Debug: {}", debug_);
+    RCLCPP_INFO(node_->get_logger(), "Max hamming distance: {}", max_hamming_distance_);
     
     // Define the tag family whose tags should be searched for in the camera
     // images
-    if (family_ == "tagStandard52h13")
-    {
+    if (family_ == "tagStandard52h13") {
       tf_ = tagStandard52h13_create();
-    }
-    else if (family_ == "tagStandard41h12")
-    {
+    } else if (family_ == "tagStandard41h12") {
       tf_ = tagStandard41h12_create();
-    }
-    else if (family_ == "tag36h11")
-    {
+    } else if (family_ == "tag36h11") {
       tf_ = tag36h11_create();
-    }
-    else if (family_ == "tag25h9")
-    {
+    } else if (family_ == "tag25h9") {
       tf_ = tag25h9_create();
-    }
-    else if (family_ == "tag16h5")
-    {
+    } else if (family_ == "tag16h5") {
       tf_ = tag16h5_create();
-    }
-    else if (family_ == "tagCustom48h12")
-    {
+    } else if (family_ == "tagCustom48h12") {
       tf_ = tagCustom48h12_create();
-    }
-    else if (family_ == "tagCircle21h7")
-    {
+    } else if (family_ == "tagCircle21h7") {
       tf_ = tagCircle21h7_create();
-    }
-    else if (family_ == "tagCircle49h12")
-    {
+    } else if (family_ == "tagCircle49h12") {
       tf_ = tagCircle49h12_create();
-    }
-    else
-    {
-      RCLCPP_WARN(node->get_logger(), "Invalid tag family specified! Aborting");
-      exit(1);
+    } else {
+      RCLCPP_WARN(node_->get_logger(), "Invalid tag family specified! Aborting");
+      rclcpp::shutdown();
     }
 
     // Create the AprilTag 2 detector
@@ -116,7 +99,8 @@ namespace tagslam_ros
     td_->nthreads = threads_;
     td_->debug = debug_;
     td_->refine_edges = refine_edges_;
-    detections_ = NULL;
+
+    detections_ = nullptr;
   }
 
   // destructor
@@ -125,44 +109,21 @@ namespace tagslam_ros
     // free memory associated with tag detector
     apriltag_detector_destroy(td_);
 
-    // Free memory associated with the array of tag detections
-    if (detections_)
-    {
+    // free memory associated with the array of tag detections
+    if (detections_) {
       apriltag_detections_destroy(detections_);
     }
 
     // free memory associated with tag family
-    if (family_ == "tagStandard52h13")
-    {
-      tagStandard52h13_destroy(tf_);
-    }
-    else if (family_ == "tagStandard41h12")
-    {
-      tagStandard41h12_destroy(tf_);
-    }
-    else if (family_ == "tag36h11")
-    {
-      tag36h11_destroy(tf_);
-    }
-    else if (family_ == "tag25h9")
-    {
-      tag25h9_destroy(tf_);
-    }
-    else if (family_ == "tag16h5")
-    {
-      tag16h5_destroy(tf_);
-    }
-    else if (family_ == "tagCustom48h12")
-    {
-      tagCustom48h12_destroy(tf_);
-    }
-    else if (family_ == "tagCircle21h7")
-    {
-      tagCircle21h7_destroy(tf_);
-    }
-    else if (family_ == "tagCircle49h12")
-    {
-      tagCircle49h12_destroy(tf_);
+    if (tf_) {
+      if (family_ == "tagStandard52h13") tagStandard52h13_destroy(tf_);
+      else if (family_ == "tagStandard41h12") tagStandard41h12_destroy(tf_);
+      else if (family_ == "tag36h11") tag36h11_destroy(tf_);
+      else if (family_ == "tag25h9") tag25h9_destroy(tf_);
+      else if (family_ == "tag16h5") tag16h5_destroy(tf_);
+      else if (family_ == "tagCustom48h12") tagCustom48h12_destroy(tf_);
+      else if (family_ == "tagCircle21h7") tagCircle21h7_destroy(tf_);
+      else if (family_ == "tagCircle49h12") tagCircle49h12_destroy(tf_);
     }
   }
 
@@ -173,10 +134,10 @@ namespace tagslam_ros
   {
     // Convert image to AprilTag code's format
     cv::Mat gray_image;
-    try{
-      gray_image = cv_bridge::toCvShare(msg_img, "mono8")->image;
-    }catch (cv_bridge::Exception& e){
-      RCLCPP_ERROR(node->get_logger(), "cv_bridge exception: %s", e.what());
+    try {
+      gray_image = cv_bridge::toCvCopy(msg_img, "mono8")->image;
+    } catch (cv_bridge::Exception& e){
+      RCLCPP_ERROR(node_->get_logger(), "cv_bridge exception: %s", e.what());
       return;
     }
 
@@ -214,7 +175,7 @@ namespace tagslam_ros
     if (detections_)
     {
       apriltag_detections_destroy(detections_);
-      detections_ = NULL;
+      detections_ = nullptr;
     }
     detections_ = apriltag_detector_detect(td_, &apriltag_image);
 

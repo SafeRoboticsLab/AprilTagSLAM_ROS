@@ -63,7 +63,7 @@ namespace tagslam_ros{
   class TagDetector
   {
     public:
-      TagDetector(std::shared_ptr<rclcpp::Node> node);
+      TagDetector(std::shared_ptr<rclcpp::Node> node_);
 
       ~TagDetector() = default;
 

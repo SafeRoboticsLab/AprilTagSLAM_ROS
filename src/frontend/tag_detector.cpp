@@ -36,7 +36,7 @@
 
 namespace tagslam_ros
 {   
-    TagDetector::TagDetector(std::shared_ptr<rclcpp::Node> node)
+    TagDetector::TagDetector(std::shared_ptr<rclcpp::Node> node_)
     {
         // Transform from camera frame to ROS frame
         T_cam_to_ros_ << 0, 0, 1, 0,
@@ -46,33 +46,33 @@ namespace tagslam_ros
 
         // Declare parameters with default values
         // each tag is a std::map (dictionary) with keys: id_start, id_end, tag_size
-        node->declare_parameter<std::vector<std::map<std::string, double>>>("landmark_tags", {});
-        node->declare_parameter<std::vector<std::map<std::string, double>>>("ignore_tags", {});
+        node_->declare_parameter<std::vector<std::map<std::string, double>>>("landmark_tags", {});
+        node_->declare_parameter<std::vector<std::map<std::string, double>>>("ignore_tags", {});
 
         // parse landmark tag group
         std::vector<std::map<std::string, double>> landmark_groups;
-        if (node->get_parameter("landmark_tags", landmark_groups)) {
+        if (node_->get_parameter("landmark_tags", landmark_groups)) {
             try {
                 parseTagGroup(tag_size_list_, landmark_groups, true); 
             } catch(const std::exception &e) {
-                RCLCPP_ERROR(node->get_logger(), "Error loading landmark_tags descriptions: %s",
+                RCLCPP_ERROR(node_->get_logger(), "Error loading landmark_tags descriptions: %s",
                             e.what());
             }
         } else {
-            RCLCPP_WARN(node->get_logger(), "Failed to get landmark_tags");
+            RCLCPP_WARN(node_->get_logger(), "Failed to get landmark_tags");
         }
         
 
         std::vector<std::map<std::string, double>> ignore_groups;
-        if (node->get_parameter("ignore_tags", ignore_groups)) {
+        if (node_->get_parameter("ignore_tags", ignore_groups)) {
             try {
                 parseTagGroup(tag_size_list_, ignore_groups, false); 
             } catch(const std::exception &e) {
-                RCLCPP_ERROR(node->get_logger(), "Error loading ignore_tags descriptions: %s",
+                RCLCPP_ERROR(node_->get_logger(), "Error loading ignore_tags descriptions: %s",
                             e.what());
             }
         } else {
-            RCLCPP_WARN(node->get_logger(), "Failed to get ignore_tags");
+            RCLCPP_WARN(node_->get_logger(), "Failed to get ignore_tags");
         }
     }
 
@@ -133,21 +133,21 @@ namespace tagslam_ros
                 int id_end = static_cast<int>(tag_group.at("id_end"));
                 double tag_size = tag_group.at("tag_size");
 
-                RCLCPP_INFO(node->get_logger(), "Tag group from %d to %d has size %f", id_start, id_end, tag_size);
+                RCLCPP_INFO(node_->get_logger(), "Tag group from %d to %d has size %f", id_start, id_end, tag_size);
 
                 if (id_end < id_start) {
-                    RCLCPP_ERROR(node->get_logger(), "id_start %d should be less than id_end %d", id_start, id_end);
+                    RCLCPP_ERROR(node_->get_logger(), "id_start %d should be less than id_end %d", id_start, id_end);
                     throw std::logic_error("id_start should be less than id_end");
                 }
 
                 for (int id = id_start; id <= id_end; id++) {
                     if (tag_group_map.find(id) != tag_group_map.end()) {
-                        RCLCPP_WARN(node->get_logger(), "Tag id %d is already in tag group, will be overwritten", id);
+                        RCLCPP_WARN(node_->get_logger(), "Tag id %d is already in tag group, will be overwritten", id);
                     }
                     tag_group_map[id] = std::make_pair(tag_size, static_tag);
                 }
             } catch (const std::exception &e) {
-                RCLCPP_ERROR(node->get_logger(), "Error parsing tag group: %s", e.what());
+                RCLCPP_ERROR(node_->get_logger(), "Error parsing tag group: %s", e.what());
             }
         }
     }
