@@ -9,7 +9,7 @@ The package is initially built for a [ZED2](https://www.stereolabs.com/zed-2/) c
 * [Apriltag 3](https://github.com/AprilRobotics/apriltag)
 * [ROS Noetic](http://wiki.ros.org/noetic)
 * A slightly modified version of [GTSAM 4.1.1](https://github.com/SafeRoboticsLab/gtsam/tree/release-4.1.1) built with *gtsam_unstable*.
-## Dependency (Highly Recommanded)
+## Dependency (Highly Recommended)
 
 * **[ZED SDK 3.8](https://www.stereolabs.com/developers/release/)**:
 
@@ -23,9 +23,18 @@ The package is initially built for a [ZED2](https://www.stereolabs.com/zed-2/) c
 
 * **OpenCV 4.6.0 with CUDA support**:
 
-    ZED's color images have BGRA8 format but CUDA Apriltag Detector requires RGBA8 format. When you have OpenCV compiled with CUDA, ZED SDK can directly send images to the CUDA device (GPU), and we can do conversion and detections without copy data between host (RAM) and device (GPU). This slightly improve the tag detection performance (15ms vs 20ms) on Jetson Xavier AGX in MAXN mode. **If you do not have CUDA enabled OpenCV, You will have to to add `-DUSE_CUDA_OPENCV=OFF` flag to the catkin.**
 
 ## Install
+First, complete an environment set up on your Ubuntu 20.04 machine like [here](https://github.com/SafeRoboticsLab/PrincetonRaceCar/tree/SP2025/Jetson_Setup). This will install 
+- [x] [ros-noetic ](http://wiki.ros.org/noetic/Installation/Ubuntu)
+- [x] [zed-sdk](https://www.stereolabs.com/developers/release/)
+- [x] [GTSAM Release 4.1.1](https://gtsam.org/build/)
+- [x] RoboStack (conda ROS environment) using a PySpline compiled .whl file
+
+In the last step `source set_startup_package` we build a `~/StartUp` directory similar to below. However, this also includes the [`Maestro-Controller-ROS`](https://github.com/SafeRoboticsLab/Maestro-Controller-ROS) repository. To build `AprilTagSLAM_ROS` on
+its own, follow these instructions:
+<!-- note: may need to include PrincetonRaceCar_msgs -->
+
 ```
 mkdir tagslam_ws
 cd tagslam_ws
@@ -34,21 +43,25 @@ cd src
 
 git clone https://github.com/SafeRoboticsLab/AprilTagSLAM_ROS.git 
 
+cd AprilTagSLAM_ROS
+git checkout sdk_v4
+cd ..
 
 # We need compile cv_bridge from source files to avoid mixing OpenCV versions
 git clone https://github.com/ros-perception/vision_opencv.git
 
 cd vision_opencv
 git checkout noetic
-
 cd ../..
 
 # build
+chmod +x *.sh
+source /opt/ros/noetic/setup.bash
 catkin_make_isolated
 ```
  
 ## Run with ZED SDK
-Checkout the setting in [config/config.yaml](config/config.yaml).
+Checkout the settings in [config/config.yaml](config/config.yaml).
 
 ```
 source devel_isolated/setup.bash
