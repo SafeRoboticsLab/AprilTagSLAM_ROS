@@ -58,19 +58,19 @@ public:
 
   ~TagDetectorCUDA();
 
-  void detectTags(const sensor_msgs::msg::Image::ConstSharedPtr&,
-    const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info,
+  void detectTags(const sensor_msgs::msg::Image::ConstSharedPtr,
+    const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info,
     TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
 #ifndef NO_CUDA_OPENCV
   // takes in RGBA8 cv::cuda::GpuMat
   void detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-    const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info, std_msgs::msg::Header header,
+    const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info, std_msgs::msg::Header header,
     TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 #endif
 
   void detectTags(cv::Mat& cv_mat_cpu,
-        const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info, std_msgs::msg::Header header,
+        const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info, std_msgs::msg::Header header,
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
     
 private:

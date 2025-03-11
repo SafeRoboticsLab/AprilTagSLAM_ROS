@@ -6,8 +6,8 @@
 
     <node pkg="tagslam_ros" exec="tagslam_ros_zed_node" name="slam_node" namespace="$(var node_namespace)" 
         clear_params="true" output="screen" >
-        <!-- load other parameters from yaml-->
-        <param from="$(find-pkg-share tagslam_ros)/config/config.yaml" />
+        <!-- load other parameters from yaml. note syntax may be wrong. could command="load" outside first. consider python launch files in future-->
+        <param from="$(find-pkg-share tagslam_ros)/config/config.yaml" /> 
         
         <param name="backend/load_path" value="$(find-pkg-share tagslam_ros)/config/track_landmark.g2o" />
     </node>

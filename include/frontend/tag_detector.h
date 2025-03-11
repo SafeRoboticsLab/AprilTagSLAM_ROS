@@ -68,29 +68,29 @@ namespace tagslam_ros{
       ~TagDetector() = default;
 
       // Detect tags in an image
-      virtual void detectTags(const sensor_msgs::msg::Image::ConstSharedPtr& msg_img,
-        const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info,
+      virtual void detectTags(const sensor_msgs::msg::Image::ConstSharedPtr msg_img,
+        const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info,
         TagDetectionArrayPtr static_tag_array_ptr,
         TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 
 #ifndef NO_CUDA_OPENCV
-      virtual void detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-        const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info, std_msgs::msg::Header,
+      virtual void detectTags(cv::cuda::GpuMat &cv_mat_gpu,
+        const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info, std_msgs::msg::Header,
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 #endif
 
-      virtual void detectTags(cv::Mat& cv_mat_cpu,
-        const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info, std_msgs::msg::Header, 
+      virtual void detectTags(cv::Mat &cv_mat_cpu,
+        const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info, std_msgs::msg::Header, 
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 
       void drawDetections(cv_bridge::CvImage::SharedPtr image, 
                   TagDetectionArrayPtr tag_detection);
 
-      void drawDetections(cv::Mat & image,
+      void drawDetections(cv::Mat &image,
             TagDetectionArrayPtr tag_detection);
 
     protected:
-      void parseTagGroup(std::map<int, SizeStaticPair> & tag_group_map, XmlRpc::XmlRpcValue& tag_groups, bool static_tag);
+      void parseTagGroup(std::map<int, SizeStaticPair> &tag_group_map, const std::vector<std::map<std::string, double>> &tag_groups, bool static_tag);
 
       // Get the pose of the tag in the camera frame
       // Returns homogeneous transformation matrix [R,t;[0 0 0 1]] which
@@ -115,4 +115,4 @@ namespace tagslam_ros{
       EigenPose T_cam_to_ros_;
   };
 } // namespace tagslam_ros
-#endif // APRILTAG_ROS_COMMON_FUNCTIONS_H
+#endif // TAG_DETECTOR_ABS_H

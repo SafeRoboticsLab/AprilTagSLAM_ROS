@@ -46,8 +46,8 @@ namespace tagslam_ros
 
         // Declare parameters with default values
         // each tag is a std::map (dictionary) with keys: id_start, id_end, tag_size
-        node_->declare_parameter<std::vector<std::map<std::string, double>>>("landmark_tags", {});
-        node_->declare_parameter<std::vector<std::map<std::string, double>>>("ignore_tags", {});
+        node->declare_parameter<std::vector<std::map<std::string, double>>>("landmark_tags", {});
+        node->declare_parameter<std::vector<std::map<std::string, double>>>("ignore_tags", {});
 
         // parse landmark tag group
         std::vector<std::map<std::string, double>> landmark_groups;
@@ -63,7 +63,7 @@ namespace tagslam_ros
         }
         
 
-        XmlRpc::XmlRpcValue ignore_groups;
+        std::vector<std::map<std::string, double>> ignore_groups;
         if (node->get_parameter("ignore_tags", ignore_groups)) {
             try {
                 parseTagGroup(tag_size_list_, ignore_groups, false); 
@@ -85,7 +85,7 @@ namespace tagslam_ros
     void TagDetector::drawDetections(cv::Mat & image,
             TagDetectionArrayPtr tag_detection)
     {
-        for (auto & det : tag_detection->detections)
+        for (auto &det : tag_detection->detections)
         {
 
         // Draw tag outline with edge colors green, blue, blue, red
@@ -119,26 +119,35 @@ namespace tagslam_ros
     }
 
     void TagDetector::parseTagGroup(std::map<int, SizeStaticPair> &tag_group_map, 
-                        const std::vector<std::map<std::string, double>>& tag_groups, bool static_tag)
-    {
-        for (int i = 0; i < tag_groups.size(); i++)
-        {
-            XmlRpc::XmlRpcValue& tag_group = tag_groups[i];
-            int id_start = tag_group["id_start"];
-            int id_end = tag_group["id_end"];
-            double tag_size = tag_group["tag_size"];
-            RCLCPP_INFO(node->get_logger(), "Tag group from {} to {} has size {}", id_start, id_end, tag_size);
-            
-            if(id_end<id_start)
-                RCLCPP_ERROR(node->get_logger(), "id_start %d should be less than id_end %d", id_start, id_end);
-
-            for (int id = id_start; id <= id_end; id++)
-            {
-                if (tag_group_map.find(id) != tag_group_map.end())
-                {
-                    RCLCPP_WARN(node->get_logger(), "Tag id %d is already in tag group, will be overwritten", id);
+                        const std::vector<std::map<std::string, double>> &tag_groups, bool static_tag)
+    {   
+        for (const auto &tag_group : tag_groups) {
+            try {
+                if (tag_group.find("id_start") == tag_group.end() ||
+                    tag_group.find("id_end") == tag_group.end() ||
+                    tag_group.find("tag_size") == tag_group.end()) {
+                    throw std::invalid_argument("Invalid tag group parameter format (missing keys)");
                 }
-                tag_group_map[id] = std::make_pair(tag_size, static_tag);
+
+                int id_start = static_cast<int>(tag_group.at("id_start"));
+                int id_end = static_cast<int>(tag_group.at("id_end"));
+                double tag_size = tag_group.at("tag_size");
+
+                RCLCPP_INFO(node->get_logger(), "Tag group from %d to %d has size %f", id_start, id_end, tag_size);
+
+                if (id_end < id_start) {
+                    RCLCPP_ERROR(node->get_logger(), "id_start %d should be less than id_end %d", id_start, id_end);
+                    throw std::logic_error("id_start should be less than id_end");
+                }
+
+                for (int id = id_start; id <= id_end; id++) {
+                    if (tag_group_map.find(id) != tag_group_map.end()) {
+                        RCLCPP_WARN(node->get_logger(), "Tag id %d is already in tag group, will be overwritten", id);
+                    }
+                    tag_group_map[id] = std::make_pair(tag_size, static_tag);
+                }
+            } catch (const std::exception &e) {
+                RCLCPP_ERROR(node->get_logger(), "Error parsing tag group: %s", e.what());
             }
         }
     }

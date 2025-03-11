@@ -54,20 +54,20 @@ namespace tagslam_ros{
       ~TagDetectorCPU();
 
       // Detect tags in an image
-      void detectTags(const sensor_msgs::msg::Image::ConstSharedPtr&,
-          const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info,
+      void detectTags(const sensor_msgs::msg::Image::ConstSharedPtr,
+          const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info,
           TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr);
 
 #ifndef NO_CUDA_OPENCV
       void detectTags(cv::cuda::GpuMat& cv_mat_gpu,
-        const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info, std_msgs::msg::Header header,
+        const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info, std_msgs::msg::Header header,
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr)
         {
           throw std::logic_error("CPU based Apriltag only supports cv::Mat");
         }
 #endif
       
-      void detectTags(cv::Mat& cv_mat_cpu, const sensor_msgs::msg::CameraInfo::ConstSharedPtr& msg_cam_info,
+      void detectTags(cv::Mat& cv_mat_cpu, const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info,
           std_msgs::msg::Header header,
           TagDetectionArrayPtr static_tag_array_ptr,
           TagDetectionArrayPtr dyn_tag_array_ptr);
