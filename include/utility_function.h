@@ -26,6 +26,7 @@
 
 * Please contact the author(s) of this library if you have any questions.
 * Authors:    Zixu Zhang       ( zixuz@princeton.edu )
+              Jarod Wille      ( jwille@princeton.edu )
 
  **/
 
@@ -55,19 +56,18 @@
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
 
-// rclrpp (ros) includes
+// rclcpp (ros2) includes
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 #include <rclcpp/logging.hpp>
 
-#include <std_msgs/msg/header.hpp>
-#include <std_msgs/msg/float32.hpp>
-#include <nav_msgs/msg/odometry.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
+#include <std_msgs/msg/header.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -95,13 +95,13 @@ namespace tagslam_ros{
   T getRosOption(std::shared_ptr<rclcpp::Node> node,
                       const std::string &param_name, const T &default_val)
   {
-    if(!node->hasParam(param_name))
+    if(!node->has_parameter(param_name))
     {
-      RCLCPP_WARN(node->get_logger(), "Parameter %s does not exist, setting to default: %s",
+      node->declare_parameter(param_name, default_val);
+      RCLCPP_WARN(node->get_logger(), "Parameter '{}' does not exist, setting to default: {}",
                     param_name.c_str(), std::to_string(default_val).c_str());
     }
     T param_val;
-    node->declare_parameter(param_name, default_val);
     node->get_parameter(param_name, param_val);
     return param_val;
   }

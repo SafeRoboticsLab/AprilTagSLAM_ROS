@@ -26,6 +26,7 @@
 
 * Please contact the author(s) of this library if you have any questions.
 * Authors:    Zixu Zhang       ( zixuz@princeton.edu )
+              Jarod Wille      ( jwille@princeton.edu )
 *             Jarod Wille      ( jwille@princeton.edu )
 
  **/
