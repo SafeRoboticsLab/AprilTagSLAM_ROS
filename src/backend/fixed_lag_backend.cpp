@@ -38,18 +38,18 @@ namespace tagslam_ros
     FixedLagBackend::FixedLagBackend(std::shared_ptr<rclcpp::Node> node) : Backend(node)
     {
         // load backend parameters
-        lm_params_.lambdaInitial = getRosOption<double>(node, "backend/lambda_initial", 1e-5);
-        lm_params_.lambdaUpperBound = getRosOption<double>(node, "backend/lambda_upper_bound", 1e5);
-        lm_params_.lambdaLowerBound = getRosOption<double>(node, "backend/lambda_lower_bound", 0);
-        lm_params_.lambdaFactor = getRosOption<double>(node, "backend/lambda_factor", 10.0);
-        lm_params_.maxIterations = getRosOption<int>(node, "backend/max_iterations", 100);
-        lm_params_.errorTol = getRosOption<double>(node, "backend/error_tol", 1e-5);
-        lm_params_.relativeErrorTol = getRosOption<double>(node, "backend/relative_error_tol", 1e-4);
-        lm_params_.absoluteErrorTol = getRosOption<double>(node, "backend/absolute_error_tol", 1e-5);
-        local_optimal_ = getRosOption<bool>(node, "backend/local_optimal", false);
+        lm_params_.lambdaInitial = get_ros_option<double>(node, "backend/lambda_initial", 1e-5);
+        lm_params_.lambdaUpperBound = get_ros_option<double>(node, "backend/lambda_upper_bound", 1e5);
+        lm_params_.lambdaLowerBound = get_ros_option<double>(node, "backend/lambda_lower_bound", 0);
+        lm_params_.lambdaFactor = get_ros_option<double>(node, "backend/lambda_factor", 10.0);
+        lm_params_.maxIterations = get_ros_option<int>(node, "backend/max_iterations", 100);
+        lm_params_.errorTol = get_ros_option<double>(node, "backend/error_tol", 1e-5);
+        lm_params_.relativeErrorTol = get_ros_option<double>(node, "backend/relative_error_tol", 1e-4);
+        lm_params_.absoluteErrorTol = get_ros_option<double>(node, "backend/absolute_error_tol", 1e-5);
+        local_optimal_ = get_ros_option<bool>(node, "backend/local_optimal", false);
 
         
-        lag_ = getRosOption<double>(node, "backend/lag", 1.0);
+        lag_ = get_ros_option<double>(node, "backend/lag", 1.0);
         smoother_ = BatchFixedLagSmoother(lag_, lm_params_, true, local_optimal_);
     }
 

@@ -57,14 +57,14 @@ namespace tagslam_ros
     tag_frequency_.clear();
 
     // Load parameters    
-    if_pub_tag_det_ = getRosOption<bool>(pnh, "publish/publish_tags", false);
-    if_pub_tag_det_image_ = getRosOption<bool>(pnh, "publish/publish_image_with_tags", false);
-    use_approx_sync_ = getRosOption<bool>(pnh, "publish/use_approx_sync", false);
+    if_pub_tag_det_ = get_ros_option<bool>(pnh, "publish/publish_tags", false);
+    if_pub_tag_det_image_ = get_ros_option<bool>(pnh, "publish/publish_image_with_tags", false);
+    use_approx_sync_ = get_ros_option<bool>(pnh, "publish/use_approx_sync", false);
 
-    image_topic_ = getRosOption<std::string>(pnh, "image_topic", "/camera/image_raw");
-    camera_info_topic_ = getRosOption<std::string>(pnh, "camera_info_topic", "/camera/camera_info");
-    odom_topic_ = getRosOption<std::string>(pnh, "odom_topic", "/odom");
-    slam_pose_topic_ = getRosOption<std::string>(pnh, "slam_pose_topic", "/slam_pose");
+    image_topic_ = get_ros_option<std::string>(pnh, "image_topic", "/camera/image_raw");
+    camera_info_topic_ = get_ros_option<std::string>(pnh, "camera_info_topic", "/camera/camera_info");
+    odom_topic_ = get_ros_option<std::string>(pnh, "odom_topic", "/odom");
+    slam_pose_topic_ = get_ros_option<std::string>(pnh, "slam_pose_topic", "/slam_pose");
     
     std::string transport_hint;
     pnh.param<std::string>("transport_hint", transport_hint, "raw");
@@ -200,8 +200,8 @@ namespace tagslam_ros
                         static_tag_array_ptr, dyn_tag_array_ptr);
 
     // get the camera pose from VIO
-    EigenPose vio_pose = getTransform(odom->pose.pose);
-    EigenPoseCov vio_cov = getTransformCov(odom->pose);
+    EigenPose vio_pose = get_transform(odom->pose.pose);
+    EigenPoseCov vio_cov = get_transform_cov(odom->pose);
 
     // get relative vio pose between this frame and the previous frame
     EigenPose vio_pose_delta = prev_vio_pose_.inverse() * vio_pose;

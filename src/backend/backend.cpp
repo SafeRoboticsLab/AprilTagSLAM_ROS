@@ -58,19 +58,19 @@ namespace tagslam_ros
     }
 
     Backend::Backend(std::shared_ptr<rclcpp::Node> node):
-        prior_map_(getRosOption<bool>(node, "backend/prior_map", false)),
-        save_graph_(getRosOption<bool>(node, "backend/save_graph", false)),
-        load_map_path_(getRosOption<std::string>(node, "backend/load_path", "")),
-        save_map_path_(getRosOption<std::string>(node, "backend/save_path", "")),
-        landmark_factor_sigma_trans_(getRosOption<double>(node, "backend/landmark_sigma_trans", 0.1)),
-        landmark_factor_sigma_rot_(getRosOption<double>(node, "backend/landmark_sigma_rot", 0.3)),
-        landmark_prior_sigma_trans_(getRosOption<double>(node, "backend/landmark_prior_sigma_trans", 0.1)),
-        landmark_prior_sigma_rot_(getRosOption<double>(node, "backend/landmark_prior_sigma_rot", 0.3)),
-        pose_prior_sigma_trans_(getRosOption<double>(node, "backend/pose_prior_sigma_trans", 0.1)),
-        pose_prior_sigma_rot_(getRosOption<double>(node, "backend/pose_prior_sigma_rot", 0.3)),
-        vel_prior_sigma_(getRosOption<double>(node, "backend/vel_prior_sigma", 0.1)),
-        bias_prior_sigma_(getRosOption<double>(node, "backend/bias_prior_sigma", 0.1)),
-        fix_prior_(getRosOption<bool>(node, "backend/fix_prior", true)),
+        prior_map_(get_ros_option<bool>(node, "backend/prior_map", false)),
+        save_graph_(get_ros_option<bool>(node, "backend/save_graph", false)),
+        load_map_path_(get_ros_option<std::string>(node, "backend/load_path", "")),
+        save_map_path_(get_ros_option<std::string>(node, "backend/save_path", "")),
+        landmark_factor_sigma_trans_(get_ros_option<double>(node, "backend/landmark_sigma_trans", 0.1)),
+        landmark_factor_sigma_rot_(get_ros_option<double>(node, "backend/landmark_sigma_rot", 0.3)),
+        landmark_prior_sigma_trans_(get_ros_option<double>(node, "backend/landmark_prior_sigma_trans", 0.1)),
+        landmark_prior_sigma_rot_(get_ros_option<double>(node, "backend/landmark_prior_sigma_rot", 0.3)),
+        pose_prior_sigma_trans_(get_ros_option<double>(node, "backend/pose_prior_sigma_trans", 0.1)),
+        pose_prior_sigma_rot_(get_ros_option<double>(node, "backend/pose_prior_sigma_rot", 0.3)),
+        vel_prior_sigma_(get_ros_option<double>(node, "backend/vel_prior_sigma", 0.1)),
+        bias_prior_sigma_(get_ros_option<double>(node, "backend/bias_prior_sigma", 0.1)),
+        fix_prior_(get_ros_option<bool>(node, "backend/fix_prior", true)),
         initialized_(false), pose_count_(0)
     {
         // get pose_offset

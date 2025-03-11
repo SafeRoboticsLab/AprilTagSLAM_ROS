@@ -49,14 +49,14 @@ namespace tagslam_ros
 
   TagDetectorCPU::TagDetectorCPU(std::shared_ptr<rclcpp::Node> node) : 
     TagDetector(node),
-    family_(getRosOption<std::string>(node, "frontend/tag_family", "tag36h11")),
-    threads_(getRosOption<int>(node, "frontend/tag_threads", 4)),
-    decimate_(getRosOption<double>(node, "frontend/tag_decimate", 1.0)),
-    blur_(getRosOption<double>(node, "frontend/tag_blur", 0.0)),
-    refine_edges_(getRosOption<int>(node, "frontend/tag_refine_edges", 1)),
-    debug_(getRosOption<int>(node, "frontend/tag_debug", 0)),
-    max_hamming_distance_(getRosOption<int>(node, "frontend/max_hamming_dist", 2)),
-    tag_size_(getRosOption<double>(node, "frontend/tag_size", 1.0))
+    family_(get_ros_option<std::string>(node, "frontend/tag_family", "tag36h11")),
+    threads_(get_ros_option<int>(node, "frontend/tag_threads", 4)),
+    decimate_(get_ros_option<double>(node, "frontend/tag_decimate", 1.0)),
+    blur_(get_ros_option<double>(node, "frontend/tag_blur", 0.0)),
+    refine_edges_(get_ros_option<int>(node, "frontend/tag_refine_edges", 1)),
+    debug_(get_ros_option<int>(node, "frontend/tag_debug", 0)),
+    max_hamming_distance_(get_ros_option<int>(node, "frontend/max_hamming_dist", 2)),
+    tag_size_(get_ros_option<double>(node, "frontend/tag_size", 1.0))
   {
     //
     RCLCPP_INFO(node->get_logger(),"Initializing cpu AprilTag detector with family {}", family_);

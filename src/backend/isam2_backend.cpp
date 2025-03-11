@@ -40,12 +40,12 @@ namespace tagslam_ros
         Backend(node)
     {
         // initialize ISAM2
-        if(getRosOption<std::string>(node, "backend/optimizer", "GaussNewton") == "Dogleg"){
+        if(get_ros_option<std::string>(node, "backend/optimizer", "GaussNewton") == "Dogleg"){
             isam_params_.optimizationParams = ISAM2DoglegParams();
         }
-        isam_params_.relinearizeSkip = std::max(getRosOption<int>(node, "backend/relinearize_skip", 10), 1);
-        isam_params_.cacheLinearizedFactors=getRosOption<bool>(node, "backend/cacheLinearizedFactors", true);
-        isam_params_.relinearizeThreshold = getRosOption<double>(node, "backend/relinearize_threshold", 0.1);
+        isam_params_.relinearizeSkip = std::max(get_ros_option<int>(node, "backend/relinearize_skip", 10), 1);
+        isam_params_.cacheLinearizedFactors=get_ros_option<bool>(node, "backend/cacheLinearizedFactors", true);
+        isam_params_.relinearizeThreshold = get_ros_option<double>(node, "backend/relinearize_threshold", 0.1);
         
         isam_ = ISAM2(isam_params_);
     }

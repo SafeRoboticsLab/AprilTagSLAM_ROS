@@ -341,26 +341,26 @@ int main(int argc, char **argv)
   double dt = 0.05;
 
   // Read parameters
-  int num_steps = getRosOption<int>(pnh, "num_steps", 100);
+  int num_steps = get_ros_option<int>(pnh, "num_steps", 100);
   // landmark parameters
-  int num_landmarks = getRosOption<int>(pnh, "num_landmarks", 50);
-  double space_lim = getRosOption<double>(pnh, "space_lim", 10.0);
+  int num_landmarks = get_ros_option<int>(pnh, "num_landmarks", 50);
+  double space_lim = get_ros_option<double>(pnh, "space_lim", 10.0);
 
   // pose parameters
-  double sigma_trans = getRosOption<double>(pnh, "sigma_trans", 1);
-  double sigma_rot = getRosOption<double>(pnh, "sigma_rot", 0.5);
+  double sigma_trans = get_ros_option<double>(pnh, "sigma_trans", 1);
+  double sigma_rot = get_ros_option<double>(pnh, "sigma_rot", 0.5);
 
-  double odom_noise_trans = getRosOption<double>(pnh, "odom_noise_trans", 0.2);
-  double odom_noise_rot = getRosOption<double>(pnh, "odom_noise_rot", 0.3);
+  double odom_noise_trans = get_ros_option<double>(pnh, "odom_noise_trans", 0.2);
+  double odom_noise_rot = get_ros_option<double>(pnh, "odom_noise_rot", 0.3);
 
-  double p_obs = getRosOption<double>(pnh, "p_obs", 0.5);
-  double landmark_noise_trans = getRosOption<double>(pnh, "landmark_noise_trans", 0.2);
-  double landmark_noise_rot = getRosOption<double>(pnh, "landmark_noise_rot", 0.3);
+  double p_obs = get_ros_option<double>(pnh, "p_obs", 0.5);
+  double landmark_noise_trans = get_ros_option<double>(pnh, "landmark_noise_trans", 0.2);
+  double landmark_noise_rot = get_ros_option<double>(pnh, "landmark_noise_rot", 0.3);
 
-  std::string backend_type = getRosOption<std::string>(pnh, "backend/type", "isam2");
-  std::string load_path = getRosOption<std::string>(pnh, "backend/load_path", "");
+  std::string backend_type = get_ros_option<std::string>(pnh, "backend/type", "isam2");
+  std::string load_path = get_ros_option<std::string>(pnh, "backend/load_path", "");
 
-  bool plot_figure = getRosOption<bool>(pnh, "plot_figure", false);
+  bool plot_figure = get_ros_option<bool>(pnh, "plot_figure", false);
   
   // Create environment
   std::shared_ptr<Env> env;

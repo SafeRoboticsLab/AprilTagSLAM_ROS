@@ -92,7 +92,7 @@ namespace tagslam_ros{
   static constexpr unsigned char kBiasSymbol = 'B'; //(ax,ay,az,gx,gy,gz)
 
   template<typename T>
-  T getRosOption(std::shared_ptr<rclcpp::Node> node,
+  T get_ros_option(std::shared_ptr<rclcpp::Node> node,
                       const std::string &param_name, const T &default_val)
   {
     if(!node->has_parameter(param_name))
@@ -106,7 +106,7 @@ namespace tagslam_ros{
     return param_val;
   }
 
-  static inline EigenPose getTransform(const geometry_msgs::msg::Pose& pose_msg)
+  static inline EigenPose get_transform(const geometry_msgs::msg::Pose& pose_msg)
   {
     Eigen::Affine3d transform;
     transform.translation() << pose_msg.position.x, pose_msg.position.y, pose_msg.position.z;
@@ -115,7 +115,7 @@ namespace tagslam_ros{
     return transform.matrix();
   }
 
-  static inline EigenPoseSigma getTransformSigma(const geometry_msgs::msg::PoseWithCovariance & pose_cov_msg)
+  static inline EigenPoseSigma get_transform_sigma(const geometry_msgs::msg::PoseWithCovariance & pose_cov_msg)
   {
     // gtsam have order rotx, roty, rotz, x, y, z
     // ros have order x, y, z, rotx, roty, rotz
@@ -127,7 +127,7 @@ namespace tagslam_ros{
     return sigma;
   }
 
-  static inline EigenPoseCov getTransformCov(const geometry_msgs::msg::PoseWithCovariance & pose_cov_msg)
+  static inline EigenPoseCov get_transform_cov(const geometry_msgs::msg::PoseWithCovariance & pose_cov_msg)
   {
     // gtsam have order rotx, roty, rotz, x, y, z
     // ros have order x, y, z, rotx, roty, rotz
@@ -162,8 +162,8 @@ namespace tagslam_ros{
 
   static inline EigenPoseWithSigma getTransformWithSigma(const geometry_msgs::msg::PoseWithCovariance & pose_cov_msg)
   {
-    EigenPose transform = getTransform(pose_cov_msg.pose);
-    EigenPoseSigma sigma = getTransformSigma(pose_cov_msg);
+    EigenPose transform = get_transform(pose_cov_msg.pose);
+    EigenPoseSigma sigma = get_transform_sigma(pose_cov_msg);
     return std::make_pair(transform, sigma);
   }
 
