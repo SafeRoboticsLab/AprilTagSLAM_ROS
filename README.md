@@ -42,10 +42,12 @@ mkdir src
 cd src
 
 git clone https://github.com/SafeRoboticsLab/AprilTagSLAM_ROS.git 
-
 cd AprilTagSLAM_ROS
 git checkout sdk_v4
 cd ..
+
+# apriltag dependency
+git clone https://github.com/AprilRobotics/apriltag.git
 
 # We need compile cv_bridge from source files to avoid mixing OpenCV versions
 git clone https://github.com/ros-perception/vision_opencv.git
