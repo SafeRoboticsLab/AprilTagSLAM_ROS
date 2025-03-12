@@ -37,7 +37,7 @@ namespace tagslam_ros
 {
     FixedLagBackend::FixedLagBackend(std::shared_ptr<rclcpp::Node> node) : 
         Backend(node),
-        node_(node),
+        node_(node)
     {
         
         // load backend parameters
@@ -290,7 +290,7 @@ namespace tagslam_ros
 
     void FixedLagBackend::getPoses(EigenPoseMap &container, const unsigned char filter_char)
     {
-        for (const auto key_value : landmark_values_)
+        for (const auto &key_value : landmark_values_)
         {
             Key landmark_key = key_value.key;
             int landmark_id = Symbol(landmark_key).index();
@@ -304,7 +304,7 @@ namespace tagslam_ros
         Values estimated_landmarks = estimated_vals.filter(Symbol::ChrTest(kLandmarkSymbol));
 
         // iterate through landmarks, and update them to priors
-        for (const auto key_value : estimated_landmarks)
+        for (const auto &key_value : estimated_landmarks)
         {
             Key temp_key = key_value.key;
             EigenPoseCov cov = marginals.marginalCovariance(temp_key);

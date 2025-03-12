@@ -83,8 +83,9 @@ namespace tagslam_ros
             }else{
                 static bool warned1 = false;
                 if (!warned1) {
-                    RCLCPP_WARN(this->get_logger(), "System not initialized, waiting for landmarks");
+                    RCLCPP_WARN(node_->get_logger(), "System not initialized, waiting for landmarks");
                     warned1 = true;
+                }
                 return nullptr;
             }
 
@@ -116,7 +117,7 @@ namespace tagslam_ros
         }else{
             static bool warned2 = false;
             if (!warned2) {
-                RCLCPP_WARN(this->get_logger(), "Resetting, waiting for reset to finish");
+                RCLCPP_WARN(node_->get_logger(), "Resetting, waiting for reset to finish");
                 warned2 = true;
             }
             return nullptr;
@@ -145,7 +146,7 @@ namespace tagslam_ros
             }else{
                 static bool warned3 = false;
                 if (!warned3) {
-                    RCLCPP_WARN(this->get_logger(), "System not initialized, waiting for landmarks");
+                    RCLCPP_WARN(node_->get_logger(), "System not initialized, waiting for landmarks");
                     warned3 = true;
                 }
                 // dump all previous inserted imu measurement
@@ -199,7 +200,7 @@ namespace tagslam_ros
         }else{
             static bool warned4 = false;
             if (!warned4) {
-                RCLCPP_WARN(this->get_logger(), "Resetting, waiting for reset to finish");
+                RCLCPP_WARN(node_->get_logger(), "Resetting, waiting for reset to finish");
                 warned4 = true;
             }
             return nullptr;
@@ -210,7 +211,7 @@ namespace tagslam_ros
     void iSAM2Backend::getPoses(EigenPoseMap & container, const unsigned char filter_char)
     {   
         Values landmark_values = isam_.calculateEstimate().filter(Symbol::ChrTest(filter_char));
-        for(const auto key_value: landmark_values) {
+        for(const auto &key_value: landmark_values) {
             Key landmark_key = key_value.key;
             int landmark_id = Symbol(landmark_key).index();
             Pose3 landmark_pose = landmark_values.at<Pose3>(landmark_key);   
@@ -224,7 +225,7 @@ namespace tagslam_ros
         Values estimated_landmarks = estimated_vals.filter(Symbol::ChrTest(kLandmarkSymbol));
 
         // iterate through landmarks, and update them to priors
-        for (const auto key_value : estimated_landmarks)
+        for (const auto &key_value : estimated_landmarks)
         {
             Key temp_key = key_value.key;
             if (landmark_values_.exists(temp_key))
