@@ -115,7 +115,7 @@ namespace tagslam_ros{
       EigenPose T_cam_to_ros_;
 
     private:
-      // declare node_ to keep track for logging in params
+      // declare node_ to keep track for logging and params
       std::shared_ptr<rclcpp::Node> node_; 
   };
 } // namespace tagslam_ros

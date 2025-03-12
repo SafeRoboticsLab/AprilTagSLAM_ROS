@@ -210,14 +210,13 @@ namespace tagslam_ros
         }
 
     private:
-        /*
-        set the gravity vector for preint_param_ using the imu message
-        */
+        // declare node_ to keep track for logging and params
+        std::shared_ptr<rclcpp::Node> node_; 
+        
+        // set the gravity vector for preint_param_ using the imu message
         void setGravity(sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr);
 
-        /*
-        loda map from load_map_path_
-        */
+        // load map from load_map_path_
         void loadMap();
 
     protected:

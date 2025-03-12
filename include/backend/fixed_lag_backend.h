@@ -86,7 +86,9 @@ namespace tagslam_ros
             void updateLandmarkValues(Values& estimated_vals, Marginals & marginals);
 
         private:
-            
+            // declare node_ to keep track for logging and params
+            std::shared_ptr<rclcpp::Node> node_;
+
             // Fixed lag smoother
             // IncrementalFixedLagSmoother isam_;
             bool local_optimal_;

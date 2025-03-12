@@ -35,21 +35,24 @@ using namespace gtsam;
 
 namespace tagslam_ros
 {
-    FixedLagBackend::FixedLagBackend(std::shared_ptr<rclcpp::Node> node) : Backend(node)
+    FixedLagBackend::FixedLagBackend(std::shared_ptr<rclcpp::Node> node) : 
+        Backend(node),
+        node_(node),
     {
+        
         // load backend parameters
-        lm_params_.lambdaInitial = get_ros_option<double>(node, "backend/lambda_initial", 1e-5);
-        lm_params_.lambdaUpperBound = get_ros_option<double>(node, "backend/lambda_upper_bound", 1e5);
-        lm_params_.lambdaLowerBound = get_ros_option<double>(node, "backend/lambda_lower_bound", 0);
-        lm_params_.lambdaFactor = get_ros_option<double>(node, "backend/lambda_factor", 10.0);
-        lm_params_.maxIterations = get_ros_option<int>(node, "backend/max_iterations", 100);
-        lm_params_.errorTol = get_ros_option<double>(node, "backend/error_tol", 1e-5);
-        lm_params_.relativeErrorTol = get_ros_option<double>(node, "backend/relative_error_tol", 1e-4);
-        lm_params_.absoluteErrorTol = get_ros_option<double>(node, "backend/absolute_error_tol", 1e-5);
-        local_optimal_ = get_ros_option<bool>(node, "backend/local_optimal", false);
+        lm_params_.lambdaInitial = get_ros_option<double>(node_, "backend/lambda_initial", 1e-5);
+        lm_params_.lambdaUpperBound = get_ros_option<double>(node_, "backend/lambda_upper_bound", 1e5);
+        lm_params_.lambdaLowerBound = get_ros_option<double>(node_, "backend/lambda_lower_bound", 0);
+        lm_params_.lambdaFactor = get_ros_option<double>(node_, "backend/lambda_factor", 10.0);
+        lm_params_.maxIterations = get_ros_option<int>(node_, "backend/max_iterations", 100);
+        lm_params_.errorTol = get_ros_option<double>(node_, "backend/error_tol", 1e-5);
+        lm_params_.relativeErrorTol = get_ros_option<double>(node_, "backend/relative_error_tol", 1e-4);
+        lm_params_.absoluteErrorTol = get_ros_option<double>(node_, "backend/absolute_error_tol", 1e-5);
+        local_optimal_ = get_ros_option<bool>(node_, "backend/local_optimal", false);
 
         
-        lag_ = get_ros_option<double>(node, "backend/lag", 1.0);
+        lag_ = get_ros_option<double>(node_, "backend/lag", 1.0);
         smoother_ = BatchFixedLagSmoother(lag_, lm_params_, true, local_optimal_);
     }
 
@@ -66,7 +69,7 @@ namespace tagslam_ros
             loadMap();
         }
         smoother_ = BatchFixedLagSmoother(lag_, lm_params_, true, local_optimal_);
-        RCLCPP_INFO(node->get_logger(), "Reset iSAM2");
+        RCLCPP_INFO(node_->get_logger(), "Reset iSAM2");
         reset_mutex_.unlock();
     }
 
@@ -96,7 +99,7 @@ namespace tagslam_ros
                 reset_mutex_.unlock();
                 static bool warned1 = false;
                 if (!warned1) {
-                    RCLCPP_WARN(node->get_logger(), "System not initialized, waiting for landmarks");
+                    RCLCPP_WARN(node_->get_logger(), "System not initialized, waiting for landmarks");
                     warned1 = true;
                 }
                 return nullptr;
@@ -124,7 +127,7 @@ namespace tagslam_ros
                 reset_mutex_.unlock();
                 static bool warned2 = false;
                 if (!warned2) {
-                    RCLCPP_WARN(node->get_logger(), "SLAM Update Failed. Re-try next time step.");
+                    RCLCPP_WARN(node_->get_logger(), "SLAM Update Failed. Re-try next time step.");
                     warned2 = true;
                 }
                 return nullptr;
@@ -153,7 +156,7 @@ namespace tagslam_ros
         else{
             static bool warned3 = false;
                 if (!warned3) {
-                    RCLCPP_WARN(node->get_logger(), "Resetting, waiting for reset to finish");
+                    RCLCPP_WARN(node_->get_logger(), "Resetting, waiting for reset to finish");
                     warned3 = true;
                 }
             return nullptr;
@@ -199,7 +202,7 @@ namespace tagslam_ros
             {   
                 static bool warned4 = false;
                 if (!warned4) {
-                    RCLCPP_WARN(node->get_logger(), "System not initialized, waiting for landmarks");
+                    RCLCPP_WARN(node_->get_logger(), "System not initialized, waiting for landmarks");
                     warned4 = true;
                 }
                 
@@ -241,7 +244,7 @@ namespace tagslam_ros
             catch(gtsam::IndeterminantLinearSystemException)
             {
                 reset_mutex_.unlock();
-                RCLCPP_WARN(node->get_logger(), "SLAM Update Failed. Re-try next time step.");
+                RCLCPP_WARN(node_->get_logger(), "SLAM Update Failed. Re-try next time step.");
                 return nullptr;
             }
 
@@ -257,7 +260,7 @@ namespace tagslam_ros
 
             EigenPoseCov pose_cov = marginals.marginalCovariance(cur_pose_key);
 
-            // RCLCPP_INFO(node->get_logger(), "Pose covariance: {}", pose_cov);
+            // RCLCPP_INFO(node_->get_logger(), "Pose covariance: {}", pose_cov);
 
             prev_state_ = NavState(prev_pose_, prev_vel_);
 
@@ -278,7 +281,7 @@ namespace tagslam_ros
         }else{
             static bool warned5 = false;
                 if (!warned5) {
-                    RCLCPP_WARN(node->get_logger(), "Resetting, waiting for reset to finish");
+                    RCLCPP_WARN(node_->get_logger(), "Resetting, waiting for reset to finish");
                     warned5 = true;
                 }
             return nullptr;

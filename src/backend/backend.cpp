@@ -52,30 +52,31 @@ namespace tagslam_ros
     // parse Rot3 from roll, pitch, yaw
     istream &operator>>(istream &is, Rot3 &R) {
         double yaw, pitch, roll;
-        is >> roll >> pitch >> yaw; // notice order !
+        is >> roll >> pitch >> yaw; // noticenode_(node), order !
         R = Rot3::Ypr(yaw, pitch, roll);
         return is;
     }
 
     Backend::Backend(std::shared_ptr<rclcpp::Node> node):
-        prior_map_(get_ros_option<bool>(node, "backend/prior_map", false)),
-        save_graph_(get_ros_option<bool>(node, "backend/save_graph", false)),
-        load_map_path_(get_ros_option<std::string>(node, "backend/load_path", "")),
-        save_map_path_(get_ros_option<std::string>(node, "backend/save_path", "")),
-        landmark_factor_sigma_trans_(get_ros_option<double>(node, "backend/landmark_sigma_trans", 0.1)),
-        landmark_factor_sigma_rot_(get_ros_option<double>(node, "backend/landmark_sigma_rot", 0.3)),
-        landmark_prior_sigma_trans_(get_ros_option<double>(node, "backend/landmark_prior_sigma_trans", 0.1)),
-        landmark_prior_sigma_rot_(get_ros_option<double>(node, "backend/landmark_prior_sigma_rot", 0.3)),
-        pose_prior_sigma_trans_(get_ros_option<double>(node, "backend/pose_prior_sigma_trans", 0.1)),
-        pose_prior_sigma_rot_(get_ros_option<double>(node, "backend/pose_prior_sigma_rot", 0.3)),
-        vel_prior_sigma_(get_ros_option<double>(node, "backend/vel_prior_sigma", 0.1)),
-        bias_prior_sigma_(get_ros_option<double>(node, "backend/bias_prior_sigma", 0.1)),
-        fix_prior_(get_ros_option<bool>(node, "backend/fix_prior", true)),
+        node_(node),
+        prior_map_(get_ros_option<bool>(node_, "backend/prior_map", false)),
+        save_graph_(get_ros_option<bool>(node_, "backend/save_graph", false)),
+        load_map_path_(get_ros_option<std::string>(node_, "backend/load_path", "")),
+        save_map_path_(get_ros_option<std::string>(node_, "backend/save_path", "")),
+        landmark_factor_sigma_trans_(get_ros_option<double>(node_, "backend/landmark_sigma_trans", 0.1)),
+        landmark_factor_sigma_rot_(get_ros_option<double>(node_, "backend/landmark_sigma_rot", 0.3)),
+        landmark_prior_sigma_trans_(get_ros_option<double>(node_, "backend/landmark_prior_sigma_trans", 0.1)),
+        landmark_prior_sigma_rot_(get_ros_option<double>(node_, "backend/landmark_prior_sigma_rot", 0.3)),
+        pose_prior_sigma_trans_(get_ros_option<double>(node_, "backend/pose_prior_sigma_trans", 0.1)),
+        pose_prior_sigma_rot_(get_ros_option<double>(node_, "backend/pose_prior_sigma_rot", 0.3)),
+        vel_prior_sigma_(get_ros_option<double>(node_, "backend/vel_prior_sigma", 0.1)),
+        bias_prior_sigma_(get_ros_option<double>(node_, "backend/bias_prior_sigma", 0.1)),
+        fix_prior_(get_ros_option<bool>(node_, "backend/fix_prior", true)),
         initialized_(false), pose_count_(0)
     {
         // get pose_offset
         std::vector<double> pose_offset_vec;
-        if(node->get_parameter("backend/pose_offset", pose_offset_vec))
+        if(node_->get_parameter("backend/pose_offset", pose_offset_vec))
         {
             need_pose_offset_ = true;
             pose_offset_ = EigenPose(pose_offset_vec.data()).transpose();
@@ -105,7 +106,7 @@ namespace tagslam_ros
             char buffer [80];
             strftime (buffer,80,"graph-%d-%m-%Y-%H-%M-%S.g2o",now);
             save_map_path_ = std::string(buffer);
-            RCLCPP_WARN(node->get_logger(), "No graph path provided. By default, system will save graph to %s",
+            RCLCPP_WARN(node_->get_logger(), "No graph path provided. By default, system will save graph to %s",
                 save_map_path_.c_str());
         }
         
@@ -115,7 +116,7 @@ namespace tagslam_ros
         }else{
             prior_map_ = false; // in case the map file is empty
             // if there is no prior map, the system will not do localization
-            RCLCPP_WARN(node->get_logger(), "No prior map is provided, the system will operate in SLAM mode");
+            RCLCPP_WARN(node_->get_logger(), "No prior map is provided, the system will operate in SLAM mode");
         }
     }
 
@@ -183,7 +184,7 @@ namespace tagslam_ros
         // if there is no prior map, we add the prior factor to the first pose
         if(!prior_map_){                
             factor_graph_.addPrior<Pose3>(cur_pose_key, cur_pose_init, pose_prior_noise);
-            RCLCPP_INFO(node->get_logger(), "Set the first frame as the origin");
+            RCLCPP_INFO(node_->get_logger(), "Set the first frame as the origin");
         }
 
         initial_estimate_.insert(cur_pose_key, cur_pose_init);
@@ -219,7 +220,7 @@ namespace tagslam_ros
         }
 
         initialized_ = true;
-        RCLCPP_INFO(node->get_logger(), "SLAM initialized");
+        RCLCPP_INFO(node_->get_logger(), "SLAM initialized");
         return cur_pose_init;
     }
 
@@ -343,12 +344,12 @@ namespace tagslam_ros
                             double gyro_noise_sigma, double gyro_bias_rw_sigma, 
                             EigenPose T_sensor2cam)
     {
-        RCLCPP_INFO(node->get_logger(), "Imu Preintegration use following parameters:");
-        RCLCPP_INFO(node->get_logger(), " - accel_noise_sigma: {}", accel_noise_sigma);
-        RCLCPP_INFO(node->get_logger(), " - accel_bias_rw_sigma: {}", accel_bias_rw_sigma);
-        RCLCPP_INFO(node->get_logger(), " - gyro_noise_sigma: {}", gyro_noise_sigma);
-        RCLCPP_INFO(node->get_logger(), " - gyro_bias_rw_sigma: {}", gyro_bias_rw_sigma);
-        RCLCPP_INFO(node->get_logger(), T_sensor2cam);
+        RCLCPP_INFO(node_->get_logger(), "Imu Preintegration use following parameters:");
+        RCLCPP_INFO(node_->get_logger(), " - accel_noise_sigma: {}", accel_noise_sigma);
+        RCLCPP_INFO(node_->get_logger(), " - accel_bias_rw_sigma: {}", accel_bias_rw_sigma);
+        RCLCPP_INFO(node_->get_logger(), " - gyro_noise_sigma: {}", gyro_noise_sigma);
+        RCLCPP_INFO(node_->get_logger(), " - gyro_bias_rw_sigma: {}", gyro_bias_rw_sigma);
+        RCLCPP_INFO(node_->get_logger(), T_sensor2cam);
 
         Matrix33 I_33 = Matrix33::Identity();
 
@@ -390,7 +391,7 @@ namespace tagslam_ros
                                                     imu_msg_ptr->orientation.z).toRotationMatrix();
         Eigen::Vector3d gravity_trans = orientation.inverse()*gravity;
         preint_param_->n_gravity = Vector3(gravity_trans[0], gravity_trans[1], gravity_trans[2]);
-        RCLCPP_INFO(node->get_logger(), "Initialize the gravity for IMU with: {}", gravity_trans);
+        RCLCPP_INFO(node_->get_logger(), "Initialize the gravity for IMU with: {}", gravity_trans);
     }
 
     void Backend::write_to_file(const Values &estimate, const std::string &filename)
@@ -442,13 +443,13 @@ namespace tagslam_ros
 
         if (num_landmarks < 1)
         {
-            RCLCPP_WARN(node->get_logger(), "No landmarks are loaded from the map file, SLAM will initialize from first frame");
+            RCLCPP_WARN(node_->get_logger(), "No landmarks are loaded from the map file, SLAM will initialize from first frame");
             prior_map_ = false;
             return;
         }
 
         // initialized_ = true;
-        RCLCPP_INFO(node->get_logger(), "Load {} landmarks from {}", num_landmarks, load_map_path_);
+        RCLCPP_INFO(node_->get_logger(), "Load {} landmarks from {}", num_landmarks, load_map_path_);
     }
 
     nav_msgs::msg::Odometry::SharedPtr Backend::createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 

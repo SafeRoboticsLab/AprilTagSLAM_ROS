@@ -37,15 +37,16 @@ using namespace gtsam;
 namespace tagslam_ros
 {
     iSAM2Backend::iSAM2Backend(std::shared_ptr<rclcpp::Node> node) :
-        Backend(node)
+        Backend(node),
+        node_(node)
     {
         // initialize ISAM2
-        if(get_ros_option<std::string>(node, "backend/optimizer", "GaussNewton") == "Dogleg"){
+        if(get_ros_option<std::string>(node_, "backend/optimizer", "GaussNewton") == "Dogleg"){
             isam_params_.optimizationParams = ISAM2DoglegParams();
         }
-        isam_params_.relinearizeSkip = std::max(get_ros_option<int>(node, "backend/relinearize_skip", 10), 1);
-        isam_params_.cacheLinearizedFactors=get_ros_option<bool>(node, "backend/cacheLinearizedFactors", true);
-        isam_params_.relinearizeThreshold = get_ros_option<double>(node, "backend/relinearize_threshold", 0.1);
+        isam_params_.relinearizeSkip = std::max(get_ros_option<int>(node_, "backend/relinearize_skip", 10), 1);
+        isam_params_.cacheLinearizedFactors=get_ros_option<bool>(node_, "backend/cacheLinearizedFactors", true);
+        isam_params_.relinearizeThreshold = get_ros_option<double>(node_, "backend/relinearize_threshold", 0.1);
         
         isam_ = ISAM2(isam_params_);
     }
@@ -64,7 +65,7 @@ namespace tagslam_ros
         }
         isam_ = ISAM2(isam_params_);
         reset_mutex_.unlock();
-        RCLCPP_INFO(node->get_logger(), "Reset iSAM2");
+        RCLCPP_INFO(node_->get_logger(), "Reset iSAM2");
     }
 
     nav_msgs::msg::Odometry::SharedPtr iSAM2Backend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)

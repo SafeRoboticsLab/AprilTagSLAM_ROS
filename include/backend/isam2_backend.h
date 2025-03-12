@@ -81,6 +81,9 @@ namespace tagslam_ros
             void updateLandmarkValues(Values& estimated_vals);
 
         private:
+            // declare node_ to keep track for logging and params
+            std::shared_ptr<rclcpp::Node> node_; 
+            
             // The ISAM2 smoother
             ISAM2Params isam_params_;
             ISAM2 isam_;
