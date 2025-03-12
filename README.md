@@ -57,7 +57,6 @@ git checkout noetic
 cd ../..
 
 # build
-chmod +x *.sh
 source /opt/ros/noetic/setup.bash
 catkin_make_isolated
 ```
