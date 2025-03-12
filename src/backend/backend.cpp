@@ -75,9 +75,9 @@ namespace tagslam_ros
         initialized_(false), pose_count_(0)
     {
         // get pose_offset
-        std::vector<double> pose_offset_vec;
-        if(node_->get_parameter("backend/pose_offset", pose_offset_vec))
-        {
+        if (node_->has_parameter("backend/pose_offset")) {
+            std::vector<double> pose_offset_vec;
+            node_->get_parameter("backend/pose_offset", pose_offset_vec);
             need_pose_offset_ = true;
             pose_offset_ = EigenPose(pose_offset_vec.data()).transpose();
             pose_offset_inv_ = pose_offset_.inverse();
@@ -126,7 +126,7 @@ namespace tagslam_ros
         if (save_graph_)
         {
             write_to_file(landmark_values_, save_map_path_);
-            std::cout << "Graph saved to " << save_map_path_ << std::endl;
+            RCLCPP_INFO(node_->get_logger(), "Graph saved to {}", save_map_path_);
         }
     }
     
@@ -139,7 +139,7 @@ namespace tagslam_ros
         std::ifstream is(filename.c_str());
 
         if (!is){
-            std::cout<<"\033[1;31mbold parse: can not find file " <<filename<<"\033[0m\n"<<std::endl;
+            RCLCPP_ERROR(node_->get_logger(), "Failed to open {}", filename);
             return values;
         }
         
@@ -201,7 +201,7 @@ namespace tagslam_ros
         {
             sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr;
             while(!imu_queue_.try_pop(imu_msg_ptr)){}
-            if(imu_msg_ptr->header.stamp.toSec()>=cur_img_t)
+            if(rclcpp::Time(imu_msg_ptr->header.stamp).seconds()>=cur_img_t)
             {
                 // use this imu measurement to initialize the gravity
                 setGravity(imu_msg_ptr);
@@ -263,7 +263,7 @@ namespace tagslam_ros
         {
             sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr;
             while(!imu_queue_.try_pop(imu_msg_ptr)){}
-            double msg_t = imu_msg_ptr->header.stamp.toSec();
+            double msg_t = rclcpp::Time(imu_msg_ptr->header.stamp).seconds();
             // We will have imu messages newer than the image due to the latency in tag detection
             if(msg_t > last_msg_t)
             {
@@ -349,7 +349,10 @@ namespace tagslam_ros
         RCLCPP_INFO(node_->get_logger(), " - accel_bias_rw_sigma: {}", accel_bias_rw_sigma);
         RCLCPP_INFO(node_->get_logger(), " - gyro_noise_sigma: {}", gyro_noise_sigma);
         RCLCPP_INFO(node_->get_logger(), " - gyro_bias_rw_sigma: {}", gyro_bias_rw_sigma);
-        RCLCPP_INFO(node_->get_logger(), T_sensor2cam);
+
+        std::stringstream T_sensor2cam_stream;
+        T_sensor2cam_stream << T_sensor2cam;
+        RCLCPP_INFO(node_->get_logger(), "T_sensor2cam: \n%s", T_sensor2cam_stream.str().c_str());
 
         Matrix33 I_33 = Matrix33::Identity();
 
@@ -391,7 +394,10 @@ namespace tagslam_ros
                                                     imu_msg_ptr->orientation.z).toRotationMatrix();
         Eigen::Vector3d gravity_trans = orientation.inverse()*gravity;
         preint_param_->n_gravity = Vector3(gravity_trans[0], gravity_trans[1], gravity_trans[2]);
-        RCLCPP_INFO(node_->get_logger(), "Initialize the gravity for IMU with: {}", gravity_trans);
+
+        std::stringstream gravity_trans_stream;
+        gravity_trans_stream << gravity_trans;
+        RCLCPP_INFO(node_->get_logger(), "Initialize the gravity for IMU with: {}", gravity_trans_stream.str().c_str());
     }
 
     void Backend::write_to_file(const Values &estimate, const std::string &filename)
@@ -474,7 +480,6 @@ namespace tagslam_ros
 
         nav_msgs::msg::Odometry::SharedPtr odom_msg = std::make_shared<nav_msgs::msg::Odometry>();
         odom_msg->header.stamp = rclcpp::Time(time);
-        odom_msg->header.seq = seq;
         odom_msg->header.frame_id = "map";
 
         // Pose information in the message
@@ -516,7 +521,7 @@ namespace tagslam_ros
         if(reset_mutex_.try_lock())
         {
             // iterate through landmarks, and update them to priors
-            for(const auto key_value: landmark_values_) {
+            for(const auto &key_value: landmark_values_) {
                 Key temp_key = key_value.key;
                 Pose3 temp_pose = landmark_values_.at<Pose3>(temp_key);
                 

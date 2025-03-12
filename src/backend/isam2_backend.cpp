@@ -74,7 +74,7 @@ namespace tagslam_ros
             int num_landmarks_detected = landmark_ptr->detections.size();
             Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
             Pose3 cur_pose_init;
-            double cur_img_t = landmark_ptr->header.stamp.toSec();
+            double cur_img_t = rclcpp::Time(landmark_ptr->header.stamp).seconds();
             
             if(initialized_){
                 cur_pose_init = addOdomFactor(odom, odom_cov);
@@ -135,7 +135,7 @@ namespace tagslam_ros
             
             Pose3 cur_pose_init;
         
-            double cur_img_t = landmark_ptr->header.stamp.toSec();
+            double cur_img_t = rclcpp::Time(landmark_ptr->header.stamp).seconds();
             
             if(initialized_){
                 cur_pose_init = addImuFactor(odom, odom_cov, cur_img_t, use_odom);
@@ -153,7 +153,7 @@ namespace tagslam_ros
                 {
                     sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr;
                     while(!imu_queue_.try_pop(imu_msg_ptr)){}
-                    if(imu_msg_ptr->header.stamp.toSec()>=cur_img_t)
+                    if(rclcpp::Time(imu_msg_ptr->header.stamp).seconds()>=cur_img_t)
                     {
                         break;
                     }

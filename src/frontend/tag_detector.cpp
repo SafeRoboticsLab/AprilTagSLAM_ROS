@@ -51,8 +51,10 @@ namespace tagslam_ros
         node_->declare_parameter<std::vector<std::map<std::string, double>>>("ignore_tags", {});
 
         // parse landmark tag group
-        std::vector<std::map<std::string, double>> landmark_groups;
-        if (node_->get_parameter("landmark_tags", landmark_groups)) {
+        
+        if (node_->has_parameter("landmark_tags", landmark_groups)) {
+            std::vector<std::map<std::string, double>> landmark_groups;
+            node_->get_parameter("landmark_tags", landmark_groups);
             try {
                 parseTagGroup(tag_size_list_, landmark_groups, true); 
             } catch(const std::exception &e) {
@@ -64,8 +66,9 @@ namespace tagslam_ros
         }
         
 
-        std::vector<std::map<std::string, double>> ignore_groups;
-        if (node_->get_parameter("ignore_tags", ignore_groups)) {
+        if (node_->has_parameter("ignore_tags", ignore_groups)) {
+            std::vector<std::map<std::string, double>> ignore_groups;
+            node_->get_parameter("ignore_tags", ignore_groups);
             try {
                 parseTagGroup(tag_size_list_, ignore_groups, false); 
             } catch(const std::exception &e) {

@@ -432,7 +432,6 @@ namespace tagslam_ros {
 #endif
 
                 // msg_header.stamp = sl_time_to_ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
-                msg_header.seq = frame_count_;
 
                 auto t1 = std::chrono::system_clock::now();
 
@@ -514,7 +513,6 @@ namespace tagslam_ros {
                 cv::Mat cv_mat_cpu = sl_mat_to_cv_mat(sl_mat);
 #endif
                 // msg_header.stamp = sl_time_to_ros(zed_camera_.getTimestamp(sl::TIME_REFERENCE::IMAGE));
-                msg_header.seq = frame_count_;
 
                 auto t1 = std::chrono::system_clock::now();
 

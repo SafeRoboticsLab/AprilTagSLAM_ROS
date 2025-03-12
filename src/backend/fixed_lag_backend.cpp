@@ -84,7 +84,7 @@ namespace tagslam_ros
             int num_landmarks_detected = landmark_ptr->detections.size();
             Key cur_pose_key = Symbol(kPoseSymbol, pose_count_);
             Pose3 cur_pose_init;
-            double cur_img_t = landmark_ptr->header.stamp.toSec();
+            double cur_img_t = rclcpp::Time(landmark_ptr->header.stamp).seconds();
 
             if (initialized_)
             {
@@ -188,7 +188,7 @@ namespace tagslam_ros
             Vector3 corrected_acc = Vector3::Zero();
             Vector3 corrected_gyro = Vector3::Zero();
 
-            double cur_img_t = landmark_ptr->header.stamp.toSec();
+            double cur_img_t = rclcpp::Time(landmark_ptr->header.stamp).seconds();
 
             if (initialized_)
             {
@@ -213,7 +213,7 @@ namespace tagslam_ros
                     while (!imu_queue_.try_pop(imu_msg_ptr))
                     {
                     }
-                    if (imu_msg_ptr->header.stamp.toSec() >= cur_img_t)
+                    if (rclcpp::Time(imu_msg_ptr->header.stamp).seconds() >= cur_img_t)
                     {
                         break;
                     }
