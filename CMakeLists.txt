@@ -118,9 +118,8 @@ ament_export_dependencies(
   cv_bridge REQUIRED
   geometry_msgs REQUIRED
   image_transport REQUIRED
-  nodelet REQUIRED
   pluginlib REQUIRED
-  roscpp REQUIRED
+  rclcpp REQUIRED
   sensor_msgs REQUIRED
   std_msgs REQUIRED
 )
