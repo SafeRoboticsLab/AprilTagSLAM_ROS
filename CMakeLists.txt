@@ -54,20 +54,7 @@ find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-find_package( REQUIRED)
 
-find_package(ament_cmake REQUIRED)
-find_package(ament_cmake REQUIRED)
-find_package(ament_cmake REQUIRED)
-
-find_package(catkin REQUIRED COMPONENTS
-  pluginlib
-  roscpp
-  sensor_msgs
-  std_msgs
-)
-
-find_package(ament_cmake REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
