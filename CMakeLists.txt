@@ -252,9 +252,6 @@ target_link_libraries(${PROJECT_NAME}_zed_node ${catkin_LIBRARIES})
 install(DIRECTORY config launch
   DESTINATION ${share}
 )
-install(FILES nodelet_plugins.xml
-  DESTINATION ${share}
-)
 
 install(TARGETS
   ${PROJECT_NAME}_slam
