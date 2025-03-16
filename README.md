@@ -42,20 +42,19 @@ mkdir src
 cd src
 
 git clone https://github.com/SafeRoboticsLab/AprilTagSLAM_ROS.git 
-
 cd AprilTagSLAM_ROS
 git checkout sdk_v4
 cd ..
 
+git clone https://github.com/AprilRobotics/apriltag.git
+
 # We need compile cv_bridge from source files to avoid mixing OpenCV versions
 git clone https://github.com/ros-perception/vision_opencv.git
-
 cd vision_opencv
 git checkout noetic
 cd ../..
 
 # build
-chmod +x *.sh
 source /opt/ros/noetic/setup.bash
 catkin_make_isolated
 ```
