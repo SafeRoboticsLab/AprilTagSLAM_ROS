@@ -1,2 +1,2 @@
-std_msgs/msg/Header header
+std_msgs/Header header
 AprilTagDetection[] detections

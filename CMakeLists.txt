@@ -58,6 +58,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(sensor_msgs REQUIRED)  
 find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)  
+# find_package(rosidk_cmake)
 
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
@@ -115,6 +116,7 @@ ament_export_dependencies(
   std_msgs REQUIRED
   visualization_msgs REQUIRED
 )
+# ament_export_dependencies(rosidl_cmake)
 ament_package() # double check. perhaps need to move
 
 ###########
