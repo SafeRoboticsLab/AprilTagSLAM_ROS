@@ -48,25 +48,17 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 find_package(ament_cmake REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(image_geometry REQUIRED)
-find_package(image_transport REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rclcpp_components REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-
-find_package(cv_bridge REQUIRED)
-find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(image_geometry REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 find_package(sensor_msgs REQUIRED)  
 find_package(std_msgs REQUIRED)  
 
-find_package(rosidl_default_generators REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
@@ -112,7 +104,7 @@ rosidl_generate_interfaces(
 get_target_property(apriltag_INCLUDE_DIRS apriltag::apriltag INTERFACE_INCLUDE_DIRECTORIES)
 get_target_property(apriltag_LIBRARIES apriltag::apriltag INTERFACE_LINK_LIBRARIES)
 
-# catkin_package
+# ament_package
 ament_export_dependencies(
   cv_bridge REQUIRED
   geometry_msgs REQUIRED
@@ -122,7 +114,7 @@ ament_export_dependencies(
   sensor_msgs REQUIRED
   std_msgs REQUIRED
 )
-ament_package() # double check
+ament_package() # double check. perhaps need to move
 
 ###########
 ## Build ##
