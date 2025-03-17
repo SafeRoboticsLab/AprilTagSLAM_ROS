@@ -176,7 +176,8 @@ else()
 endif()
 
 # TODO: check generate messages, rosidl_generate_interfaces
-add_dependencies(${PROJECT_NAME}_frontend ${PROJECT_NAME}_generate_messages_cpp)
+# believe not needed bc generate messages gone
+# add_dependencies(${PROJECT_NAME}_frontend ${PROJECT_NAME}_generate_messages_cpp)
 
 ################################
 ## Add library for the back-end
