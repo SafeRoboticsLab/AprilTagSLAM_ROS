@@ -163,7 +163,7 @@ class Env
           EigenPose landmark_pose = landmarks[i];
           EigenPose obs_pose = pose.inverse() * landmark_pose;
           EigenPose noised_obs_pose = obs_pose * genNormalRandomPose(sigma_trans, sigma_rot);
-          AprilTagDetection detection;
+          tagslam_ros::msg::AprilTagDetection detection;
           detection.id = i;
           detection.pose = createPoseMsg(noised_obs_pose);
           observations->detections.push_back(detection);

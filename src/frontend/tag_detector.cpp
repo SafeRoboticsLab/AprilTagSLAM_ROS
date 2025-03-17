@@ -47,8 +47,8 @@ namespace tagslam_ros
 
         // Declare parameters with default values
         // each tag is a std::map (dictionary) with keys: id_start, id_end, tag_size
-        node_->declare_parameter<std::vector<std::map<std::string, double>>>("landmark_tags", {});
-        node_->declare_parameter<std::vector<std::map<std::string, double>>>("ignore_tags", {});
+        node_->declare_parameter<std::vector<std::map<std::string, double>>>("landmark_tags", std::vector<std::map<std::string, double>>());
+        node_->declare_parameter<std::vector<std::map<std::string, double>>>("ignore_tags", std::vector<std::map<std::string, double>>());
 
         // parse landmark tag group
         

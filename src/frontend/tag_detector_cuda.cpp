@@ -319,7 +319,7 @@ namespace tagslam_ros
       geometry_msgs::msg::Pose tag_pose = createPoseMsg(T_tag_to_ros);
 
       // create message
-      AprilTagDetection tag_detection;
+      tagslam_ros::msg::AprilTagDetection tag_detection;
       tag_detection.id = detection.id;
       tag_detection.size = cur_tag_size;
       tag_detection.static_tag = cur_tag_static;

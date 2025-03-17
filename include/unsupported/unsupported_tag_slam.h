@@ -98,7 +98,7 @@ namespace tagslam_ros
     std::string camera_info_topic_;
     std::string odom_topic_;
     std::string slam_pose_topic_;
-    cv_bridge::CvImage::SharedPtr cv_image_;
+    cv_bridge::CvImagePtr cv_image_;
 
     bool detection_only_;
 

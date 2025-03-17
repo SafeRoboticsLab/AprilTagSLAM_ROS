@@ -43,7 +43,7 @@
 #include "utility_function.hpp"
 #include "frontend/tag_detector.hpp"
 
-#include <apriltag.h>
+#include <apriltag.hpp>
 
 namespace tagslam_ros{
   class TagDetectorCPU: public TagDetector
@@ -73,7 +73,7 @@ namespace tagslam_ros{
           TagDetectionArrayPtr dyn_tag_array_ptr);
 
       // Draw the detected tags' outlines and payload values on the image
-      void drawDetections(cv_bridge::CvImage::SharedPtr image);
+      void drawDetections(cv_bridge::CvImagePtr image);
 
     private:
       // declare node_ to keep track for logging and params

@@ -98,8 +98,10 @@ namespace tagslam_ros{
     if(!node->has_parameter(param_name))
     {
       node->declare_parameter(param_name, default_val);
+      std::ostringstream default_val_stream;
+      default_val_stream << default_val;
       RCLCPP_WARN(node->get_logger(), "Parameter %s does not exist, setting to default: %s",
-                    param_name.c_str(), std::to_string(default_val).c_str());
+                    param_name.c_str(), default_val_stream.str().c_str());
     }
     T param_val;
     node->get_parameter(param_name, param_val);

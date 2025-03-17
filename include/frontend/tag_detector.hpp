@@ -83,7 +83,7 @@ namespace tagslam_ros{
         const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg_cam_info, std_msgs::msg::Header, 
         TagDetectionArrayPtr static_tag_array_ptr, TagDetectionArrayPtr dyn_tag_array_ptr) = 0;
 
-      void drawDetections(cv_bridge::CvImage::SharedPtr image, 
+      void drawDetections(cv_bridge::CvImagePtr image, 
                   TagDetectionArrayPtr tag_detection);
 
       void drawDetections(cv::Mat &image,

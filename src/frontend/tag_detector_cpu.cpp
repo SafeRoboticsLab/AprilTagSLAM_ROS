@@ -60,7 +60,7 @@ namespace tagslam_ros
     tag_size_(get_ros_option<double>(node_, "frontend/tag_size", 1.0))
   {
     //
-    RCLCPP_INFO(node_->get_logger(),"Initializing cpu AprilTag detector with family %s", family_.c_str);
+    RCLCPP_INFO(node_->get_logger(),"Initializing cpu AprilTag detector with family %s", family_.c_str());
     RCLCPP_INFO(node_->get_logger(), "Tag Size: %f", tag_size_);
     RCLCPP_INFO(node_->get_logger(), "Threads: %d", threads_);
     RCLCPP_INFO(node_->get_logger(), "Decimate: %f", decimate_);
@@ -232,7 +232,7 @@ namespace tagslam_ros
       geometry_msgs::msg::Pose tag_pose = createPoseMsg(T_tag_to_ros);
 
       // Add the detection to the back of the tag detection array
-      AprilTagDetection tag_detection;
+      tagslam_ros::msg::AprilTagDetection tag_detection;
       tag_detection.pose = tag_pose;
       tag_detection.id = tagID;
       tag_detection.static_tag = cur_tag_static;
