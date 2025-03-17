@@ -116,7 +116,7 @@ ament_export_dependencies(
   std_msgs REQUIRED
   visualization_msgs REQUIRED
 )
-# ament_export_dependencies(rosidl_cmake)
+ament_export_dependencies(rosidl_cmake REQUIRED)
 ament_package() # double check. perhaps need to move
 
 ###########
