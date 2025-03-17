@@ -40,8 +40,8 @@
 #ifndef TAG_DETECTOR_CPU_H
 #define TAG_DETECTOR_CPU_H
 
-#include "utility_function.h"
-#include "frontend/tag_detector.h"
+#include "utility_function.hpp"
+#include "frontend/tag_detector.hpp"
 
 #include <apriltag.h>
 

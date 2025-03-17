@@ -116,6 +116,7 @@ ament_export_dependencies(
   image_transport REQUIRED
   pluginlib REQUIRED
   rclcpp REQUIRED
+  rclcpp_components REQUIRED
   sensor_msgs REQUIRED
   std_msgs REQUIRED
   visualization_msgs REQUIRED

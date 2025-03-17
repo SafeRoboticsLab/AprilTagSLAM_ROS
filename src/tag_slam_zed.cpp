@@ -30,7 +30,7 @@
 
  **/
 
-#include "tag_slam_zed.h"
+#include "tag_slam_zed.hpp"
 
 RCLCPP_COMPONENTS_REGISTER_NODE(tagslam_ros::TagSlamZED)
 

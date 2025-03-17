@@ -39,7 +39,7 @@
 #ifndef backend_h
 #define backend_h
 
-#include "utility_function.h"
+#include "utility_function.hpp"
 
 #include <gtsam/geometry/Pose3.h>
 #include <gtsam/slam/dataset.h>

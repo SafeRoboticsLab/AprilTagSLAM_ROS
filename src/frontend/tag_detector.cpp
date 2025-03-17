@@ -30,7 +30,7 @@
 
  **/
 
-#include "frontend/tag_detector.h"
+#include "frontend/tag_detector.hpp"
 #include <stdexcept>
 
 

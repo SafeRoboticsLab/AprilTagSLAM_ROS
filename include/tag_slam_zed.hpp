@@ -46,13 +46,13 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/cvconfig.h>
 
-#include "utility_function.h"
-#include "frontend/tag_detector.h"
-#include "frontend/tag_detector_cpu.h"
+#include "utility_function.hpp"
+#include "frontend/tag_detector.hpp"
+#include "frontend/tag_detector_cpu.hpp"
 
-#include "backend/backend.h"
-#include "backend/fixed_lag_backend.h"
-#include "backend/isam2_backend.h"
+#include "backend/backend.hpp"
+#include "backend/fixed_lag_backend.hpp"
+#include "backend/isam2_backend.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
@@ -83,7 +83,7 @@ using Trigger = std_srvs::srv::trigger;
     
     // Note: ZED SDK depends on CUDA,
     // therefore if we can have zed sdk, then cuda detector will run
-    #include "frontend/tag_detector_cuda.h"// Topics
+    #include "frontend/tag_detector_cuda.hpp"// Topics
 
     namespace tagslam_ros {
     class TagSlamZED : public rclcpp::Node {

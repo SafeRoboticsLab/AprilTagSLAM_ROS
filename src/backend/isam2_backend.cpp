@@ -30,7 +30,7 @@
 
  **/
 
-#include "backend/isam2_backend.h"
+#include "backend/isam2_backend.hpp"
 
 using namespace gtsam;
 

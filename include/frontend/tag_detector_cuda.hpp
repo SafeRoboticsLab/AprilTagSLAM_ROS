@@ -40,12 +40,12 @@
 #ifndef TAG_DETECTOR_CUDA_H_
 #define TAG_DETECTOR_CUDA_H_
 
-#include "utility_function.h"
-#include "frontend/tag_detector.h"
+#include "utility_function.hpp"
+#include "frontend/tag_detector.hpp"
 
 #include "cuda.h"  // NOLINT - include .h without directory
 #include "cuda_runtime.h"  // NOLINT - include .h without directory
-#include "nvAprilTags.h"
+#include "nvAprilTags.hpp"
 
 
 namespace tagslam_ros

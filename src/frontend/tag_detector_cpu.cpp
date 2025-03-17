@@ -32,7 +32,7 @@ Code is adapted from the AprilTag_ROS package by Danylo Malyuta, JPL
  * policies, either expressed or implied, of the California Institute of
  * Technology.
  */
-#include "frontend/tag_detector_cpu.h"
+#include "frontend/tag_detector_cpu.hpp"
 
 #include "common/homography.h"
 #include "tagStandard52h13.h"

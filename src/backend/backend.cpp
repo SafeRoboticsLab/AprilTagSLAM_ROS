@@ -30,7 +30,7 @@
 
  **/
 
-#include "backend/backend.h"
+#include "backend/backend.hpp"
 
 using namespace gtsam;
 

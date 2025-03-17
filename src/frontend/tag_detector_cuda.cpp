@@ -8,7 +8,7 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
-#include "frontend/tag_detector_cuda.h"
+#include "frontend/tag_detector_cuda.hpp"
 
 namespace tagslam_ros
 {

@@ -29,7 +29,7 @@
               Jarod Wille      ( jwille@princeton.edu )
 
  **/
-#include "backend/fixed_lag_backend.h"
+#include "backend/fixed_lag_backend.hpp"
 
 using namespace gtsam;
 

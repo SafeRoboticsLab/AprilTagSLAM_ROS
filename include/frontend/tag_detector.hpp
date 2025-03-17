@@ -39,13 +39,13 @@
 #ifndef TAG_DETECTOR_ABS_H
 #define TAG_DETECTOR_ABS_H
 
-#include "utility_function.h"
-#include <cv_bridge/cv_bridge.h>
+#include "utility_function.hpp"
+#include <cv_bridge/cv_bridge.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 
-#include "image_geometry/pinhole_camera_model.h"
+#include "image_geometry/pinhole_camera_model.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
