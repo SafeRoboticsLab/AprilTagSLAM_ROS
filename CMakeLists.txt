@@ -198,12 +198,13 @@ target_link_libraries(${PROJECT_NAME}_backend
 # ## Add library for the SLAM
 # ################################
 
-add_library(${PROJECT_NAME}_slam src/tag_slam.cpp)
-add_dependencies(${PROJECT_NAME}_slam ${PROJECT_NAME}_generate_messages_cpp)
-target_link_libraries(${PROJECT_NAME}_slam
-                      ${PROJECT_NAME}_frontend 
-                      ${PROJECT_NAME}_backend
-                      ${catkin_LIBRARIES} )
+# no longer supported
+# add_library(${PROJECT_NAME}_slam src/tag_slam.cpp)
+# add_dependencies(${PROJECT_NAME}_slam ${PROJECT_NAME}_generate_messages_cpp)
+# target_link_libraries(${PROJECT_NAME}_slam
+#                       ${PROJECT_NAME}_frontend 
+#                       ${PROJECT_NAME}_backend
+#                       ${catkin_LIBRARIES} )
                       
 
 ################################
@@ -223,8 +224,9 @@ target_link_libraries(${PROJECT_NAME}_slam_zed
 ################################
 ## TAG SLAM Node
 ################################
-add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
-target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})
+# no longer supported
+# add_executable(${PROJECT_NAME}_node src/${PROJECT_NAME}_node.cpp)
+# target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})
 
 
 ################################
