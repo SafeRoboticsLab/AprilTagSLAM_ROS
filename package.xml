@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="">
+<package format="3">
   <name>tagslam_ros</name>
   <version>5.0.0</version>
   <description>
