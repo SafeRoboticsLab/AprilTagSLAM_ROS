@@ -48,7 +48,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 find_package(ament_cmake REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
 find_package(image_geometry REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(nav_msgs REQUIRED)
@@ -98,8 +97,8 @@ endif()
 # )
 
 # Extract the include directories and libraries from apriltag::apriltag as catkin_package() does not support modern cmake.
-get_target_property(apriltag_INCLUDE_DIRS apriltag::apriltag INTERFACE_INCLUDE_DIRECTORIES)
-get_target_property(apriltag_LIBRARIES apriltag::apriltag INTERFACE_LINK_LIBRARIES)
+# get_target_property(apriltag_INCLUDE_DIRS apriltag::apriltag INTERFACE_INCLUDE_DIRECTORIES)
+# get_target_property(apriltag_LIBRARIES apriltag::apriltag INTERFACE_LINK_LIBRARIES)
 
 # ament_package
 ament_export_dependencies(
@@ -151,28 +150,61 @@ endif()
 ################################
 
 if(USE_CUDA)
-
   add_library(${PROJECT_NAME}_frontend 
             src/frontend/tag_detector.cpp
             src/frontend/tag_detector_cpu.cpp
             src/frontend/tag_detector_cuda.cpp)
   target_include_directories(${PROJECT_NAME}_frontend PUBLIC
             ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+
   target_link_libraries(${PROJECT_NAME}_frontend
-            ${catkin_LIBRARIES} 
             ${OpenCV_LIBRARIES}
             ${CUDA_LIBRARIES}
             apriltag::apriltag
             nvapriltags)
 
+  ament_target_dependencies(${PROJECT_NAME}_frontend
+            cv_bridge
+            geometry_msgs
+            image_geometry
+            image_transport
+            nav_msgs
+            pluginlib
+            rclcpp
+            rclcpp_components
+            rosidl_default_generators
+            sensor_msgs
+            std_msgs
+            # OpenCV
+            # apriltag
+            # CUDA # check
+            # nvapriltags # check
+            ) 
+
 else()
+
   add_library(${PROJECT_NAME}_frontend 
             src/frontend/tag_detector.cpp
             src/frontend/tag_detector_cpu.cpp)
-  target_link_libraries(${PROJECT_NAME}_frontend
-            ${catkin_LIBRARIES} 
-            ${OpenCV_LIBRARIES}
-            apriltag::apriltag)
+
+  # target_link_libraries(${PROJECT_NAME}_frontend # might need to keep this
+  #           ${OpenCV_LIBRARIES}
+  #           apriltag::apriltag)
+  ament_target_dependencies(${PROJECT_NAME}_frontend
+            cv_bridge
+            geometry_msgs
+            image_geometry
+            image_transport
+            nav_msgs
+            pluginlib
+            rclcpp
+            rclcpp_components
+            rosidl_default_generators
+            sensor_msgs
+            std_msgs
+            OpenCV #unsure
+            apriltag #unsure
+            )
 endif()
 
 # TODO: check generate messages, rosidl_generate_interfaces
@@ -186,14 +218,28 @@ add_library(${PROJECT_NAME}_backend
             src/backend/backend.cpp
             src/backend/isam2_backend.cpp
             src/backend/fixed_lag_backend.cpp)
-# add_dependencies(${PROJECT_NAME}_backend ${PROJECT_NAME}_generate_messages_cpp)
-target_link_libraries(${PROJECT_NAME}_backend 
-                      ${catkin_LIBRARIES}
-                      gtsam
-                      gtsam_unstable
-                      tbb  
-                      # ${Boost_LIBRARIES} 
-                      )
+
+# target_link_libraries(${PROJECT_NAME}_backend  # may still need this
+# gtsam
+# gtsam_unstable
+# tbb  
+# ${Boost_LIBRARIES} ) # may not need to include boost?
+
+ament_target_dependencies(${PROJECT_NAME}_backend
+            cv_bridge
+            geometry_msgs
+            image_geometry
+            image_transport
+            nav_msgs
+            pluginlib
+            rclcpp
+            rclcpp_components
+            rosidl_default_generators
+            sensor_msgs
+            std_msgs
+            gtsam
+            gtsam_unstable
+            tbb) #perhaps need to add boost
 
 # ################################
 # ## Add library for the SLAM
@@ -209,7 +255,7 @@ target_link_libraries(${PROJECT_NAME}_backend
                       
 
 ################################
-## ZED Node
+## SLAM ZED
 ################################
 add_library(${PROJECT_NAME}_slam_zed src/tag_slam_zed.cpp)
 # add_dependencies(${PROJECT_NAME}_slam_zed ${PROJECT_NAME}_generate_messages_cpp)
@@ -219,9 +265,20 @@ target_link_libraries(${PROJECT_NAME}_slam_zed
                       ${PROJECT_NAME}_frontend 
                       ${PROJECT_NAME}_backend
                       ${ZED_LIBRARIES}
-                      ${CUDA_LIBRARIES}
-                      ${catkin_LIBRARIES} )
-
+                      ${CUDA_LIBRARIES} )
+ament_target_dependencies(${PROJECT_NAME}_slam_zed
+                      cv_bridge
+                      geometry_msgs
+                      image_geometry
+                      image_transport
+                      nav_msgs
+                      pluginlib
+                      rclcpp
+                      rclcpp_components
+                      rosidl_default_generators
+                      sensor_msgs
+                      std_msgs
+                      )
 ################################
 ## TAG SLAM Node
 ################################
@@ -234,7 +291,19 @@ target_link_libraries(${PROJECT_NAME}_slam_zed
 ## TAG SLAM ZED Node
 ################################
 add_executable(${PROJECT_NAME}_zed_node src/${PROJECT_NAME}_zed_node.cpp)
-target_link_libraries(${PROJECT_NAME}_zed_node ${catkin_LIBRARIES})
+ament_target_dependencies(${PROJECT_NAME}_zed_node
+  cv_bridge
+  geometry_msgs
+  image_geometry
+  image_transport
+  nav_msgs
+  pluginlib
+  rclcpp
+  rclcpp_components
+  rosidl_default_generators
+  sensor_msgs
+  std_msgs
+)
 
 #############
 ## Install ##
