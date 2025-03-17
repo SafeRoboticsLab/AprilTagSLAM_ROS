@@ -71,10 +71,10 @@ namespace tagslam_ros
             ~FixedLagBackend();
 
             nav_msgs::msg::Odometry::SharedPtr updateSLAM(TagDetectionArrayPtr landmark_ptr,
-                                    const EigenPose& odom, const EigenPoseCov& odom_cov);
+                                    EigenPose odom, EigenPoseCov odom_cov);
 
             nav_msgs::msg::Odometry::SharedPtr updateVIO(TagDetectionArrayPtr landmark_ptr, 
-                                    const EigenPose& odom, const EigenPoseCov& odom_cov, bool use_odom);
+                                    EigenPose odom, EigenPoseCov odom_cov, bool use_odom);
 
             void getPoses(EigenPoseMap & container, const unsigned char filter_char);
 

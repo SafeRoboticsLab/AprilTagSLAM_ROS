@@ -73,7 +73,7 @@ namespace tagslam_ros
         reset_mutex_.unlock();
     }
 
-    nav_msgs::msg::Odometry::SharedPtr FixedLagBackend::updateSLAM(TagDetectionArrayPtr landmark_ptr, const EigenPose& odom, const EigenPoseCov& odom_cov)
+    nav_msgs::msg::Odometry::SharedPtr FixedLagBackend::updateSLAM(TagDetectionArrayPtr landmark_ptr, EigenPose odom, EigenPoseCov odom_cov)
     {
         // reset local graph and values
         factor_graph_.resize(0);
@@ -164,7 +164,7 @@ namespace tagslam_ros
     }
 
     nav_msgs::msg::Odometry::SharedPtr FixedLagBackend::updateVIO(TagDetectionArrayPtr landmark_ptr, 
-                                    const EigenPose& odom, const EigenPoseCov& odom_cov, bool use_odom)
+                                    EigenPose odom, EigenPoseCov odom_cov, bool use_odom)
     {
         // reset local graph and values
         factor_graph_.resize(0);

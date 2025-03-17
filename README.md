@@ -7,7 +7,7 @@ The package is initially built for a [ZED2](https://www.stereolabs.com/zed-2/) c
 
 ## Dependency (Must)
 * [Apriltag 3](https://github.com/AprilRobotics/apriltag)
-* [ROS Noetic](http://wiki.ros.org/noetic)
+* [ROS Humble](https://docs.ros.org/en/humble/index.html)
 * A slightly modified version of [GTSAM 4.1.1](https://github.com/SafeRoboticsLab/gtsam/tree/release-4.1.1) built with *gtsam_unstable*.
 ## Dependency (Highly Recommended)
 
@@ -43,20 +43,24 @@ cd src
 
 git clone https://github.com/SafeRoboticsLab/AprilTagSLAM_ROS.git 
 cd AprilTagSLAM_ROS
-git checkout sdk_v4
+git checkout ros2_updates
 cd ..
 
 git clone https://github.com/AprilRobotics/apriltag.git
+cd apriltag
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target install
+cd ..
 
 # We need compile cv_bridge from source files to avoid mixing OpenCV versions
 git clone https://github.com/ros-perception/vision_opencv.git
 cd vision_opencv
-git checkout noetic
+git checkout humble
 cd ../..
 
 # build
-source /opt/ros/noetic/setup.bash
-catkin_make_isolated
+source /opt/ros/humble/setup.bash
+colcon build --cmake-args -DUSE_CUDA=OFF
 ```
  
 ## Run with ZED SDK
@@ -64,5 +68,5 @@ Checkout the settings in [config/config.yaml](config/config.yaml).
 
 ```
 source devel_isolated/setup.bash
-roslaunch tagslam_ros zed_sdk.launch
+ros2 launch tagslam_ros zed_sdk.launch
 ```
