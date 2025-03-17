@@ -95,9 +95,13 @@ endif()
 
 
 # custom messages
-rosidl_generate_interfaces(${PROJECT_NAME}
+set(msg_files
   "msg/AprilTagDetection.msg"
   "msg/AprilTagDetectionArray.msg"
+)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
   DEPENDENCIES geometry_msgs std_msgs
 )
 
@@ -116,7 +120,7 @@ ament_export_dependencies(
   std_msgs REQUIRED
   visualization_msgs REQUIRED
 )
-ament_export_dependencies(rosidl_cmake REQUIRED)
+ament_export_dependencies(rosidl_default_runtime) # required for custom messages
 ament_package() # double check. perhaps need to move
 
 ###########
@@ -183,13 +187,10 @@ if(USE_CUDA)
             sensor_msgs
             std_msgs
             visualization_msgs
-            tagslam_ros__rosidl_typesupport_cpp # custom messages
-            # OpenCV
-            # apriltag
-            # CUDA # check
-            # nvapriltags # check
             ) 
-
+  # to use custom messages
+  rosidl_target_interfaces(${PROJECT_NAME}_frontend
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()
 
   add_library(${PROJECT_NAME}_frontend 
@@ -212,8 +213,10 @@ else()
             sensor_msgs
             std_msgs
             visualization_msgs
-            tagslam_ros__rosidl_typesupport_cpp # custom messages
             )
+  # to use custom messages
+  rosidl_target_interfaces(${PROJECT_NAME}_frontend
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 endif()
 
 # TODO: check generate messages, rosidl_generate_interfaces
@@ -248,8 +251,10 @@ ament_target_dependencies(${PROJECT_NAME}_backend
             sensor_msgs
             std_msgs
             visualization_msgs
-            tagslam_ros__rosidl_typesupport_cpp # custom messages
             )
+  # to use custom messages
+  rosidl_target_interfaces(${PROJECT_NAME}_backend
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # ################################
 # ## Add library for the SLAM
@@ -289,8 +294,10 @@ ament_target_dependencies(${PROJECT_NAME}_slam_zed
                       sensor_msgs
                       std_msgs
                       visualization_msgs
-                      tagslam_ros__rosidl_typesupport_cpp # custom messages
                       )
+# to use custom messages
+rosidl_target_interfaces(${PROJECT_NAME}_slam_zed
+${PROJECT_NAME} "rosidl_typesupport_cpp")
 ################################
 ## TAG SLAM Node
 ################################
@@ -316,8 +323,10 @@ ament_target_dependencies(${PROJECT_NAME}_zed_node
   sensor_msgs
   std_msgs
   visualization_msgs
-  tagslam_ros__rosidl_typesupport_cpp # custom messages
 )
+# to use custom messages
+rosidl_target_interfaces(${PROJECT_NAME}_zed_node
+${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 #############
 ## Install ##

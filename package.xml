@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package format="3">
+<package format="">
   <name>tagslam_ros</name>
   <version>5.0.0</version>
   <description>
@@ -17,12 +17,14 @@
 
   <license>Apache 2.0</license>
 
-  <!-- required: declaration that this package provides message-->
-  <member_of_group>rosidl_interface_packages</member_of_group>
+  
+  
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
-  <depend>rosidl_default_runtime</depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <!-- required: declaration that this package provides message-->
+  <member_of_group>rosidl_interface_packages</member_of_group>
   <!-- <depend>rosidl_cmake</depend> -->
 
   <!-- <depend>apriltag</depend> -->
