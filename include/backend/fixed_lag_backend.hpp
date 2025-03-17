@@ -39,7 +39,7 @@
 #ifndef FIXED_LAG_BACKEND_H
 #define FIXED_LAG_BACKEND_H
 
-#include <backend/backend.h>
+#include <backend/backend.hpp>
 
 #include <gtsam/nonlinear/NonlinearFactorGraph.h>
 #include <gtsam/nonlinear/ISAM2.h>

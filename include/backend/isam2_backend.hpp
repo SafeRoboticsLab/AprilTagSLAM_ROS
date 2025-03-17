@@ -43,7 +43,7 @@
 #ifndef isam2_backend_h
 #define isam2_backend_h
 
-#include <backend/backend.h>
+#include <backend/backend.hpp>
 #include <gtsam/nonlinear/ISAM2.h>
 
 using namespace gtsam;
