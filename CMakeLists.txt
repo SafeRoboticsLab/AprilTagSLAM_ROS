@@ -244,9 +244,9 @@ install(DIRECTORY config launch
 )
 
 install(TARGETS
-  ${PROJECT_NAME}_slam
+  # ${PROJECT_NAME}_slam
   ${PROJECT_NAME}_slam_zed
-  ${PROJECT_NAME}_node
+  # ${PROJECT_NAME}_node
   ${PROJECT_NAME}_zed_node
   RUNTIME DESTINATION ${bin}
   ARCHIVE DESTINATION ${lib}
