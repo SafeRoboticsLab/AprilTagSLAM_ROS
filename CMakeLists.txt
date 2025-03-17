@@ -93,12 +93,9 @@ if(NOT USE_CUDA_OPENCV)
 endif()
 
 
-rosidl_generate_interfaces(
-  DEPENDENCIES
-  geometry_msgs
-  sensor_msgs
-  std_msgs
-)
+# use for custom messages
+# rosidl_generate_interfaces(
+# )
 
 # Extract the include directories and libraries from apriltag::apriltag as catkin_package() does not support modern cmake.
 get_target_property(apriltag_INCLUDE_DIRS apriltag::apriltag INTERFACE_INCLUDE_DIRECTORIES)
