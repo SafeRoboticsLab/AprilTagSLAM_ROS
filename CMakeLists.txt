@@ -58,7 +58,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(sensor_msgs REQUIRED)  
 find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)  
-# find_package(rosidk_cmake)
+find_package(rosidl_cmake)
 
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
