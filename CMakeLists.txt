@@ -94,7 +94,7 @@ endif()
 
 
 # custom messages
-rosidl_generate_interfaces(
+rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AprilTagDetection.msg"
   "msg/AprilTagDetectionArray.msg"
   DEPENDENCIES 
