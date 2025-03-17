@@ -93,9 +93,14 @@ if(NOT USE_CUDA_OPENCV)
 endif()
 
 
-# use for custom messages
-# rosidl_generate_interfaces(
-# )
+# custom messages
+rosidl_generate_interfaces(
+  "msg/AprilTagDetection.msg"
+  "msg/AprilTagDetectionArray.msg"
+  DEPENDENCIES 
+  geometry_msgs
+  std_msgs
+)
 
 # Extract the include directories and libraries from apriltag::apriltag as catkin_package() does not support modern cmake.
 # get_target_property(apriltag_INCLUDE_DIRS apriltag::apriltag INTERFACE_INCLUDE_DIRECTORIES)
@@ -178,6 +183,7 @@ if(USE_CUDA)
             sensor_msgs
             std_msgs
             visualization_msgs
+            tagslam_ros__rosidl_typesupport_cpp # custom messages
             # OpenCV
             # apriltag
             # CUDA # check
@@ -190,9 +196,9 @@ else()
             src/frontend/tag_detector.cpp
             src/frontend/tag_detector_cpu.cpp)
 
-  # target_link_libraries(${PROJECT_NAME}_frontend # might need to keep this
-  #           ${OpenCV_LIBRARIES}
-  #           apriltag::apriltag)
+  target_link_libraries(${PROJECT_NAME}_frontend
+            ${OpenCV_LIBRARIES}
+            apriltag::apriltag)
   ament_target_dependencies(${PROJECT_NAME}_frontend
             cv_bridge
             geometry_msgs
@@ -206,8 +212,7 @@ else()
             sensor_msgs
             std_msgs
             visualization_msgs
-            OpenCV #unsure
-            apriltag #unsure
+            tagslam_ros__rosidl_typesupport_cpp # custom messages
             )
 endif()
 
@@ -243,6 +248,7 @@ ament_target_dependencies(${PROJECT_NAME}_backend
             sensor_msgs
             std_msgs
             visualization_msgs
+            tagslam_ros__rosidl_typesupport_cpp # custom messages
             )
 
 # ################################
@@ -283,6 +289,7 @@ ament_target_dependencies(${PROJECT_NAME}_slam_zed
                       sensor_msgs
                       std_msgs
                       visualization_msgs
+                      tagslam_ros__rosidl_typesupport_cpp # custom messages
                       )
 ################################
 ## TAG SLAM Node
@@ -309,6 +316,7 @@ ament_target_dependencies(${PROJECT_NAME}_zed_node
   sensor_msgs
   std_msgs
   visualization_msgs
+  tagslam_ros__rosidl_typesupport_cpp # custom messages
 )
 
 #############
