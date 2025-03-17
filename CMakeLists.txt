@@ -186,7 +186,7 @@ add_library(${PROJECT_NAME}_backend
             src/backend/backend.cpp
             src/backend/isam2_backend.cpp
             src/backend/fixed_lag_backend.cpp)
-add_dependencies(${PROJECT_NAME}_backend ${PROJECT_NAME}_generate_messages_cpp)
+# add_dependencies(${PROJECT_NAME}_backend ${PROJECT_NAME}_generate_messages_cpp)
 target_link_libraries(${PROJECT_NAME}_backend 
                       ${catkin_LIBRARIES}
                       gtsam
@@ -212,7 +212,7 @@ target_link_libraries(${PROJECT_NAME}_backend
 ## ZED Node
 ################################
 add_library(${PROJECT_NAME}_slam_zed src/tag_slam_zed.cpp)
-add_dependencies(${PROJECT_NAME}_slam_zed ${PROJECT_NAME}_generate_messages_cpp)
+# add_dependencies(${PROJECT_NAME}_slam_zed ${PROJECT_NAME}_generate_messages_cpp)
 target_include_directories(${PROJECT_NAME}_slam_zed PUBLIC
                       ${ZED_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME}_slam_zed
