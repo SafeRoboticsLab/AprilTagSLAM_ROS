@@ -97,9 +97,7 @@ endif()
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AprilTagDetection.msg"
   "msg/AprilTagDetectionArray.msg"
-  DEPENDENCIES 
-  geometry_msgs
-  std_msgs
+  DEPENDENCIES geometry_msgs std_msgs
 )
 
 # Extract the include directories and libraries from apriltag::apriltag as catkin_package() does not support modern cmake.
