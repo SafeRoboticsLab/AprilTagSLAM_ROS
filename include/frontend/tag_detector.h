@@ -41,7 +41,7 @@
 
 #include "utility_function.h"
 #include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/msg/image_encodings.hpp>
+#include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 
