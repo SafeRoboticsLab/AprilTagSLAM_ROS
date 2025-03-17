@@ -56,7 +56,8 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(sensor_msgs REQUIRED)  
-find_package(std_msgs REQUIRED)  
+find_package(std_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)  
 
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
@@ -109,6 +110,7 @@ ament_export_dependencies(
   rclcpp REQUIRED
   sensor_msgs REQUIRED
   std_msgs REQUIRED
+  visualization_msgs REQUIRED
 )
 ament_package() # double check. perhaps need to move
 
@@ -175,6 +177,7 @@ if(USE_CUDA)
             rosidl_default_generators
             sensor_msgs
             std_msgs
+            visualization_msgs
             # OpenCV
             # apriltag
             # CUDA # check
@@ -202,6 +205,7 @@ else()
             rosidl_default_generators
             sensor_msgs
             std_msgs
+            visualization_msgs
             OpenCV #unsure
             apriltag #unsure
             )
@@ -238,6 +242,7 @@ ament_target_dependencies(${PROJECT_NAME}_backend
             rosidl_default_generators
             sensor_msgs
             std_msgs
+            visualization_msgs
             )
 
 # ################################
@@ -277,6 +282,7 @@ ament_target_dependencies(${PROJECT_NAME}_slam_zed
                       rosidl_default_generators
                       sensor_msgs
                       std_msgs
+                      visualization_msgs
                       )
 ################################
 ## TAG SLAM Node
@@ -302,6 +308,7 @@ ament_target_dependencies(${PROJECT_NAME}_zed_node
   rosidl_default_generators
   sensor_msgs
   std_msgs
+  visualization_msgs
 )
 
 #############
