@@ -117,7 +117,7 @@ ament_package() # double check. perhaps need to move
 ###########
 
 include_directories(include
-  ${catkin_INCLUDE_DIRS}
+  # ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   # ${Boost_INCLUDE_DIR}
@@ -219,10 +219,11 @@ add_library(${PROJECT_NAME}_backend
             src/backend/isam2_backend.cpp
             src/backend/fixed_lag_backend.cpp)
 
-# target_link_libraries(${PROJECT_NAME}_backend  # may still need this
-# gtsam
-# gtsam_unstable
-# tbb  
+target_link_libraries(${PROJECT_NAME}_backend  # may still need this
+            gtsam
+            gtsam_unstable
+            tbb  
+            )
 # ${Boost_LIBRARIES} ) # may not need to include boost?
 
 ament_target_dependencies(${PROJECT_NAME}_backend
@@ -237,9 +238,7 @@ ament_target_dependencies(${PROJECT_NAME}_backend
             rosidl_default_generators
             sensor_msgs
             std_msgs
-            gtsam
-            gtsam_unstable
-            tbb) #perhaps need to add boost
+            )
 
 # ################################
 # ## Add library for the SLAM
