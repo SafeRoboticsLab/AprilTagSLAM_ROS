@@ -30,7 +30,7 @@
 
  **/
 
-#include "tag_slam_zed.hpp"
+#include "tag_slam_zed.h"
 
 RCLCPP_COMPONENTS_REGISTER_NODE(tagslam_ros::TagSlamZED)
 
@@ -212,11 +212,11 @@ namespace tagslam_ros {
         int resol;
         this->get_parameter("camera/resolution", resol);
         zed_resol_ = static_cast<sl::RESOLUTION>(resol);
-        RCLCPP_INFO(this->get_logger(), " * Camera Resolution        -> {}", sl::toString(zed_resol_).c_str());
+        RCLCPP_INFO(this->get_logger(), " * Camera Resolution        -> %s", sl::toString(zed_resol_).c_str());
 
         this->get_parameter("camera/frame_rate", zed_frame_rate_);
         check_resol_fps();
-        RCLCPP_INFO(this->get_logger(), " * Camera Grab Framerate    -> {}", zed_frame_rate_);
+        RCLCPP_INFO(this->get_logger(), " * Camera Grab Framerate    -> %d", zed_frame_rate_);
 
         /*
         ************** Frontend Setup **************
@@ -271,19 +271,19 @@ namespace tagslam_ros {
             int depth_mode;
             this->get_parameter("depth/quality", depth_mode);
             zed_depth_mode_ = static_cast<sl::DEPTH_MODE>(depth_mode);
-            RCLCPP_INFO(this->get_logger(), " * Depth quality        -> {}", sl::toString(zed_depth_mode_).c_str());
+            RCLCPP_INFO(this->get_logger(), " * Depth quality        -> %s", sl::toString(zed_depth_mode_).c_str());
 
             int sensing_mode;
             this->get_parameter("depth/sensing_mode", sensing_mode);
             // assuming "this" is TagSlamZED node
             zed_sensing_mode_ = static_cast<sl::DE = get_ros_option<int>(this, "depth/sensing_mode", 0);PTH_MODE>(sensing_mode);
-            RCLCPP_INFO(this->get_logger(), " * Depth Sensing mode       -> {}", sl::toString(zed_sensing_mode_).c_str());
+            RCLCPP_INFO(this->get_logger(), " * Depth Sensing mode       -> %s", sl::toString(zed_sensing_mode_).c_str());
 
             this->get_parameter("depth/min_depth", zed_min_depth_);
-            RCLCPP_INFO(this->get_logger(), " * Minimum depth        -> {} m", zed_min_depth_);
+            RCLCPP_INFO(this->get_logger(), " * Minimum depth        -> %f m", zed_min_depth_);
 
             this->get_parameter("depth/max_depth", zed_max_depth_);
-            RCLCPP_INFO(this->get_logger(), " * Maximum depth        -> {} m", zed_max_depth_);
+            RCLCPP_INFO(this->get_logger(), " * Maximum depth        -> %f m", zed_max_depth_);
         } else{
             zed_depth_mode_ = sl::DEPTH_MODE::NONE;
         }
@@ -305,7 +305,7 @@ namespace tagslam_ros {
         
         // Set default coordinate system
         zed_init_param_.coordinate_system = sl::COORDINATE_SYSTEM::RIGHT_HANDED_Z_UP_X_FWD;
-        RCLCPP_INFO(this->get_logger(), " * Camera coordinate system     -> {}", sl::toString(zed_init_param_.coordinate_system));
+        RCLCPP_INFO(this->get_logger(), " * Camera coordinate system     -> %s", sl::toString(zed_init_param_.coordinate_system).c_str());
 
         // set up camera parameters
         zed_init_param_.coordinate_units = sl::UNIT::METER;
@@ -318,11 +318,11 @@ namespace tagslam_ros {
 
         sl::ERROR_CODE conn_status = sl::ERROR_CODE::CAMERA_NOT_DETECTED;
 
-        RCLCPP_INFO(this->get_logger(), " *** Opening {} ...", sl::toString(zed_user_model_));
+        RCLCPP_INFO(this->get_logger(), " *** Opening %s ...", sl::toString(zed_user_model_).c_str());
 
         while (conn_status != sl::ERROR_CODE::SUCCESS) {
             conn_status = zed_camera_.open(zed_init_param_);
-            RCLCPP_INFO(this->get_logger(), "ZED connection -> {}", sl::toString(conn_status));
+            RCLCPP_INFO(this->get_logger(), "ZED connection -> %s", sl::toString(conn_status).c_str());
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
             if (!rclcpp::ok()) {
@@ -332,7 +332,7 @@ namespace tagslam_ros {
                 return;
             }
         }
-        RCLCPP_INFO(this->get_logger(), " ... {} ready", sl::toString(zed_real_model_));
+        RCLCPP_INFO(this->get_logger(), " ... %s ready", sl::toString(zed_real_model_).c_str());
 
         // Disable AEC_AGC and Auto Whitebalance to trigger it if use set to automatic
         // zed_camera_.setCameraSettings(sl::VIDEO_SETTINGS::AEC_AGC, 0);
@@ -720,7 +720,7 @@ namespace tagslam_ros {
         case sl::RESOLUTION::HD2K:
             if (zed_frame_rate_ != 15) {
                 RCLCPP_WARN(this->get_logger(),
-                        "Wrong FrameRate ({}) for the resolution HD2K. Set to 15 FPS.",
+                        "Wrong FrameRate (%d) for the resolution HD2K. Set to 15 FPS.",
                         zed_frame_rate_);
                 zed_frame_rate_ = 15;
             }
@@ -734,15 +734,15 @@ namespace tagslam_ros {
 
             if (zed_frame_rate_ > 15 && zed_frame_rate_ < 30) {
                 RCLCPP_WARN(this->get_logger(), 
-                        "Wrong FrameRate ({}) for the resolution HD1080. Set to 15 FPS.",
+                        "Wrong FrameRate (%d) for the resolution HD1080. Set to 15 FPS.",
                         zed_frame_rate_);
                 zed_frame_rate_ = 15;
             } else if (zed_frame_rate_ > 30) {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}}) for the resolution HD1080. Set to 30 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d}) for the resolution HD1080. Set to 30 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 30;
             } else {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD1080. Set to 15 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution HD1080. Set to 15 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 15;
             }
@@ -755,19 +755,19 @@ namespace tagslam_ros {
             }
 
             if (zed_frame_rate_ > 15 && zed_frame_rate_ < 30) {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD720. Set to 15 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution HD720. Set to 15 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 15;
             } else if (zed_frame_rate_ > 30 && zed_frame_rate_ < 60) {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD720. Set to 30 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution HD720. Set to 30 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 30;
             } else if (zed_frame_rate_ > 60) {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD720. Set to 60 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution HD720. Set to 60 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 60;
             } else {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution HD720. Set to 15 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution HD720. Set to 15 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 15;
             }
@@ -780,23 +780,23 @@ namespace tagslam_ros {
             }
 
             if (zed_frame_rate_ > 15 && zed_frame_rate_ < 30) {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 15 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution VGA. Set to 15 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 15;
             } else if (zed_frame_rate_ > 30 && zed_frame_rate_ < 60) {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 30 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution VGA. Set to 30 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 30;
             } else if (zed_frame_rate_ > 60 && zed_frame_rate_ < 100) {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 60 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution VGA. Set to 60 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 60;
             } else if (zed_frame_rate_ > 100) {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 100 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution VGA. Set to 100 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 100;
             } else {
-                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate ({}) for the resolution VGA. Set to 15 FPS.",
+                RCLCPP_WARN(this->get_logger(), "Wrong FrameRate (%d) for the resolution VGA. Set to 15 FPS.",
                 zed_frame_rate_);
                 zed_frame_rate_ = 15;
             }

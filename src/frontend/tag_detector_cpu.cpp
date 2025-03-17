@@ -60,14 +60,14 @@ namespace tagslam_ros
     tag_size_(get_ros_option<double>(node_, "frontend/tag_size", 1.0))
   {
     //
-    RCLCPP_INFO(node_->get_logger(),"Initializing cpu AprilTag detector with family {}", family_);
-    RCLCPP_INFO(node_->get_logger(), "Tag Size: {}", tag_size_);
-    RCLCPP_INFO(node_->get_logger(), "Threads: {}", threads_);
-    RCLCPP_INFO(node_->get_logger(), "Decimate: {}", decimate_);
-    RCLCPP_INFO(node_->get_logger(), "Blur: {}", blur_);
-    RCLCPP_INFO(node_->get_logger(), "Refine edges: {}", refine_edges_);
-    RCLCPP_INFO(node_->get_logger(), "Debug: {}", debug_);
-    RCLCPP_INFO(node_->get_logger(), "Max hamming distance: {}", max_hamming_distance_);
+    RCLCPP_INFO(node_->get_logger(),"Initializing cpu AprilTag detector with family %s", family_.c_str);
+    RCLCPP_INFO(node_->get_logger(), "Tag Size: %f", tag_size_);
+    RCLCPP_INFO(node_->get_logger(), "Threads: %d", threads_);
+    RCLCPP_INFO(node_->get_logger(), "Decimate: %f", decimate_);
+    RCLCPP_INFO(node_->get_logger(), "Blur: %f", blur_);
+    RCLCPP_INFO(node_->get_logger(), "Refine edges: %d", refine_edges_);
+    RCLCPP_INFO(node_->get_logger(), "Debug: %i", debug_);
+    RCLCPP_INFO(node_->get_logger(), "Max hamming distance: %i", max_hamming_distance_);
     
     // Define the tag family whose tags should be searched for in the camera
     // images

@@ -76,7 +76,7 @@
 
 namespace tagslam_ros{
 
-  using TagDetectionArrayPtr = AprilTagDetectionArray::SharedPtr;
+  using TagDetectionArrayPtr = msg::AprilTagDetectionArray::SharedPtr;
   using EigenPose = Eigen::Matrix4d;
   using EigenPoseSigma = Eigen::Matrix<double, 6, 1>; // rotx, roty, rotz, x, y, z
   using EigenPoseCov = Eigen::Matrix<double, 6, 6>; // rotx, roty, rotz, x, y, z
@@ -98,7 +98,7 @@ namespace tagslam_ros{
     if(!node->has_parameter(param_name))
     {
       node->declare_parameter(param_name, default_val);
-      RCLCPP_WARN(node->get_logger(), "Parameter '{}' does not exist, setting to default: {}",
+      RCLCPP_WARN(node->get_logger(), "Parameter %s does not exist, setting to default: %s",
                     param_name.c_str(), std::to_string(default_val).c_str());
     }
     T param_val;

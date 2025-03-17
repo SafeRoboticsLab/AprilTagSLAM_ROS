@@ -30,7 +30,7 @@
 
  **/
 
-#include "backend/backend.hpp"
+#include "backend/backend.h"
 
 using namespace gtsam;
 
@@ -126,7 +126,7 @@ namespace tagslam_ros
         if (save_graph_)
         {
             write_to_file(landmark_values_, save_map_path_);
-            RCLCPP_INFO(node_->get_logger(), "Graph saved to {}", save_map_path_);
+            RCLCPP_INFO(node_->get_logger(), "Graph saved to %s", save_map_path_.c_str());
         }
     }
     
@@ -139,7 +139,7 @@ namespace tagslam_ros
         std::ifstream is(filename.c_str());
 
         if (!is){
-            RCLCPP_ERROR(node_->get_logger(), "Failed to open {}", filename);
+            RCLCPP_ERROR(node_->get_logger(), "Failed to open %s", filename.c_str());
             return values;
         }
         
@@ -345,10 +345,10 @@ namespace tagslam_ros
                             EigenPose T_sensor2cam)
     {
         RCLCPP_INFO(node_->get_logger(), "Imu Preintegration use following parameters:");
-        RCLCPP_INFO(node_->get_logger(), " - accel_noise_sigma: {}", accel_noise_sigma);
-        RCLCPP_INFO(node_->get_logger(), " - accel_bias_rw_sigma: {}", accel_bias_rw_sigma);
-        RCLCPP_INFO(node_->get_logger(), " - gyro_noise_sigma: {}", gyro_noise_sigma);
-        RCLCPP_INFO(node_->get_logger(), " - gyro_bias_rw_sigma: {}", gyro_bias_rw_sigma);
+        RCLCPP_INFO(node_->get_logger(), " - accel_noise_sigma: %f", accel_noise_sigma);
+        RCLCPP_INFO(node_->get_logger(), " - accel_bias_rw_sigma: %f", accel_bias_rw_sigma);
+        RCLCPP_INFO(node_->get_logger(), " - gyro_noise_sigma: %f", gyro_noise_sigma);
+        RCLCPP_INFO(node_->get_logger(), " - gyro_bias_rw_sigma: %f", gyro_bias_rw_sigma);
 
         std::stringstream T_sensor2cam_stream;
         T_sensor2cam_stream << T_sensor2cam;
@@ -397,7 +397,7 @@ namespace tagslam_ros
 
         std::stringstream gravity_trans_stream;
         gravity_trans_stream << gravity_trans;
-        RCLCPP_INFO(node_->get_logger(), "Initialize the gravity for IMU with: {}", gravity_trans_stream.str().c_str());
+        RCLCPP_INFO(node_->get_logger(), "Initialize the gravity for IMU with: %s", gravity_trans_stream.str().c_str());
     }
 
     void Backend::write_to_file(const Values &estimate, const std::string &filename)
@@ -455,7 +455,7 @@ namespace tagslam_ros
         }
 
         // initialized_ = true;
-        RCLCPP_INFO(node_->get_logger(), "Load {} landmarks from {}", num_landmarks, load_map_path_);
+        RCLCPP_INFO(node_->get_logger(), "Load %d landmarks from %s", num_landmarks, load_map_path_.c_str());
     }
 
     nav_msgs::msg::Odometry::SharedPtr Backend::createOdomMsg(Pose3 pose, EigenPoseCov pose_cov, 
