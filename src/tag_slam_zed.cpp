@@ -570,7 +570,7 @@ namespace tagslam_ros {
             zed_camera_.getSensorsData(sensor_data, sl::TIME_REFERENCE::CURRENT);
             if(ts_handler.isNew(sensor_data.imu))
             {
-                auto imu_msg_ptr = std::make_shared<sensor_msgs::msg::Imu>();
+                auto imu_msg_ptr = boost::make_shared<sensor_msgs::msg::Imu>();
 
                 imu_msg_ptr->header.stamp = sl_time_to_ros(sensor_data.imu.timestamp);
 
@@ -678,7 +678,7 @@ namespace tagslam_ros {
             
             // create raw image message
             if(num_image_subscriber > 0 && if_pub_image_){
-                auto raw_img_msg_ptr = std::make_shared<sensor_msgs::msg::Image>();
+                auto raw_img_msg_ptr = boost::make_shared<sensor_msgs::msg::Image>();
                 sl_mat_to_ros_msg(raw_img_msg_ptr, sl_mat_cpu, header);
                 cam_info_msg_ptr_->header = header;
                 img_pub_->publish(*raw_img_msg_ptr, *cam_info_msg_ptr_);

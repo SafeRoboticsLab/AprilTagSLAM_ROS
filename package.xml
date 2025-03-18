@@ -34,6 +34,8 @@
   <exec_depend>message_runtime</exec_depend> -->
 
   <depend>cv_bridge</depend>
+  <!-- boost and eigen needed for gtsam -->
+  <depend>boost</depend> 
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>image_geometry</depend>

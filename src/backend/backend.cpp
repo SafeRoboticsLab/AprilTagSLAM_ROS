@@ -133,7 +133,7 @@ namespace tagslam_ros
     Values::shared_ptr Backend::read_from_file(const std::string &filename)
     {  
         // Pointer to GTSAM Values
-        auto values = std::make_shared<gtsam::Values>();
+        auto values = boost::make_shared<gtsam::Values>();
 
         // Parse the file
         std::ifstream is(filename.c_str());
@@ -365,7 +365,7 @@ namespace tagslam_ros
         Matrix6 bias_acc_omega_init = Matrix6::Identity() * 1e-3;
 
         // the imu is in camera frame, which have y point down, z point forward
-        preint_param_ = std::make_shared<PreintegrationCombinedParams>(Vector3(0.0, 0.0, 0.0));
+        preint_param_ = boost::make_shared<PreintegrationCombinedParams>(Vector3(0.0, 0.0, 0.0));
         // PreintegrationBase params:
         preint_param_->accelerometerCovariance =
             measured_acc_cov;  // acc white noise in continuous
@@ -478,7 +478,7 @@ namespace tagslam_ros
             angular_w << twist(2,1), twist(0,2), twist(1,0);
         }
 
-        nav_msgs::msg::Odometry::SharedPtr odom_msg = std::make_shared<nav_msgs::msg::Odometry>();
+        nav_msgs::msg::Odometry::SharedPtr odom_msg = boost::make_shared<nav_msgs::msg::Odometry>();
         odom_msg->header.stamp = rclcpp::Time(time);
         odom_msg->header.frame_id = "map";
 
@@ -517,7 +517,7 @@ namespace tagslam_ros
     visualization_msgs::msg::MarkerArray::SharedPtr Backend::createMarkerArray(std_msgs::msg::Header header)
     {
         // initialize the marker array
-        visualization_msgs::msg::MarkerArray::SharedPtr marker_array_ptr = std::make_shared<visualization_msgs::msg::MarkerArray>();
+        visualization_msgs::msg::MarkerArray::SharedPtr marker_array_ptr = boost::make_shared<visualization_msgs::msg::MarkerArray>();
         if(reset_mutex_.try_lock())
         {
             // iterate through landmarks, and update them to priors

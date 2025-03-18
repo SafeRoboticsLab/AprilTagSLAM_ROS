@@ -60,14 +60,16 @@ find_package(std_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)  
 find_package(rosidl_cmake)
 
-find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(apriltag REQUIRED)
-find_package(TBB REQUIRED)
-# find_package(Boost 1.58 REQUIRED COMPONENTS system serialization filesystem thread date_time regex timer chrono)
+find_package(apriltag REQUIRED) # front end
+
+# needed for backend with GTSAM
+find_package(Eigen3 3.3.4 REQUIRED)
+find_package(Boost 1.58 REQUIRED COMPONENTS system serialization filesystem thread date_time regex timer chrono)
 find_package(GTSAM REQUIRED)
 find_package(GTSAM_UNSTABLE REQUIRED)
+find_package(TBB REQUIRED)
 
 # TODO: add linting in future
 # find_package(ament_lint_auto REQUIRED)
@@ -132,7 +134,7 @@ include_directories(include
   # ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  # ${Boost_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIR}
   ${GTSAM_INCLUDE_DIR}
   ${GTSAM_UNSTABLE_INCLUDE_DIR}
 )
@@ -232,12 +234,12 @@ add_library(${PROJECT_NAME}_backend
             src/backend/isam2_backend.cpp
             src/backend/fixed_lag_backend.cpp)
 
-target_link_libraries(${PROJECT_NAME}_backend  # may still need this
+target_link_libraries(${PROJECT_NAME}_backend
+            ${Boost_LIBRARIES}
             gtsam
             gtsam_unstable
-            tbb  
+            tbb
             )
-# ${Boost_LIBRARIES} ) # may not need to include boost?
 
 ament_target_dependencies(${PROJECT_NAME}_backend
             cv_bridge
