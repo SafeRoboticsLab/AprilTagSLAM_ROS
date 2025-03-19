@@ -206,7 +206,7 @@ namespace tagslam_ros
                 // use this imu measurement to initialize the gravity
                 setGravity(imu_msg_ptr);
                 // initialize the IMU pre-integrator
-                preint_meas_ = std::make_shared<PreintegratedCombinedMeasurements>(preint_param_, prev_bias_);
+                preint_meas_ = boost::make_shared<PreintegratedCombinedMeasurements>(preint_param_, prev_bias_);
                 break;
             }
         }
