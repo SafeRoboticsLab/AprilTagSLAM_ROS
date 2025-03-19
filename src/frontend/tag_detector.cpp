@@ -132,7 +132,7 @@ namespace tagslam_ros
                 !std::getline(tag_stream, id_end_str, ',') ||
                 !std::getline(tag_stream, tag_size_str, ','))
             {
-                RCLCPP_ERROR(this->get_logger(), "Invalid tag format: %s", tag_str.c_str());
+                RCLCPP_ERROR(node_->get_logger(), "Invalid tag format: %s", tag_str.c_str());
                 continue;
             }
 

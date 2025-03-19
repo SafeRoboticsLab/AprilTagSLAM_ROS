@@ -43,7 +43,7 @@
 #include "utility_function.hpp"
 #include "frontend/tag_detector.hpp"
 
-#include <apriltag.hpp>
+#include <apriltag.h>
 
 namespace tagslam_ros{
   class TagDetectorCPU: public TagDetector
