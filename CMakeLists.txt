@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 project(tagslam_ros)
-set(CMAKE_PROJECT_NAME tagslam_ros) # can probably remove
+# set(CMAKE_PROJECT_NAME tagslam_ros) # can probably remove
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
@@ -198,10 +198,6 @@ else()
             src/frontend/tag_detector.cpp
             src/frontend/tag_detector_cpu.cpp)
 
-  target_link_libraries(${PROJECT_NAME}_frontend
-            ${OpenCV_LIBRARIES}
-            apriltag::apriltag
-            "${cpp_typesupport_target}")
   ament_target_dependencies(${PROJECT_NAME}_frontend
             cv_bridge
             geometry_msgs
@@ -215,6 +211,11 @@ else()
             sensor_msgs
             std_msgs
             visualization_msgs
+            )
+  target_link_libraries(${PROJECT_NAME}_frontend
+            ${OpenCV_LIBRARIES}
+            apriltag::apriltag
+            "${cpp_typesupport_target}"
             )
   # to use custom messages
   # rosidl_target_interfaces(${PROJECT_NAME}_frontend
@@ -231,13 +232,6 @@ add_library(${PROJECT_NAME}_backend
             src/backend/isam2_backend.cpp
             src/backend/fixed_lag_backend.cpp)
 
-target_link_libraries(${PROJECT_NAME}_backend
-            ${Boost_LIBRARIES}
-            gtsam
-            gtsam_unstable
-            tbb
-            "${cpp_typesupport_target}")
-
 ament_target_dependencies(${PROJECT_NAME}_backend
             cv_bridge
             geometry_msgs
@@ -251,6 +245,14 @@ ament_target_dependencies(${PROJECT_NAME}_backend
             sensor_msgs
             std_msgs
             visualization_msgs
+            )
+
+target_link_libraries(${PROJECT_NAME}_backend
+            ${Boost_LIBRARIES}
+            gtsam
+            gtsam_unstable
+            tbb
+            "${cpp_typesupport_target}"
             )
   # to use custom messages
   # rosidl_target_interfaces(${PROJECT_NAME}_backend
@@ -276,12 +278,7 @@ add_library(${PROJECT_NAME}_slam_zed src/tag_slam_zed.cpp)
 # add_dependencies(${PROJECT_NAME}_slam_zed ${PROJECT_NAME}_generate_messages_cpp)
 target_include_directories(${PROJECT_NAME}_slam_zed PUBLIC
                       ${ZED_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}_slam_zed
-                      ${PROJECT_NAME}_frontend 
-                      ${PROJECT_NAME}_backend
-                      ${ZED_LIBRARIES}
-                      ${CUDA_LIBRARIES}
-                      "${cpp_typesupport_target}")
+
 ament_target_dependencies(${PROJECT_NAME}_slam_zed
                       cv_bridge
                       geometry_msgs
@@ -296,6 +293,13 @@ ament_target_dependencies(${PROJECT_NAME}_slam_zed
                       std_msgs
                       visualization_msgs
                       )
+
+target_link_libraries(${PROJECT_NAME}_slam_zed
+                      ${PROJECT_NAME}_frontend 
+                      ${PROJECT_NAME}_backend
+                      ${ZED_LIBRARIES}
+                      ${CUDA_LIBRARIES}
+                      "${cpp_typesupport_target}")
 # to use custom messages
 # rosidl_target_interfaces(${PROJECT_NAME}_slam_zed
 # ${PROJECT_NAME} "rosidl_typesupport_cpp")
@@ -325,9 +329,6 @@ ament_target_dependencies(${PROJECT_NAME}_zed_node
   std_msgs
   visualization_msgs
 )
-# to use custom messages
-# rosidl_target_interfaces(${PROJECT_NAME}_zed_node
-# ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 #############
 ## Install ##
