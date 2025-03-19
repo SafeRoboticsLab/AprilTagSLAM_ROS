@@ -107,9 +107,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES geometry_msgs std_msgs
 )
 
-# Extract the include directories and libraries from apriltag::apriltag as catkin_package() does not support modern cmake.
-# get_target_property(apriltag_INCLUDE_DIRS apriltag::apriltag INTERFACE_INCLUDE_DIRECTORIES)
-# get_target_property(apriltag_LIBRARIES apriltag::apriltag INTERFACE_LINK_LIBRARIES)
+# Extract the include directories and libraries from apriltag::apriltag as colcon does not support modern cmake? perhaps
+get_target_property(apriltag_INCLUDE_DIRS apriltag::apriltag INTERFACE_INCLUDE_DIRECTORIES)
+get_target_property(apriltag_LIBRARIES apriltag::apriltag INTERFACE_LINK_LIBRARIES)
 
 # ament_package
 ament_export_dependencies(
