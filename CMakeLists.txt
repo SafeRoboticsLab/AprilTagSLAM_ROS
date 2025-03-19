@@ -1,5 +1,6 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(tagslam_ros)
+set(CMAKE_PROJECT_NAME tagslam_ros) # can probably remove
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
@@ -102,10 +103,10 @@ set(msg_files
   "msg/AprilTagDetectionArray.msg"
 )
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  ${msg_files}
-  DEPENDENCIES geometry_msgs std_msgs
-)
+# rosidl_generate_interfaces(${PROJECT_NAME}
+#   ${msg_files}
+#   DEPENDENCIES geometry_msgs std_msgs
+# )
 
 # Extract the include directories and libraries from apriltag::apriltag as colcon does not support modern cmake? perhaps
 get_target_property(apriltag_INCLUDE_DIRS apriltag::apriltag INTERFACE_INCLUDE_DIRECTORIES)
@@ -190,9 +191,6 @@ if(USE_CUDA)
             std_msgs
             visualization_msgs
             ) 
-  # to use custom messages
-  # rosidl_target_interfaces(${PROJECT_NAME}_frontend
-  # ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()
 
   add_library(${PROJECT_NAME}_frontend 
@@ -221,9 +219,7 @@ else()
   # ${PROJECT_NAME} "rosidl_typesupport_cpp")
 endif()
 
-# TODO: check generate messages, rosidl_generate_interfaces
-# believe not needed bc generate messages gone
-# add_dependencies(${PROJECT_NAME}_frontend ${PROJECT_NAME}_generate_messages_cpp)
+
 
 ################################
 ## Add library for the back-end
@@ -349,3 +345,8 @@ install(TARGETS
 )
 
 ament_package() # EOF
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${msg_files}
+  DEPENDENCIES geometry_msgs std_msgs
+)
