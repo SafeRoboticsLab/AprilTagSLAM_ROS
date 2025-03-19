@@ -47,12 +47,12 @@ namespace tagslam_ros
 
         // Declare parameters with default values
         // each tag is a std::string with comma (,) separated attributes: id_start, id_end, tag_size
-        node_->declare_parameter<std::vector<std::string>>("landmark_tags", {});
-        node_->declare_parameter<std::vector<std::string>>("ignore_tags", {});
+        node_->declare_parameter<std::vector<std::string>>("landmark_tags", {}, rcl_interfaces::msg::ParameterDescriptor());
+        node_->declare_parameter<std::vector<std::string>>("ignore_tags", {}, rcl_interfaces::msg::ParameterDescriptor());
 
         // parse landmark tag group
         
-        if (node_->has_parameter("landmark_tags", landmark_tags)) {
+        if (node_->has_parameter("landmark_tags")) {
             std::vector<std::string> landmark_tags;
             node_->get_parameter("landmark_tags", landmark_tags);
             try {
@@ -66,7 +66,7 @@ namespace tagslam_ros
         }
         
 
-        if (node_->has_parameter("ignore_tags", ignore_tags)) {
+        if (node_->has_parameter("ignore_tags")) {
             std::vector<std::string> ignore_tags;
             node_->get_parameter("ignore_tags", ignore_tags);
             try {

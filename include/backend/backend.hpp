@@ -259,8 +259,8 @@ namespace tagslam_ros
 
         // concurrent queue for imu data
         tbb::concurrent_queue<sensor_msgs::msg::Imu::SharedPtr> imu_queue_;
-        std::shared_ptr<PreintegrationCombinedParams> preint_param_;
-        std::shared_ptr<PreintegratedCombinedMeasurements> preint_meas_ = nullptr;
+        boost::shared_ptr<PreintegrationCombinedParams> preint_param_;
+        boost::shared_ptr<PreintegratedCombinedMeasurements> preint_meas_ = nullptr;
 
         // values to track of previous states
         Pose3 prev_pose_;
