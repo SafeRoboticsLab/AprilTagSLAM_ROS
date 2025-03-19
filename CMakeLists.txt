@@ -130,7 +130,6 @@ ament_export_dependencies(rosidl_default_runtime) # required for custom messages
 ###########
 
 include_directories(include
-  # ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIR}
@@ -156,7 +155,8 @@ if(USE_CUDA)
   endif()
 endif()
 
-
+rosidl_get_typesupport_target(${PROJECT_NAME}_rosidl_typesupport_cpp
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 ################################
 ## Add library for the front-end
@@ -191,8 +191,8 @@ if(USE_CUDA)
             visualization_msgs
             ) 
   # to use custom messages
-  rosidl_target_interfaces(${PROJECT_NAME}_frontend
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
+  # rosidl_target_interfaces(${PROJECT_NAME}_frontend
+  # ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()
 
   add_library(${PROJECT_NAME}_frontend 
@@ -217,8 +217,8 @@ else()
             visualization_msgs
             )
   # to use custom messages
-  rosidl_target_interfaces(${PROJECT_NAME}_frontend
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
+  # rosidl_target_interfaces(${PROJECT_NAME}_frontend
+  # ${PROJECT_NAME} "rosidl_typesupport_cpp")
 endif()
 
 # TODO: check generate messages, rosidl_generate_interfaces
@@ -255,8 +255,8 @@ ament_target_dependencies(${PROJECT_NAME}_backend
             visualization_msgs
             )
   # to use custom messages
-  rosidl_target_interfaces(${PROJECT_NAME}_backend
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
+  # rosidl_target_interfaces(${PROJECT_NAME}_backend
+  # ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # ################################
 # ## Add library for the SLAM
@@ -298,8 +298,8 @@ ament_target_dependencies(${PROJECT_NAME}_slam_zed
                       visualization_msgs
                       )
 # to use custom messages
-rosidl_target_interfaces(${PROJECT_NAME}_slam_zed
-${PROJECT_NAME} "rosidl_typesupport_cpp")
+# rosidl_target_interfaces(${PROJECT_NAME}_slam_zed
+# ${PROJECT_NAME} "rosidl_typesupport_cpp")
 ################################
 ## TAG SLAM Node
 ################################
@@ -327,8 +327,8 @@ ament_target_dependencies(${PROJECT_NAME}_zed_node
   visualization_msgs
 )
 # to use custom messages
-rosidl_target_interfaces(${PROJECT_NAME}_zed_node
-${PROJECT_NAME} "rosidl_typesupport_cpp")
+# rosidl_target_interfaces(${PROJECT_NAME}_zed_node
+# ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 #############
 ## Install ##
