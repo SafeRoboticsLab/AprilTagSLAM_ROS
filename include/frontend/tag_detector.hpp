@@ -90,7 +90,7 @@ namespace tagslam_ros{
             TagDetectionArrayPtr tag_detection);
 
     protected:
-    void TagDetector::parseTagGroup(std::map<int, SizeStaticPair> &tag_group_map, 
+    void parseTagGroup(std::map<int, SizeStaticPair> &tag_group_map, 
       const std::vector<std::string> &tag_group, bool static_tag);
 
       // Get the pose of the tag in the camera frame
