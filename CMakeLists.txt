@@ -156,8 +156,8 @@ if(USE_CUDA)
   endif()
 endif()
 
-rosidl_get_typesupport_target(${PROJECT_NAME}_rosidl_typesupport_cpp
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
+rosidl_get_typesupport_target(cpp_typesupport_target
+  "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
 ################################
 ## Add library for the front-end
@@ -175,7 +175,8 @@ if(USE_CUDA)
             ${OpenCV_LIBRARIES}
             ${CUDA_LIBRARIES}
             apriltag::apriltag
-            nvapriltags)
+            nvapriltags
+            "${cpp_typesupport_target}")
 
   ament_target_dependencies(${PROJECT_NAME}_frontend
             cv_bridge
@@ -199,7 +200,8 @@ else()
 
   target_link_libraries(${PROJECT_NAME}_frontend
             ${OpenCV_LIBRARIES}
-            apriltag::apriltag)
+            apriltag::apriltag
+            "${cpp_typesupport_target}")
   ament_target_dependencies(${PROJECT_NAME}_frontend
             cv_bridge
             geometry_msgs
@@ -234,7 +236,7 @@ target_link_libraries(${PROJECT_NAME}_backend
             gtsam
             gtsam_unstable
             tbb
-            )
+            "${cpp_typesupport_target}")
 
 ament_target_dependencies(${PROJECT_NAME}_backend
             cv_bridge
@@ -278,7 +280,8 @@ target_link_libraries(${PROJECT_NAME}_slam_zed
                       ${PROJECT_NAME}_frontend 
                       ${PROJECT_NAME}_backend
                       ${ZED_LIBRARIES}
-                      ${CUDA_LIBRARIES} )
+                      ${CUDA_LIBRARIES}
+                      "${cpp_typesupport_target}")
 ament_target_dependencies(${PROJECT_NAME}_slam_zed
                       cv_bridge
                       geometry_msgs
