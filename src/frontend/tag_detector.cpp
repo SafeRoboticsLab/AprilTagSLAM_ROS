@@ -53,7 +53,7 @@ namespace tagslam_ros
         // parse landmark tag group
         
         if (node_->has_parameter("landmark_tags", landmark_tags)) {
-            std::vector<std::string> landmark_groups;
+            std::vector<std::string> landmark_tags;
             node_->get_parameter("landmark_tags", landmark_tags);
             try {
                 parseTagGroup(tag_size_list_, landmark_tags, true); 
@@ -151,9 +151,6 @@ namespace tagslam_ros
                 }
                 tag_group_map[id] = std::make_pair(tag_size, static_tag);
             }
-        } catch (const std::exception &e) {
-            RCLCPP_ERROR(node_->get_logger(), "Error parsing tag group: %s", e.what());
-        }
         }
     }
 
