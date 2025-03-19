@@ -124,7 +124,6 @@ ament_export_dependencies(
   visualization_msgs REQUIRED
 )
 ament_export_dependencies(rosidl_default_runtime) # required for custom messages
-ament_package() # double check. perhaps need to move
 
 ###########
 ## Build ##
@@ -349,3 +348,4 @@ install(TARGETS
   LIBRARY DESTINATION ${lib}
 )
 
+ament_package() # EOF

@@ -29,9 +29,6 @@
 
   <!-- <depend>apriltag</depend> -->
   <!-- <depend>gtsam</depend> -->
-  <!-- <depend>boost</depend> -->
-  <!-- <build_depend>message_generation</build_depend>
-  <exec_depend>message_runtime</exec_depend> -->
 
   <depend>cv_bridge</depend>
   <!-- boost and eigen needed for gtsam -->
