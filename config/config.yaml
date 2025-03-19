@@ -121,32 +121,13 @@ slam_node:
 
         # The tags are used to define the landmarks 
         landmark_tags:
-            -   id_start: 1, # include this tag
-                id_end: 1, # include this tag
-                tag_size: 0.254, # size of the tag in meters
-
-            -   id_start: 2, # include this tag
-                id_end: 26, # include this tag
-                tag_size: 0.259, # size of the tag in meters
-
-            -   id_start: 100, # include this tag
-                id_end: 103, # include this tag
-                tag_size: 0.12, # size of the tag in meters
+            -   "1,1,0.254" # id_start, id_end, tag_size in meters
+            -   "2,26,0.259"
+            -   "100,103,0.12"
 
         # tags are ignored during slam
         ignore_tags:
-            -   id_start: 27, # include this tag
-                id_end: 99, # include this tag
-                tag_size: 0.2, # size of the tag in meters
-
-            -   id_start: 104, # include this tag
-                id_end: 199, # include this tag
-                tag_size: 0.2, # size of the tag in meters
-
-            -   id_start: 200, # include this tag
-                id_end: 220, # include this tag
-                tag_size: 0.096, # size of the tag in meters
-
-            -   id_start: 221, # include this tag
-                id_end: 10000, # include this tag
-                tag_size: 0.2, # size of the tag in meters
+            -   "27,99,0,2"
+            -   "104,199,0.2"
+            -   "200,220,0.096"
+            -   "221,10000,0.2"

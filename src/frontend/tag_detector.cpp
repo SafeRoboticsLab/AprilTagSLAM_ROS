@@ -46,17 +46,17 @@ namespace tagslam_ros
                         0, 0, 0, 1;
 
         // Declare parameters with default values
-        // each tag is a std::map (dictionary) with keys: id_start, id_end, tag_size
-        node_->declare_parameter<std::vector<std::map<std::string, double>>>("landmark_tags", std::vector<std::map<std::string, double>>());
-        node_->declare_parameter<std::vector<std::map<std::string, double>>>("ignore_tags", std::vector<std::map<std::string, double>>());
+        // each tag is a std::string with comma (,) separated attributes: id_start, id_end, tag_size
+        node_->declare_parameter<std::vector<std::string>>("landmark_tags", {});
+        node_->declare_parameter<std::vector<std::string>>("ignore_tags", {});
 
         // parse landmark tag group
         
-        if (node_->has_parameter("landmark_tags", landmark_groups)) {
-            std::vector<std::map<std::string, double>> landmark_groups;
-            node_->get_parameter("landmark_tags", landmark_groups);
+        if (node_->has_parameter("landmark_tags", landmark_tags)) {
+            std::vector<std::string> landmark_groups;
+            node_->get_parameter("landmark_tags", landmark_tags);
             try {
-                parseTagGroup(tag_size_list_, landmark_groups, true); 
+                parseTagGroup(tag_size_list_, landmark_tags, true); 
             } catch(const std::exception &e) {
                 RCLCPP_ERROR(node_->get_logger(), "Error loading landmark_tags descriptions: %s",
                             e.what());
@@ -66,11 +66,11 @@ namespace tagslam_ros
         }
         
 
-        if (node_->has_parameter("ignore_tags", ignore_groups)) {
-            std::vector<std::map<std::string, double>> ignore_groups;
-            node_->get_parameter("ignore_tags", ignore_groups);
+        if (node_->has_parameter("ignore_tags", ignore_tags)) {
+            std::vector<std::string> ignore_tags;
+            node_->get_parameter("ignore_tags", ignore_tags);
             try {
-                parseTagGroup(tag_size_list_, ignore_groups, false); 
+                parseTagGroup(tag_size_list_, ignore_tags, false); 
             } catch(const std::exception &e) {
                 RCLCPP_ERROR(node_->get_logger(), "Error loading ignore_tags descriptions: %s",
                             e.what());
@@ -123,36 +123,37 @@ namespace tagslam_ros
     }
 
     void TagDetector::parseTagGroup(std::map<int, SizeStaticPair> &tag_group_map, 
-                        const std::vector<std::map<std::string, double>> &tag_groups, bool static_tag)
+                        const std::vector<std::string> &tag_group, bool static_tag)
     {   
-        for (const auto &tag_group : tag_groups) {
-            try {
-                if (tag_group.find("id_start") == tag_group.end() ||
-                    tag_group.find("id_end") == tag_group.end() ||
-                    tag_group.find("tag_size") == tag_group.end()) {
-                    throw std::invalid_argument("Invalid tag group parameter format (missing keys)");
-                }
-
-                int id_start = static_cast<int>(tag_group.at("id_start"));
-                int id_end = static_cast<int>(tag_group.at("id_end"));
-                double tag_size = tag_group.at("tag_size");
-
-                RCLCPP_INFO(node_->get_logger(), "Tag group from %d to %d has size %f", id_start, id_end, tag_size);
-
-                if (id_end < id_start) {
-                    RCLCPP_ERROR(node_->get_logger(), "id_start %d should be less than id_end %d", id_start, id_end);
-                    throw std::logic_error("id_start should be less than id_end");
-                }
-
-                for (int id = id_start; id <= id_end; id++) {
-                    if (tag_group_map.find(id) != tag_group_map.end()) {
-                        RCLCPP_WARN(node_->get_logger(), "Tag id %d is already in tag group, will be overwritten", id);
-                    }
-                    tag_group_map[id] = std::make_pair(tag_size, static_tag);
-                }
-            } catch (const std::exception &e) {
-                RCLCPP_ERROR(node_->get_logger(), "Error parsing tag group: %s", e.what());
+        for (const auto &tag_str : tag_group) {
+            std::istringstream tag_stream(tag_str);
+            std::string id_start_str, id_end_str, tag_size_str;
+            if (!std::getline(tag_stream, id_start_str, ',') ||
+                !std::getline(tag_stream, id_end_str, ',') ||
+                !std::getline(tag_stream, tag_size_str, ','))
+            {
+                RCLCPP_ERROR(this->get_logger(), "Invalid tag format: %s", tag_str.c_str());
+                continue;
             }
+
+            int id_start = std::stoi(id_start_str);
+            int id_end = std::stoi(id_end_str);
+            double tag_size = std::stod(tag_size_str);
+            
+            RCLCPP_INFO(node_->get_logger(), "Tag group from %d to %d has size %f", id_start, id_end, tag_size);
+            if (id_end < id_start) {
+                RCLCPP_ERROR(node_->get_logger(), "id_start %d should be less than id_end %d", id_start, id_end);
+                continue;
+            }
+            for (int id = id_start; id <= id_end; id++) {
+                if (tag_group_map.find(id) != tag_group_map.end()) {
+                    RCLCPP_WARN(node_->get_logger(), "Tag id %d is already in tag group, will be overwritten", id);
+                }
+                tag_group_map[id] = std::make_pair(tag_size, static_tag);
+            }
+        } catch (const std::exception &e) {
+            RCLCPP_ERROR(node_->get_logger(), "Error parsing tag group: %s", e.what());
+        }
         }
     }
 
