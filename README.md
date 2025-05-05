@@ -25,7 +25,7 @@ The package is initially built for a [ZED2](https://www.stereolabs.com/zed-2/) c
 
 
 ## Install
-First, complete an environment set up on your Ubuntu 20.04 machine like [here](https://github.com/SafeRoboticsLab/PrincetonRaceCar/tree/SP2025/Jetson_Setup). This will install 
+First, complete an environment set up on your Ubuntu 22.04 machine like [here](https://github.com/SafeRoboticsLab/PrincetonRaceCar/tree/SP2025/Jetson_Setup). This will install 
 - [x] [ros-noetic ](http://wiki.ros.org/noetic/Installation/Ubuntu)
 - [x] [zed-sdk](https://www.stereolabs.com/developers/release/)
 - [x] [GTSAM Release 4.1.1](https://gtsam.org/build/)
