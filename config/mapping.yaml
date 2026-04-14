@@ -48,14 +48,14 @@ backend:
     #smoother parameter
     smoother: "isam2" # choose from "fixed_lag", "isam2", and "none"
     use_odom: true        # use ZED's odometry as motion priors, it can work with or without imu
-    use_imu: false        # use ZED's imu as motion priors, it can work with or without odometry
+    use_imu: true        # use ZED's imu as motion priors, it can work with or without odometry
 
     # Load and Save Maps
     prior_map: true
     save_graph: true
     load_path: "track_prior.g2o"    # prior map
     save_path: "track4.g2o"                 # default: "", system will automatically create file with timestamp  in ~/.ros folder
-    fix_prior: false
+    fix_prior: true
     # pose_offset:    [1.0, 0.0, 0.0, -0.357, # camera center offset
     #                 0.0, 1.0, 0.0, -0.06,
     #                 0.0, 0.0, 1.0, 0, #wheelbase
@@ -68,8 +68,8 @@ backend:
     ################# Uncertainty parameters ####################
 
     # variance of tag pose estimation
-    landmark_sigma_trans: 0.05   
-    landmark_sigma_rot: 0.1
+    landmark_sigma_trans: 0.15
+    landmark_sigma_rot: 0.3
 
     # variance of prior landmark loaded from file
     #(smaller value to enforce the landmark are not updated)
