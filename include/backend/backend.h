@@ -177,7 +177,10 @@ namespace tagslam_ros
                 Key landmark_key = Symbol(kLandmarkSymbol, landmark.id);
                 // landmark.pose is geometry_msgs::Pose
                 Pose3 landmark_factor = Pose3(getTransform(landmark.pose));
-                auto landmark_noise = noiseModel::Gaussian::Covariance(landmark_factor_cov_);
+                auto landmark_gaussian = noiseModel::Gaussian::Covariance(landmark_factor_cov_);
+                // Huber robust kernel: down-weights outlier tag observations to prevent ghosting
+                auto landmark_noise = noiseModel::Robust::Create(
+                    noiseModel::mEstimator::Huber::Create(1.345), landmark_gaussian);
 
                 // add prior factor to the local graph
                 factor_graph_.emplace_shared<BetweenFactor<Pose3>>(
